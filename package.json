@@ -1,0 +1,45 @@
+{
+  "name": "kink-atlas",
+  "description": "A private-by-default, rules-based tool for exploring kink role vocabulary.",
+  "author": "D.",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc -b --pretty false && tsc --noEmit --project tsconfig.e2e.json --pretty false",
+    "build": "tsc -b && vite build",
+    "postbuild": "node scripts/generate-site-metadata.mjs",
+    "test": "vitest run --config vitest.public.config.ts",
+    "test:watch": "vitest --config vitest.public.config.ts",
+    "dev:e2e": "vite --config vite.e2e.config.mjs --host 127.0.0.1 --port 4174 --strictPort",
+    "test:e2e:boundary": "node scripts/check-e2e-harness-boundary.mjs",
+    "test:e2e:smoke": "npm run test:e2e:boundary && playwright test --config playwright.smoke.config.ts",
+    "calibrate": "vitest run --config vitest.public.config.ts src/calibration/calibrationReport.test.ts src/calibration/recommendationReport.test.ts --reporter=verbose",
+    "role-library:generate": "vite-node scripts/generate-role-library-runtime.ts",
+    "role-library:check": "vite-node scripts/check-role-library-drift.ts",
+    "production-boundary": "node scripts/production-boundary.mjs",
+    "public-surface:check": "node scripts/public-surface-scan.mjs",
+    "public-self-containment": "node scripts/check-public-self-containment.mjs",
+    "secrets:check": "node scripts/secret-scan.mjs"
+  },
+  "dependencies": {
+    "@netlify/blobs": "10.7.13",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  }
+}

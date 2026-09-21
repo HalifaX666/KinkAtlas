@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
+
+      - name: Check role-library drift
+        run: npm run role-library:check
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Run calibration suite
+        run: npm run calibrate
+
+      - name: Enforce production source boundary
+        run: npm run production-boundary
+
+      - name: Verify public self-containment
+        run: npm run public-self-containment
+
+      - name: Scan public file surface
+        run: npm run public-surface:check
+
+      - name: Scan public file surface for secrets
+        run: npm run secrets:check
