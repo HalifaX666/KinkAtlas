@@ -17,6 +17,7 @@ const publicRoutes: Record<string, RouteMetadata> = {
   '/faq': { title: 'KinkAtlas FAQ', description: 'Clear answers about KinkAtlas results, privacy, role vocabulary, boundaries, consent, and reflection.', robots: 'index, follow', canonicalPath: '/faq' },
   '/contact': { title: 'Contact — KinkAtlas', description: 'Contact KinkAtlas for questions, feedback, bug reports, accessibility issues, privacy questions, or collaboration inquiries.', robots: 'index, follow', canonicalPath: '/contact' },
   '/philosophy': { title: 'Consent philosophy — KinkAtlas', description: 'Read the consent principles that guide KinkAtlas and keep roles, interests, compatibility, and consent separate.', robots: 'index, follow', canonicalPath: '/philosophy' },
+  '/terms': { title: 'Terms of Use | KinkAtlas', description: 'Read the KinkAtlas Terms of Use for the assessment, role library, results, educational materials, exports, and related features.', robots: 'index, follow', canonicalPath: '/terms' },
   '/assessment': { title: 'Explore — KinkAtlas', description: 'Explore kink interests, dynamics, boundaries, and role vocabulary through a private, rules-based assessment.', robots: 'index, follow', canonicalPath: '/assessment' },
   '/results': { title: 'Your kink map — KinkAtlas', description: 'Review your private, in-session KinkAtlas reflection and vocabulary suggestions.', robots: 'noindex, nofollow' },
 }

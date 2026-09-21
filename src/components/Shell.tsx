@@ -91,6 +91,7 @@ export function Shell() {
             <Link to="/about#how-it-works">How it works</Link>
             <Link to="/about#privacy">Privacy</Link>
             <Link to="/faq">FAQ</Link>
+            <Link to="/terms">Terms</Link>
             <Link to="/contact">Contact</Link>
             <Link to="/philosophy">Consent philosophy</Link>
           </nav>

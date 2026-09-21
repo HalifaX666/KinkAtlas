@@ -177,10 +177,49 @@ export function AboutPage() {
       </section>
       <section id="privacy" aria-labelledby="privacy-heading">
         <h2 id="privacy-heading">Privacy &amp; transparency</h2>
-        <p>No account is required. KinkAtlas keeps assessment answers and results in browser memory for the current session, not in persistent storage. Refreshing or closing the tab clears that assessment session.</p>
-        <p>Assessment data is not saved in localStorage, sessionStorage, cookies, or IndexedDB. There is no questionnaire-data backend. Copying, downloading, or sharing a result is your choice; copies you create can remain outside KinkAtlas after the session ends.</p>
-        <p>When you choose to view a completed assessment, the browser sends an empty same-origin increment request. KinkAtlas stores only the aggregate number of completions—not answers, results, roles, readiness information, boundaries, negotiation preferences, or identifiers. The public total is approximate rather than a count of unique people.</p>
-        <p>Results come from deterministic application rules. Under the same KinkAtlas version and ruleset, the same answers produce the same results. Results may change when those rules are updated.</p>
+        <p>No account is required. KinkAtlas keeps assessment answers and generated results in browser memory for the current assessment session, not in persistent browser storage or an assessment database. Refreshing or closing the assessment page may clear your current assessment state.</p>
+        <p>Assessment answers and results are not saved in localStorage, sessionStorage, cookies, or IndexedDB. KinkAtlas does not maintain a questionnaire-data backend.</p>
+        <p>Copying, downloading, exporting, or sharing a result is your choice. Copies you create may remain outside KinkAtlas after your assessment session ends.</p>
+        <p>When you choose to view a completed assessment, your browser sends an empty same-origin request that increments an aggregate completion counter. The KinkAtlas application does not include assessment answers, results, roles, readiness information, boundaries, negotiation preferences, or other assessment content in that request.</p>
+        <p>The application stores an aggregate number of assessment completions rather than a record of individual assessment users. The public total is approximate and should not be interpreted as a count of unique people.</p>
+        <p>Like most websites, hosting, security, or infrastructure providers may process limited technical request information when requests are made to the site.</p>
+        <p>Assessment results are generated using deterministic application rules and curated KinkAtlas data. Under the same KinkAtlas version and ruleset, the same answers produce the same results. Results may change when the assessment logic or rules are updated.</p>
+        <h3>No AI analysis</h3>
+        <p>KinkAtlas does not use generative artificial intelligence to analyze assessment responses or generate assessment results.</p>
+        <p>Assessment results are produced using deterministic application logic and curated KinkAtlas data.</p>
+        <p>Assessment answers, results, roles, readiness information, boundaries, negotiation preferences, and other assessment content are not sent to a generative AI service as part of assessment scoring.</p>
+        <h3>Contact form</h3>
+        <p>If you choose to use the KinkAtlas Contact form, only the information you intentionally enter into that form is submitted for that purpose.</p>
+        <p>Contact-form submissions are separate from assessment state.</p>
+        <p>KinkAtlas does not attach your assessment answers, results, Role Set, readiness information, boundaries, negotiation preferences, or other assessment content to a contact-form submission.</p>
+        <p>The contact form is processed using Netlify Forms.</p>
+        <h3>Aggregate completion counter</h3>
+        <p>KinkAtlas uses an aggregate completion counter to display an approximate number of completed assessments.</p>
+        <p>When a completed assessment is viewed, the application may send an empty same-origin request used to increment that aggregate count.</p>
+        <p>The request does not contain assessment answers, results, roles, readiness information, boundaries, negotiation preferences, or other assessment content.</p>
+        <p>The stored value represents an aggregate number of completion events. It is not intended to identify users and should not be interpreted as a count of unique people.</p>
+        <p>The aggregate completion value may be stored using Netlify infrastructure, including Netlify Blobs.</p>
+        <h3>Hosting and technical request information</h3>
+        <p>KinkAtlas is hosted using third-party infrastructure.</p>
+        <p>Like most websites, hosting, security, DNS, email, form-processing, or other infrastructure providers may process limited technical information associated with normal website requests.</p>
+        <p>Depending on the provider and request, this may include information such as:</p>
+        <ul>
+          <li>IP address;</li>
+          <li>browser or device information;</li>
+          <li>request URL;</li>
+          <li>request time;</li>
+          <li>HTTP headers;</li>
+          <li>security-related information; or</li>
+          <li>server or infrastructure logs.</li>
+        </ul>
+        <p>This technical processing does not mean that KinkAtlas stores your assessment answers or generated results.</p>
+        <h3>Exports and sharing</h3>
+        <p>KinkAtlas allows you to copy, download, export, or share information when you choose to do so.</p>
+        <p>These actions are initiated by you.</p>
+        <p>Once you copy, download, publish, send, or otherwise share information outside KinkAtlas, that copy may continue to exist after your KinkAtlas assessment session has ended.</p>
+        <p>Third-party platforms or recipients may process information you share according to their own privacy practices.</p>
+        <p>KinkAtlas does not automatically post assessment information to FetLife or another social/community platform.</p>
+        <p>KinkAtlas does not automatically read from or modify a FetLife profile.</p>
       </section>
       <section id="definitions" aria-labelledby="definitions-heading">
         <h2 id="definitions-heading">Role-definition methodology</h2>

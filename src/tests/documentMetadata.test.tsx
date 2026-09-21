@@ -23,6 +23,7 @@ describe('route document metadata', () => {
     ['/faq', 'KinkAtlas FAQ', 'index, follow'],
     ['/contact', 'Contact — KinkAtlas', 'index, follow'],
     ['/philosophy', 'Consent philosophy — KinkAtlas', 'index, follow'],
+    ['/terms', 'Terms of Use | KinkAtlas', 'index, follow'],
     ['/assessment', 'Explore — KinkAtlas', 'index, follow'],
     ['/results', 'Your kink map — KinkAtlas', 'noindex, nofollow'],
   ])('sets safe metadata for %s', (path, title, robots) => {

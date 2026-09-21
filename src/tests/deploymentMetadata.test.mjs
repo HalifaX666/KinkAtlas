@@ -37,7 +37,7 @@ describe('launch deployment metadata', () => {
 
   it('generates a valid domain-bound sitemap containing only intended routes', () => {
     const sitemap = buildSitemap('https://example.test')
-    expect(indexableRoutes).toEqual(['/', '/about', '/faq', '/contact', '/philosophy', '/assessment'])
+    expect(indexableRoutes).toEqual(['/', '/about', '/faq', '/contact', '/philosophy', '/terms', '/assessment'])
     for (const route of indexableRoutes) expect(sitemap).toContain(`<loc>https://example.test${route}</loc>`)
     expect(sitemap).not.toMatch(/\/results|\/roles\//)
     expect(normalizeSiteUrl('https://example.test/')).toBe('https://example.test')

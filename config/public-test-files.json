@@ -29,5 +29,6 @@
   "src/tests/roleLibraryContent.test.ts",
   "src/tests/scoring.test.ts",
   "src/tests/scrollRestoration.test.tsx",
-  "src/tests/shareDialog.test.tsx"
+  "src/tests/shareDialog.test.tsx",
+  "src/tests/terms.test.tsx"
 ]

@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-export const indexableRoutes = ['/', '/about', '/faq', '/contact', '/philosophy', '/assessment']
+export const indexableRoutes = ['/', '/about', '/faq', '/contact', '/philosophy', '/terms', '/assessment']
 
 export function normalizeSiteUrl(value) {
   if (!value?.trim()) return undefined

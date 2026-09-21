@@ -13,7 +13,8 @@ import { NotFoundPage } from './pages/NotFoundPage'
 import { PhilosophyPage } from './pages/PhilosophyPage'
 import { ResultsPage } from './pages/ResultsPage'
 import { RolePage } from './pages/RolePage'
+import { TermsPage } from './pages/TermsPage'
 
 export default function App() {
-  return <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><AppErrorBoundary><ScrollRestoration /><DocumentMetadata /><AssessmentProvider><Routes><Route element={<Shell />}><Route index element={<HomePage />} /><Route path="about" element={<AboutPage />} /><Route path="faq" element={<FaqPage />} /><Route path="contact" element={<ContactPage />} /><Route path="philosophy" element={<PhilosophyPage />} /><Route path="assessment" element={<AssessmentPage />} /><Route path="results" element={<ResultsPage />} /><Route path="roles/:roleId" element={<RolePage />} /><Route path="*" element={<NotFoundPage />} /></Route></Routes></AssessmentProvider></AppErrorBoundary></BrowserRouter>
+  return <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><AppErrorBoundary><ScrollRestoration /><DocumentMetadata /><AssessmentProvider><Routes><Route element={<Shell />}><Route index element={<HomePage />} /><Route path="about" element={<AboutPage />} /><Route path="faq" element={<FaqPage />} /><Route path="contact" element={<ContactPage />} /><Route path="philosophy" element={<PhilosophyPage />} /><Route path="terms" element={<TermsPage />} /><Route path="assessment" element={<AssessmentPage />} /><Route path="results" element={<ResultsPage />} /><Route path="roles/:roleId" element={<RolePage />} /><Route path="*" element={<NotFoundPage />} /></Route></Routes></AssessmentProvider></AppErrorBoundary></BrowserRouter>
 }
