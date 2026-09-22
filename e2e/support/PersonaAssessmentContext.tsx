@@ -1,58 +1,144 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
-import { assessmentPersonas } from '../../src/tests/fixtures/assessmentPersonas'
-import type { AssessmentAnswers, BoundaryValue } from '../../src/types'
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { assessmentPersonas } from "../../src/tests/fixtures/assessmentPersonas";
+import type { AssessmentAnswers, BoundaryValue } from "../../src/types";
 
-export const PERSONA_HARNESS_MARKER = 'KINKATLAS_E2E_PERSONA_HARNESS_V1'
+export const PERSONA_HARNESS_MARKER = "KINKATLAS_E2E_PERSONA_HARNESS_V1";
 
-const emptyAnswers = (): AssessmentAnswers => ({ discovery: {}, readiness: {}, boundaries: {}, negotiation: {} })
+const emptyAnswers = (): AssessmentAnswers => ({
+  discovery: {},
+  refinement: {},
+  readiness: {},
+  boundaries: {},
+  negotiation: {},
+});
 
 function initialAnswers(): AssessmentAnswers {
-  const personaId = new URLSearchParams(window.location.search).get('__kinkatlas_e2e_persona')
-  if (!personaId) return emptyAnswers()
-  const persona = assessmentPersonas.find((candidate) => candidate.id === personaId)
-  if (!persona) throw new Error(`Unknown E2E persona: ${personaId}`)
+  const personaId = new URLSearchParams(window.location.search).get("__kinkatlas_e2e_persona");
+
+  if (!personaId) return emptyAnswers();
+
+  const persona = assessmentPersonas.find((candidate) => candidate.id === personaId);
+
+  if (!persona) {
+    throw new Error(`Unknown E2E persona: ${personaId}`);
+  }
+
   return {
     discovery: { ...persona.answers.discovery },
+    refinement: { ...persona.answers.refinement },
     readiness: { ...persona.answers.readiness },
     boundaries: { ...persona.answers.boundaries },
     negotiation: { ...persona.answers.negotiation },
-  }
+  };
 }
 
 interface AssessmentContextValue {
-  answers: AssessmentAnswers
-  answerDiscovery: (questionId: string, answerId: string) => void
-  answerReadiness: (questionId: string, answerId: string) => void
-  answerBoundary: (itemId: string, value: BoundaryValue) => void
-  answerNegotiation: (questionId: string, answerId: string) => void
-  removeDiscoveryAnswer: (questionId: string) => void
-  reset: () => void
+  answers: AssessmentAnswers;
+  answerDiscovery: (questionId: string, answerId: string) => void;
+  answerRefinement: (questionId: string, answerId: string) => void;
+  answerReadiness: (questionId: string, answerId: string) => void;
+  answerBoundary: (itemId: string, value: BoundaryValue) => void;
+  answerNegotiation: (questionId: string, answerId: string) => void;
+  removeDiscoveryAnswer: (questionId: string) => void;
+  clearRefinementAnswers: () => void;
+  reset: () => void;
 }
 
-const AssessmentContext = createContext<AssessmentContextValue | null>(null)
+const AssessmentContext = createContext<AssessmentContextValue | null>(null);
 
-document.documentElement.dataset.personaHarness = PERSONA_HARNESS_MARKER
+document.documentElement.dataset.personaHarness = PERSONA_HARNESS_MARKER;
 
 export function AssessmentProvider({ children }: { children: ReactNode }) {
-  const [answers, setAnswers] = useState<AssessmentAnswers>(initialAnswers)
-  const value = useMemo<AssessmentContextValue>(() => ({
-    answers,
-    answerDiscovery: (questionId, answerId) => setAnswers((current) => ({ ...current, discovery: { ...current.discovery, [questionId]: answerId } })),
-    answerReadiness: (questionId, answerId) => setAnswers((current) => ({ ...current, readiness: { ...current.readiness, [questionId]: answerId } })),
-    answerBoundary: (itemId, boundary) => setAnswers((current) => ({ ...current, boundaries: { ...current.boundaries, [itemId]: boundary } })),
-    answerNegotiation: (questionId, answerId) => setAnswers((current) => ({ ...current, negotiation: { ...current.negotiation, [questionId]: answerId } })),
-    removeDiscoveryAnswer: (questionId) => setAnswers((current) => {
-      const discovery = { ...current.discovery }
-      delete discovery[questionId]
-      return { ...current, discovery }
+  const [answers, setAnswers] = useState<AssessmentAnswers>(initialAnswers);
+
+  const value = useMemo<AssessmentContextValue>(
+    () => ({
+      answers,
+
+      answerDiscovery: (questionId, answerId) =>
+        setAnswers((current) => {
+          const previousAnswer = current.discovery[questionId];
+          const discoveryChanged = previousAnswer !== undefined && previousAnswer !== answerId;
+
+          return {
+            ...current,
+            discovery: {
+              ...current.discovery,
+              [questionId]: answerId,
+            },
+            refinement: discoveryChanged ? {} : current.refinement,
+          };
+        }),
+
+      answerRefinement: (questionId, answerId) =>
+        setAnswers((current) => ({
+          ...current,
+          refinement: {
+            ...current.refinement,
+            [questionId]: answerId,
+          },
+        })),
+
+      answerReadiness: (questionId, answerId) =>
+        setAnswers((current) => ({
+          ...current,
+          readiness: {
+            ...current.readiness,
+            [questionId]: answerId,
+          },
+        })),
+
+      answerBoundary: (itemId, boundary) =>
+        setAnswers((current) => ({
+          ...current,
+          boundaries: {
+            ...current.boundaries,
+            [itemId]: boundary,
+          },
+        })),
+
+      answerNegotiation: (questionId, answerId) =>
+        setAnswers((current) => ({
+          ...current,
+          negotiation: {
+            ...current.negotiation,
+            [questionId]: answerId,
+          },
+        })),
+
+      removeDiscoveryAnswer: (questionId) =>
+        setAnswers((current) => {
+          const discovery = { ...current.discovery };
+
+          delete discovery[questionId];
+
+          return {
+            ...current,
+            discovery,
+            refinement: {},
+          };
+        }),
+
+      clearRefinementAnswers: () =>
+        setAnswers((current) => ({
+          ...current,
+          refinement: {},
+        })),
+
+      reset: () => setAnswers(emptyAnswers()),
     }),
-    reset: () => setAnswers(emptyAnswers()),
-  }), [answers])
-  return <AssessmentContext.Provider value={value}>{children}</AssessmentContext.Provider>
+    [answers],
+  );
+
+  return <AssessmentContext.Provider value={value}>{children}</AssessmentContext.Provider>;
 }
 
 export function useAssessment() {
-  const context = useContext(AssessmentContext)
-  if (!context) throw new Error('useAssessment must be used inside AssessmentProvider')
-  return context
+  const context = useContext(AssessmentContext);
+
+  if (!context) {
+    throw new Error("useAssessment must be used inside AssessmentProvider");
+  }
+
+  return context;
 }

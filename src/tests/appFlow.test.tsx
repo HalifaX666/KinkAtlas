@@ -30,6 +30,12 @@ describe("assessment flow", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
+    expect(screen.getByRole("heading", { name: "Refine" })).toBeInTheDocument();
+    expect(screen.getByText("No extra refinement is needed yet.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    expect(screen.getByRole("heading", { name: "Reflect" })).toBeInTheDocument();
     expect(screen.getByRole("group").querySelector("legend")).toHaveFocus();
 
     fireEvent.click(screen.getAllByRole("radio")[0]);
@@ -46,10 +52,6 @@ describe("assessment flow", () => {
 
     expect(screen.queryByText(/not evaluated/i)).not.toBeInTheDocument();
 
-    /*
-     * Define now requires an explicit response for every boundary item.
-     * Prefer not to answer is a valid completed response.
-     */
     const defineContinueButton = screen.getByRole("button", {
       name: "Continue",
     });

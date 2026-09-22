@@ -12,9 +12,10 @@ import { useAssessment } from "../context/AssessmentContext";
 import { recordAssessmentCompletion } from "../services/completionCount";
 import { discoveryProgress, selectNextDiscoveryQuestion } from "../engine/adaptiveQuestioning";
 import { calculateTraitScores } from "../engine/discoveryScoring";
+import { selectRefinementQuestions } from "../engine/refinementRouting";
 import type { BoundaryValue } from "../types";
 
-type Phase = "intro" | "discovery" | "readiness" | "boundaries" | "negotiation";
+type Phase = "intro" | "discovery" | "refinement" | "readiness" | "boundaries" | "negotiation";
 
 const readinessSet = readinessQuestions.filter((question, index, all) => all.findIndex((item) => item.domain === question.domain) === index);
 
@@ -23,13 +24,14 @@ const phaseLabels: {
   label: string;
 }[] = [
   { id: "discovery", label: "Discover" },
+  { id: "refinement", label: "Refine" },
   { id: "readiness", label: "Reflect" },
   { id: "boundaries", label: "Define" },
   { id: "negotiation", label: "Communicate" },
 ];
 
 export function AssessmentPage() {
-  const { answers, answerDiscovery, answerReadiness, answerBoundary, answerNegotiation, removeDiscoveryAnswer, reset } = useAssessment();
+  const { answers, answerDiscovery, answerRefinement, answerReadiness, answerBoundary, answerNegotiation, removeDiscoveryAnswer, reset } = useAssessment();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -39,13 +41,16 @@ export function AssessmentPage() {
   const [phase, setPhase] = useState<Phase>(returningToReview ? "negotiation" : "intro");
   const [discoveryHistory, setDiscoveryHistory] = useState<string[]>([]);
   const [discoveryCursor, setDiscoveryCursor] = useState<number | null>(null);
+  const [refinementIndex, setRefinementIndex] = useState(0);
   const [readinessIndex, setReadinessIndex] = useState(0);
   const [negotiationIndex, setNegotiationIndex] = useState(returningToReview ? negotiationQuestions.length - 1 : 0);
 
   const completionRequested = useRef(false);
 
   const traitScores = useMemo(() => calculateTraitScores(answers.discovery), [answers.discovery]);
+  const refinementQuestions = useMemo(() => selectRefinementQuestions(answers, traitScores), [answers, traitScores]);
 
+  const refinementQuestion = refinementQuestions[refinementIndex];
   const nextDiscoveryQuestion = useMemo(() => selectNextDiscoveryQuestion(answers, traitScores), [answers, traitScores]);
 
   const discoveryQuestion = useMemo(() => (discoveryCursor === null ? nextDiscoveryQuestion : discoveryQuestions.find((question) => question.id === discoveryHistory[discoveryCursor])), [discoveryCursor, discoveryHistory, nextDiscoveryQuestion]);
@@ -170,6 +175,7 @@ export function AssessmentPage() {
             setPhase("intro");
             setDiscoveryHistory([]);
             setDiscoveryCursor(null);
+            setRefinementIndex(0);
             setReadinessIndex(0);
             setNegotiationIndex(0);
           }}
@@ -216,7 +222,78 @@ export function AssessmentPage() {
               </div>
             </>
           ) : (
-            <StageComplete title="Your discovery map has enough coverage for a first reading." text="Next, short scenarios look at knowledge and attitudes separately. These answers will never raise or lower your role alignment." onBack={backFromDiscovery} onContinue={() => setPhase("readiness")} />
+            <StageComplete
+              title="Your discovery map has enough coverage for a first reading."
+              text="Next, Refine can look more closely at relevant role patterns without changing your underlying Discovery alignment."
+              onBack={backFromDiscovery}
+              onContinue={() => {
+                setRefinementIndex(0);
+                setPhase("refinement");
+              }}
+            />
+          )}
+        </section>
+      )}
+
+      {phase === "refinement" && (
+        <section className="question-stage page-width">
+          {refinementQuestion ? (
+            <>
+              <div className="question-meta">
+                <div>
+                  <span className="eyebrow">Role refinement</span>
+
+                  <p>Subtype and style exploration · separate from Discovery alignment</p>
+                </div>
+
+                <span>
+                  {refinementIndex + 1} of {refinementQuestions.length}
+                </span>
+              </div>
+
+              <QuestionCard
+                question={refinementQuestion}
+                selected={answers.refinement[refinementQuestion.id]}
+                onAnswer={(answerId) => {
+                  answerRefinement(refinementQuestion.id, answerId);
+                  setRefinementIndex((index) => index + 1);
+                }}
+                focusPrompt
+              />
+
+              <div className="question-controls">
+                <button
+                  className="quiet-button"
+                  onClick={() => {
+                    if (refinementIndex === 0) {
+                      setPhase("discovery");
+                      setDiscoveryCursor(discoveryHistory.length ? discoveryHistory.length - 1 : null);
+                    } else {
+                      setRefinementIndex((index) => index - 1);
+                    }
+                  }}
+                >
+                  <ArrowLeft size={16} />
+                  Back
+                </button>
+
+                <p>Refine can distinguish supported patterns, but it cannot create a parent role or change your Discovery score.</p>
+              </div>
+            </>
+          ) : (
+            <StageComplete
+              title={refinementQuestions.length ? "Refinement complete." : "No extra refinement is needed yet."}
+              text={refinementQuestions.length ? "These answers add context to supported role patterns without changing your original Discovery alignment." : "Your Discovery evidence is preserved as-is. As refinement branches are added, only relevant follow-up questions will appear here."}
+              onBack={() => {
+                if (refinementQuestions.length) {
+                  setRefinementIndex(refinementQuestions.length - 1);
+                } else {
+                  setPhase("discovery");
+                  setDiscoveryCursor(discoveryHistory.length ? discoveryHistory.length - 1 : null);
+                }
+              }}
+              onContinue={() => setPhase("readiness")}
+            />
           )}
         </section>
       )}
@@ -253,9 +330,11 @@ export function AssessmentPage() {
                   className="quiet-button"
                   onClick={() => {
                     if (readinessIndex === 0) {
-                      setPhase("discovery");
-                      setDiscoveryCursor(discoveryHistory.length ? discoveryHistory.length - 1 : null);
-                    } else setReadinessIndex((index) => index - 1);
+                      setRefinementIndex(refinementQuestions.length ? refinementQuestions.length - 1 : 0);
+                      setPhase("refinement");
+                    } else {
+                      setReadinessIndex((index) => index - 1);
+                    }
                   }}
                 >
                   <ArrowLeft size={16} />

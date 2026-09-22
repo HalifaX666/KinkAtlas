@@ -18,6 +18,13 @@ function currentRadios(): HTMLInputElement[] {
   return screen.getAllByRole("radio") as HTMLInputElement[];
 }
 
+function continueThroughRefinement() {
+  expect(screen.getByRole("heading", { name: "Refine" })).toBeInTheDocument();
+  expect(screen.getByText("No extra refinement is needed yet.")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+  expect(screen.getByRole("heading", { name: "Reflect" })).toBeInTheDocument();
+}
+
 function completeDiscovery() {
   for (let index = 0; index < 26; index += 1) fireEvent.click(currentRadios()[0]);
   expect(screen.getByText("Your discovery map has enough coverage for a first reading.")).toBeInTheDocument();
@@ -91,6 +98,7 @@ describe("assessment navigation", () => {
     expect(currentRadios()[0]).toBeChecked();
     fireEvent.click(currentRadios()[0]);
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    continueThroughRefinement();
 
     const firstAnswer = currentRadios()[0];
     const changedAnswer = currentRadios()[1];
@@ -104,10 +112,15 @@ describe("assessment navigation", () => {
     expect(changedAnswer).toBeChecked();
 
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("heading", { name: "Refine" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(screen.getByRole("heading", { name: "Discover" })).toBeInTheDocument();
     expect(currentRadios()[0]).toBeChecked();
+
     fireEvent.click(currentRadios()[0]);
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    continueThroughRefinement();
 
     completeReadiness();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
@@ -118,6 +131,7 @@ describe("assessment navigation", () => {
     renderAssessment();
     completeDiscovery();
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    continueThroughRefinement();
     completeReadiness();
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
@@ -156,6 +170,7 @@ describe("assessment navigation", () => {
     renderAssessment();
     completeDiscovery();
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    continueThroughRefinement();
     completeReadiness();
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     completeBoundaries();
