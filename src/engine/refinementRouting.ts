@@ -257,7 +257,7 @@ export function eligibleRefinementFamilies(answers: AssessmentAnswers, traitScor
   return families;
 }
 
-export function selectRefinementQuestions(answers: AssessmentAnswers, traitScores: TraitScores): RefinementQuestion[] {
+export function selectEligibleRefinementQuestions(answers: AssessmentAnswers, traitScores: TraitScores): RefinementQuestion[] {
   const questionById = new Map(refinementQuestions.map((question) => [question.id, question]));
   const strongestCandidateByQuestionId = new Map<string, RefinementRouteCandidate>();
 
@@ -273,12 +273,15 @@ export function selectRefinementQuestions(answers: AssessmentAnswers, traitScore
 
   return [...strongestCandidateByQuestionId.values()]
     .sort((left, right) => right.strength - left.strength || left.questionId.localeCompare(right.questionId))
-    .slice(0, MAX_REFINEMENT_QUESTIONS)
     .flatMap((candidate) => {
       const question = questionById.get(candidate.questionId);
 
       return question ? [question] : [];
     });
+}
+
+export function selectRefinementQuestions(answers: AssessmentAnswers, traitScores: TraitScores): RefinementQuestion[] {
+  return selectEligibleRefinementQuestions(answers, traitScores).slice(0, MAX_REFINEMENT_QUESTIONS);
 }
 
 export function unansweredRefinementQuestions(answers: AssessmentAnswers, traitScores: TraitScores): RefinementQuestion[] {

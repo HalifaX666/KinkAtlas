@@ -1,7 +1,7 @@
 import { refinementQuestionById, refinementQuestions } from "../data/refinement";
 import type { AssessmentAnswers, RefinementEvidence, RefinementPrimaryPreference, RefinementTargetId } from "../types";
 import { calculateTraitScores } from "./discoveryScoring";
-import { selectRefinementQuestions } from "./refinementRouting";
+import { selectEligibleRefinementQuestions } from "./refinementRouting";
 
 export interface RefinementTargetDefinition {
   id: RefinementTargetId;
@@ -175,9 +175,9 @@ interface SelectedPrimaryPreference {
   preference: RefinementPrimaryPreference;
 }
 
-function selectedPrimaryPreferences(refinementAnswers: AssessmentAnswers["refinement"], routedQuestionIds: ReadonlySet<string>): SelectedPrimaryPreference[] {
+function selectedPrimaryPreferences(refinementAnswers: AssessmentAnswers["refinement"], eligibleQuestionIds: ReadonlySet<string>): SelectedPrimaryPreference[] {
   return refinementQuestions.flatMap((question) => {
-    if (!routedQuestionIds.has(question.id)) return [];
+    if (!eligibleQuestionIds.has(question.id)) return [];
 
     const answerId = refinementAnswers[question.id];
     const preference = question.answers.find((answer) => answer.id === answerId)?.primaryPreference;
@@ -198,8 +198,8 @@ export function preferredPrimaryRoleIdsFromRefinement(refinementAnswers: Assessm
     boundaries: {},
     negotiation: {},
   };
-  const routedQuestionIds = new Set(selectRefinementQuestions(assessment, calculateTraitScores(discoveryAnswers)).map((question) => question.id));
-  const selected = selectedPrimaryPreferences(refinementAnswers, routedQuestionIds);
+  const eligibleQuestionIds = new Set(selectEligibleRefinementQuestions(assessment, calculateTraitScores(discoveryAnswers)).map((question) => question.id));
+  const selected = selectedPrimaryPreferences(refinementAnswers, eligibleQuestionIds);
   const blockedFallbackGroups = new Set(
     selected.flatMap(({ preference }) => (preference.kind === "direct" && preference.fallbackGroup ? [preference.fallbackGroup] : preference.kind === "suppress-fallback" ? [preference.fallbackGroup] : [])),
   );
@@ -214,7 +214,7 @@ export function preferredPrimaryRoleIdsFromRefinement(refinementAnswers: Assessm
   return [...new Set(roleIds)].sort((left, right) => left.localeCompare(right));
 }
 
-export function refinementFallbackIsSuperseded(targetId: RefinementTargetId, refinementAnswers: AssessmentAnswers["refinement"], routedQuestionIds: ReadonlySet<string>): boolean {
+export function refinementFallbackIsSuperseded(targetId: RefinementTargetId, refinementAnswers: AssessmentAnswers["refinement"], eligibleQuestionIds: ReadonlySet<string>): boolean {
   const fallbackGroups = new Set(
     refinementQuestions.flatMap((question) =>
       question.answers.flatMap((answer) => {
@@ -223,7 +223,7 @@ export function refinementFallbackIsSuperseded(targetId: RefinementTargetId, ref
       }),
     ),
   );
-  const selected = selectedPrimaryPreferences(refinementAnswers, routedQuestionIds);
+  const selected = selectedPrimaryPreferences(refinementAnswers, eligibleQuestionIds);
 
   return selected.some(({ preference }) => {
     if (preference.kind === "suppress-fallback") return fallbackGroups.has(preference.fallbackGroup);

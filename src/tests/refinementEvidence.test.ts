@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calculateTraitScores } from "../engine/discoveryScoring";
 import { evaluateRefinementEvidence, preferredPrimaryRoleIdsFromRefinement, supportedRefinementTargets } from "../engine/refinementEvidence";
-import { applyRefinementAnswer, eligibleRefinementFamilies, selectRefinementQuestions } from "../engine/refinementRouting";
+import { applyRefinementAnswer, eligibleRefinementFamilies, MAX_REFINEMENT_QUESTIONS, selectEligibleRefinementQuestions, selectRefinementQuestions } from "../engine/refinementRouting";
 import { buildEditableRoleProfileEntries, buildRoleProfileCandidates, optimizeRoleProfile } from "../engine/roleProfileOptimizer";
 import { matchRoles } from "../engine/roleMatching";
 import type { AssessmentAnswers } from "../types";
@@ -548,7 +548,7 @@ describe("Refine evidence architecture", () => {
     expect(selectRefinementQuestions(assessment, scores).map((question) => question.id)).not.toContain("ref-dom-bottom");
   });
 
-  it("caps adaptive refinement at six questions", () => {
+  it("separates uncapped semantic eligibility from the six-question presentation cap", () => {
     const assessment = answers({
       "d-power-give": "strong",
       "r-authority-style": "strong",
@@ -576,11 +576,80 @@ describe("Refine evidence architecture", () => {
       "r-care-receive": "strong",
     });
 
-    const questions = selectRefinementQuestions(assessment, calculateTraitScores(assessment.discovery));
+    const scores = calculateTraitScores(assessment.discovery);
+    const eligibleQuestions = selectEligibleRefinementQuestions(assessment, scores);
+    const presentedQuestions = selectRefinementQuestions(assessment, scores);
+    const repeatedEligibleQuestions = selectEligibleRefinementQuestions(assessment, scores);
+    const repeatedPresentedQuestions = selectRefinementQuestions(assessment, scores);
 
-    expect(questions.length).toBeLessThanOrEqual(6);
+    expect(eligibleQuestions.length).toBeGreaterThan(MAX_REFINEMENT_QUESTIONS);
+    expect(presentedQuestions).toHaveLength(MAX_REFINEMENT_QUESTIONS);
+    expect(new Set(eligibleQuestions.map((question) => question.id)).size).toBe(eligibleQuestions.length);
+    expect(new Set(presentedQuestions.map((question) => question.id)).size).toBe(presentedQuestions.length);
+    expect(repeatedEligibleQuestions.map((question) => question.id)).toEqual(eligibleQuestions.map((question) => question.id));
+    expect(repeatedPresentedQuestions.map((question) => question.id)).toEqual(presentedQuestions.map((question) => question.id));
+  });
 
-    expect(new Set(questions.map((question) => question.id)).size).toBe(questions.length);
+  it("keeps an answered direct-primary hybrid valid after new branch questions push it outside the presentation cap", () => {
+    const discovery = {
+      "d-power-receive": "strong",
+      "r-surrender": "strong",
+      "r-yielding-motivation": "strong",
+      "d-intensity": "strong",
+      "r-pain-give": "strong",
+      "r-pain-receive": "strong",
+      "d-primal": "strong",
+      "r-primal-give": "strong",
+      "r-primal-receive": "strong",
+      "d-service": "strong",
+      "r-service-give": "strong",
+      "d-rope": "strong",
+      "r-rope-give": "strong",
+      "r-rope-motivation": "strong",
+      "d-pet": "some",
+      "d-care": "some",
+    };
+    const beforeBranchExpansion = answers(discovery, {
+      "ref-pet-persona": "canine",
+    });
+    const afterBranchExpansion = answers(discovery, {
+      "ref-pet-persona": "canine",
+      "ref-age-roleplay-interest": "yes",
+      "ref-age-roleplay-position": "little",
+    });
+    const beforeScores = calculateTraitScores(beforeBranchExpansion.discovery);
+    const afterScores = calculateTraitScores(afterBranchExpansion.discovery);
+    const presentedBefore = selectRefinementQuestions(beforeBranchExpansion, beforeScores).map((question) => question.id);
+    const presentedAfter = selectRefinementQuestions(afterBranchExpansion, afterScores).map((question) => question.id);
+    const eligibleAfter = selectEligibleRefinementQuestions(afterBranchExpansion, afterScores).map((question) => question.id);
+    const roleResults = matchRoles(afterScores, afterBranchExpansion.discovery);
+    const puppy = buildRoleProfileCandidates(roleResults, afterBranchExpansion.refinement, afterBranchExpansion.discovery).find((item) => item.label === "Puppy");
+
+    expect(presentedBefore).toContain("ref-pet-persona");
+    expect(eligibleAfter.length).toBeGreaterThan(MAX_REFINEMENT_QUESTIONS);
+    expect(eligibleAfter).toContain("ref-pet-persona");
+    expect(presentedAfter).not.toContain("ref-pet-persona");
+    expect(preferredPrimaryRoleIdsFromRefinement(afterBranchExpansion.refinement, afterBranchExpansion.discovery)).toContain("role:puppy-75822bc4");
+    expect(puppy).toMatchObject({ eligible: true, evidenceType: "hybrid", rawAlignment: undefined, confidence: undefined });
+  });
+
+  it("rejects stale descendant evidence even when its answer remains injected in state", () => {
+    const assessment = answers(
+      { "d-care": "some" },
+      {
+        "ref-age-roleplay-interest": "yes",
+        "ref-age-roleplay-position": "middle",
+        "ref-little-vocabulary": "little-princess",
+      },
+    );
+    const scores = calculateTraitScores(assessment.discovery);
+    const eligibleQuestionIds = selectEligibleRefinementQuestions(assessment, scores).map((question) => question.id);
+    const roleResults = matchRoles(scores, assessment.discovery);
+    const littlePrincess = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery).find((item) => item.label === "little princess");
+
+    expect(eligibleQuestionIds).not.toContain("ref-little-vocabulary");
+    expect(preferredPrimaryRoleIdsFromRefinement(assessment.refinement, assessment.discovery)).toEqual(["role:middle-a4888af4"]);
+    expect(littlePrincess?.eligible).toBe(false);
   });
 
   it("records supported, possible, rejected and unanswered refinement evidence without percentages", () => {
