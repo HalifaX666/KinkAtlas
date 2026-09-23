@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { calculateTraitScores } from "../engine/discoveryScoring";
-import { evaluateRefinementEvidence, supportedRefinementTargets } from "../engine/refinementEvidence";
-import { eligibleRefinementFamilies, selectRefinementQuestions } from "../engine/refinementRouting";
-import { buildRoleProfileCandidates, optimizeRoleProfile } from "../engine/roleProfileOptimizer";
+import { evaluateRefinementEvidence, preferredPrimaryRoleIdFromRefinement, supportedRefinementTargets } from "../engine/refinementEvidence";
+import { applyRefinementAnswer, eligibleRefinementFamilies, selectRefinementQuestions } from "../engine/refinementRouting";
+import { buildEditableRoleProfileEntries, buildRoleProfileCandidates, optimizeRoleProfile } from "../engine/roleProfileOptimizer";
 import { matchRoles } from "../engine/roleMatching";
 import type { AssessmentAnswers } from "../types";
 
@@ -303,6 +303,16 @@ describe("Refine evidence architecture", () => {
 
     expect(candidate?.eligible).toBe(false);
   });
+  it.each([
+    [{ "ref-pet-persona": "canine" }, "role:puppy-75822bc4"],
+    [{ "ref-caregiver-title": "daddy" }, "role:daddy-e585737a"],
+    [{ "ref-age-roleplay-position": "middle" }, "role:middle-a4888af4"],
+    [{ "ref-age-roleplay-position": "big" }, "role:big-f69fd263"],
+    [{ "ref-age-roleplay-position": "little" }, "role:little-180ca01b"],
+    [{ "ref-age-roleplay-position": "little", "ref-little-vocabulary": "babygirl" }, "role:babygirl-f95fc9d2"],
+  ])("derives a deterministic preferred primary from direct vocabulary %o", (refinement, roleId) => {
+    expect(preferredPrimaryRoleIdFromRefinement(refinement)).toBe(roleId);
+  });
   it("opens age-roleplay position only after direct non-sexual interest confirmation", () => {
     const assessment = answers(
       {
@@ -351,6 +361,31 @@ describe("Refine evidence architecture", () => {
 
     expect(questions.map((question) => question.id)).not.toContain("ref-caregiver-title");
   });
+  it("clears only the age-roleplay descendants invalidated by a parent answer", () => {
+    const current = {
+      "ref-age-roleplay-interest": "yes",
+      "ref-age-roleplay-position": "little",
+      "ref-little-vocabulary": "little-princess",
+      "ref-pet-persona": "canine",
+    };
+
+    const changedPosition = applyRefinementAnswer(current, "ref-age-roleplay-position", "middle");
+
+    expect(changedPosition.refinement).toEqual({
+      "ref-age-roleplay-interest": "yes",
+      "ref-age-roleplay-position": "middle",
+      "ref-pet-persona": "canine",
+    });
+    expect(changedPosition.invalidatedQuestionIds).toEqual(["ref-caregiver-title", "ref-little-vocabulary"]);
+
+    const declinedInterest = applyRefinementAnswer(current, "ref-age-roleplay-interest", "no");
+
+    expect(declinedInterest.refinement).toEqual({
+      "ref-age-roleplay-interest": "no",
+      "ref-pet-persona": "canine",
+    });
+    expect(declinedInterest.invalidatedQuestionIds).toEqual(["ref-age-roleplay-position", "ref-caregiver-title", "ref-little-vocabulary"]);
+  });
   it("makes Little princess eligible only after direct Little vocabulary confirmation", () => {
     const assessment = answers(
       {
@@ -376,6 +411,66 @@ describe("Refine evidence architecture", () => {
 
     expect(candidate?.rawAlignment).toBeUndefined();
     expect(candidate?.confidence).toBeUndefined();
+  });
+  it("keeps generic Little eligible when that exact vocabulary is selected", () => {
+    const assessment = answers(
+      { "d-care": "some" },
+      {
+        "ref-age-roleplay-interest": "yes",
+        "ref-age-roleplay-position": "little",
+        "ref-little-vocabulary": "little",
+      },
+    );
+    const roleResults = matchRoles(calculateTraitScores(assessment.discovery), assessment.discovery);
+    const little = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery).find((item) => item.roleId === "role:little-180ca01b");
+
+    expect(little).toMatchObject({ eligible: true, evidenceType: "hybrid", rawAlignment: undefined, confidence: undefined });
+  });
+  it("lets specific Little vocabulary supersede generic Little in recommendation eligibility", () => {
+    const assessment = answers(
+      { "d-care": "some" },
+      {
+        "ref-age-roleplay-interest": "yes",
+        "ref-age-roleplay-position": "little",
+        "ref-little-vocabulary": "little-princess",
+      },
+    );
+    const roleResults = matchRoles(calculateTraitScores(assessment.discovery), assessment.discovery);
+    const candidates = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery);
+
+    expect(candidates.find((item) => item.roleId === "role:little-princess-eb248642")?.eligible).toBe(true);
+    expect(candidates.find((item) => item.roleId === "role:little-180ca01b")?.eligible).toBe(false);
+  });
+  it("makes babygirl eligible and supersedes generic Little only after direct vocabulary confirmation", () => {
+    const assessment = answers(
+      { "d-care": "some" },
+      {
+        "ref-age-roleplay-interest": "yes",
+        "ref-age-roleplay-position": "little",
+        "ref-little-vocabulary": "babygirl",
+      },
+    );
+    const roleResults = matchRoles(calculateTraitScores(assessment.discovery), assessment.discovery);
+    const candidates = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery);
+    const babygirl = candidates.find((item) => item.roleId === "role:babygirl-f95fc9d2");
+
+    expect(babygirl).toMatchObject({ eligible: true, evidenceType: "hybrid", rawAlignment: undefined, confidence: undefined });
+    expect(candidates.find((item) => item.roleId === "role:little-180ca01b")?.eligible).toBe(false);
+  });
+  it("does not force generic Little when another Little-related label is selected", () => {
+    const assessment = answers(
+      { "d-care": "some" },
+      {
+        "ref-age-roleplay-interest": "yes",
+        "ref-age-roleplay-position": "little",
+        "ref-little-vocabulary": "other",
+      },
+    );
+    const roleResults = matchRoles(calculateTraitScores(assessment.discovery), assessment.discovery);
+    const little = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery).find((item) => item.roleId === "role:little-180ca01b");
+
+    expect(little?.eligible).toBe(false);
+    expect(preferredPrimaryRoleIdFromRefinement(assessment.refinement)).toBeUndefined();
   });
   it("makes Daddy eligible only after direct caregiver-title confirmation", () => {
     const assessment = answers(
@@ -690,5 +785,29 @@ describe("Refine evidence architecture", () => {
     expect(puppy?.confidence).toBeUndefined();
     expect(little?.rawAlignment).toBeUndefined();
     expect(little?.confidence).toBeUndefined();
+  });
+  it("uses the most specific eligible Refine vocabulary as primary and returns one canonical primary-first order", () => {
+    const assessment = answers(
+      {
+        "d-care": "some",
+        "r-care-receive": "some",
+      },
+      {
+        "ref-age-roleplay-interest": "yes",
+        "ref-age-roleplay-position": "little",
+        "ref-little-vocabulary": "little-princess",
+      },
+    );
+    const roleResults = matchRoles(calculateTraitScores(assessment.discovery), assessment.discovery);
+    const preferredPrimaryRoleId = preferredPrimaryRoleIdFromRefinement(assessment.refinement);
+    const optimization = optimizeRoleProfile(buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery), 5, { preferredPrimaryRoleId });
+    const editable = buildEditableRoleProfileEntries(optimization);
+
+    expect(preferredPrimaryRoleId).toBe("role:little-princess-eb248642");
+    expect(optimization.primary?.candidate.roleId).toBe(preferredPrimaryRoleId);
+    expect(optimization.recommendations[0]).toBe(optimization.primary);
+    expect(editable[0]?.roleId).toBe(preferredPrimaryRoleId);
+    expect(optimization.primary?.candidate.rawAlignment).toBeUndefined();
+    expect(optimization.primary?.candidate.confidence).toBeUndefined();
   });
 });

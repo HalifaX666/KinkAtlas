@@ -54,6 +54,11 @@ export const refinementTargets: RefinementTargetDefinition[] = [
     label: "Bratty Little",
   },
   {
+    id: "babygirl",
+    roleId: "role:babygirl-f95fc9d2",
+    label: "babygirl",
+  },
+  {
     id: "middle",
     roleId: "role:middle-a4888af4",
     label: "middle",
@@ -163,6 +168,64 @@ export const refinementTargets: RefinementTargetDefinition[] = [
 export const refinementTargetById = new Map(refinementTargets.map((target) => [target.id, target]));
 
 export const refinementTargetByRoleId = new Map(refinementTargets.map((target) => [target.roleId, target]));
+
+const directTargetByQuestionAndAnswer: Record<string, Record<string, RefinementTargetId>> = {
+  "ref-little-vocabulary": {
+    little: "little",
+    "little-one": "little-one",
+    "little-girl": "little-girl",
+    "little-boy": "little-boy",
+    "little-princess": "little-princess",
+    "little-prince": "little-prince",
+    "bratty-little": "bratty-little",
+    babygirl: "babygirl",
+  },
+  "ref-caregiver-title": {
+    daddy: "daddy",
+    mommy: "mommy",
+  },
+  "ref-pet-persona": {
+    canine: "puppy",
+    feline: "kitten",
+  },
+  "ref-age-roleplay-position": {
+    middle: "middle",
+    big: "big",
+  },
+};
+
+const specificLittleVocabulary = new Set(["little-one", "little-girl", "little-boy", "little-princess", "little-prince", "bratty-little", "babygirl"]);
+
+function roleIdForTarget(targetId: RefinementTargetId | undefined): string | undefined {
+  return targetId ? refinementTargetById.get(targetId)?.roleId : undefined;
+}
+
+export function preferredPrimaryRoleIdFromRefinement(refinementAnswers: AssessmentAnswers["refinement"]): string | undefined {
+  const priorityQuestionIds = ["ref-little-vocabulary", "ref-caregiver-title", "ref-pet-persona", "ref-age-roleplay-position"];
+
+  for (const questionId of priorityQuestionIds) {
+    const answerId = refinementAnswers[questionId];
+    const targetId = answerId ? directTargetByQuestionAndAnswer[questionId]?.[answerId] : undefined;
+    const roleId = roleIdForTarget(targetId);
+
+    if (roleId) return roleId;
+  }
+
+  const littlePositionSelected = refinementAnswers["ref-age-roleplay-position"] === "little";
+  const littleVocabularyAnswer = refinementAnswers["ref-little-vocabulary"];
+
+  if (littlePositionSelected && littleVocabularyAnswer !== "other") {
+    return roleIdForTarget("little");
+  }
+
+  return undefined;
+}
+
+export function genericLittleIsSuperseded(refinementAnswers: AssessmentAnswers["refinement"]): boolean {
+  const littleVocabularyAnswer = refinementAnswers["ref-little-vocabulary"];
+
+  return littleVocabularyAnswer === "other" || (littleVocabularyAnswer !== undefined && specificLittleVocabulary.has(littleVocabularyAnswer));
+}
 
 export function evaluateRefinementEvidence(refinementAnswers: AssessmentAnswers["refinement"]): RefinementEvidence[] {
   const evidence = new Map<

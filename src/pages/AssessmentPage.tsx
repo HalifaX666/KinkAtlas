@@ -8,11 +8,12 @@ import { categories } from "../data/categories";
 import { discoveryQuestions } from "../data/questions";
 import { negotiationQuestions } from "../data/negotiation";
 import { readinessQuestions } from "../data/readiness";
+import { refinementQuestionById } from "../data/refinement";
 import { useAssessment } from "../context/AssessmentContext";
 import { recordAssessmentCompletion } from "../services/completionCount";
 import { discoveryProgress, selectNextDiscoveryQuestion } from "../engine/adaptiveQuestioning";
 import { calculateTraitScores } from "../engine/discoveryScoring";
-import { selectRefinementQuestions } from "../engine/refinementRouting";
+import { applyRefinementAnswer, MAX_REFINEMENT_QUESTIONS, selectRefinementQuestions } from "../engine/refinementRouting";
 import type { BoundaryValue } from "../types";
 
 type Phase = "intro" | "discovery" | "refinement" | "readiness" | "boundaries" | "negotiation";
@@ -41,7 +42,8 @@ export function AssessmentPage() {
   const [phase, setPhase] = useState<Phase>(returningToReview ? "negotiation" : "intro");
   const [discoveryHistory, setDiscoveryHistory] = useState<string[]>([]);
   const [discoveryCursor, setDiscoveryCursor] = useState<number | null>(null);
-  const [refinementIndex, setRefinementIndex] = useState(0);
+  const [refinementHistory, setRefinementHistory] = useState<string[]>(() => Object.keys(answers.refinement).slice(0, MAX_REFINEMENT_QUESTIONS));
+  const [refinementCursor, setRefinementCursor] = useState<number | null>(null);
   const [readinessIndex, setReadinessIndex] = useState(0);
   const [negotiationIndex, setNegotiationIndex] = useState(returningToReview ? negotiationQuestions.length - 1 : 0);
 
@@ -50,7 +52,13 @@ export function AssessmentPage() {
   const traitScores = useMemo(() => calculateTraitScores(answers.discovery), [answers.discovery]);
   const refinementQuestions = useMemo(() => selectRefinementQuestions(answers, traitScores), [answers, traitScores]);
 
-  const refinementQuestion = refinementQuestions[refinementIndex];
+  const refinementQuestion = useMemo(() => {
+    const questionId = refinementCursor === null ? refinementQuestions.find((question) => answers.refinement[question.id] === undefined)?.id : refinementHistory[refinementCursor];
+
+    if (!questionId || (refinementCursor === null && refinementHistory.length >= MAX_REFINEMENT_QUESTIONS)) return undefined;
+
+    return refinementQuestionById[questionId];
+  }, [answers.refinement, refinementCursor, refinementHistory, refinementQuestions]);
   const nextDiscoveryQuestion = useMemo(() => selectNextDiscoveryQuestion(answers, traitScores), [answers, traitScores]);
 
   const discoveryQuestion = useMemo(() => (discoveryCursor === null ? nextDiscoveryQuestion : discoveryQuestions.find((question) => question.id === discoveryHistory[discoveryCursor])), [discoveryCursor, discoveryHistory, nextDiscoveryQuestion]);
@@ -70,6 +78,8 @@ export function AssessmentPage() {
         invalidatedQuestionIds.forEach(removeDiscoveryAnswer);
         setDiscoveryHistory((current) => current.slice(0, discoveryCursor + 1));
         setDiscoveryCursor(null);
+        setRefinementHistory([]);
+        setRefinementCursor(null);
         return;
       }
 
@@ -79,6 +89,57 @@ export function AssessmentPage() {
 
     answerDiscovery(questionId, answerId);
     setDiscoveryHistory((current) => (current.includes(questionId) ? current : [...current, questionId]));
+  };
+
+  const returnToDiscoveryFromRefinement = () => {
+    setPhase("discovery");
+    setDiscoveryCursor(discoveryHistory.length ? discoveryHistory.length - 1 : null);
+  };
+
+  const backFromRefinement = () => {
+    if (refinementCursor !== null) {
+      if (refinementCursor === 0) {
+        setRefinementCursor(null);
+        returnToDiscoveryFromRefinement();
+      } else {
+        setRefinementCursor((current) => (current === null ? null : current - 1));
+      }
+
+      return;
+    }
+
+    if (refinementHistory.length) {
+      setRefinementCursor(refinementHistory.length - 1);
+    } else {
+      returnToDiscoveryFromRefinement();
+    }
+  };
+
+  const answerRefinementAndAdvance = (answerId: string) => {
+    if (!refinementQuestion) return;
+
+    const questionId = refinementQuestion.id;
+    const previousAnswer = answers.refinement[questionId];
+    const update = applyRefinementAnswer(answers.refinement, questionId, answerId);
+    const invalidatedQuestionIds = new Set(update.invalidatedQuestionIds);
+
+    answerRefinement(questionId, answerId);
+
+    if (refinementCursor !== null) {
+      const nextHistory = refinementHistory.filter((visitedQuestionId) => !invalidatedQuestionIds.has(visitedQuestionId));
+      setRefinementHistory(nextHistory);
+
+      if (previousAnswer === answerId) {
+        const currentIndex = nextHistory.indexOf(questionId);
+        setRefinementCursor(currentIndex >= 0 && currentIndex < nextHistory.length - 1 ? currentIndex + 1 : null);
+      } else {
+        setRefinementCursor(null);
+      }
+
+      return;
+    }
+
+    setRefinementHistory((current) => (current.includes(questionId) ? current : [...current, questionId].slice(0, MAX_REFINEMENT_QUESTIONS)));
   };
 
   const backFromDiscovery = () => {
@@ -175,7 +236,8 @@ export function AssessmentPage() {
             setPhase("intro");
             setDiscoveryHistory([]);
             setDiscoveryCursor(null);
-            setRefinementIndex(0);
+            setRefinementHistory([]);
+            setRefinementCursor(null);
             setReadinessIndex(0);
             setNegotiationIndex(0);
           }}
@@ -227,7 +289,7 @@ export function AssessmentPage() {
               text="Next, Refine can look more closely at relevant role patterns without changing your underlying Discovery alignment."
               onBack={backFromDiscovery}
               onContinue={() => {
-                setRefinementIndex(0);
+                setRefinementCursor(null);
                 setPhase("refinement");
               }}
             />
@@ -246,46 +308,18 @@ export function AssessmentPage() {
                   <p>Role style and intersection exploration · separate from Discovery alignment</p>
                 </div>
 
-                <span>
-                  {refinementIndex + 1} of {refinementQuestions.length}
-                </span>
+                <span>Question {refinementCursor === null ? refinementHistory.length + 1 : refinementCursor + 1} of up to {MAX_REFINEMENT_QUESTIONS}</span>
               </div>
 
               <QuestionCard
                 question={refinementQuestion}
                 selected={answers.refinement[refinementQuestion.id]}
-                onAnswer={(answerId) => {
-                  const nextAnswers = {
-                    ...answers,
-                    refinement: {
-                      ...answers.refinement,
-                      [refinementQuestion.id]: answerId,
-                    },
-                  };
-
-                  answerRefinement(refinementQuestion.id, answerId);
-
-                  const nextQuestions = selectRefinementQuestions(nextAnswers, traitScores);
-
-                  const nextUnansweredIndex = nextQuestions.findIndex((question) => question.id !== refinementQuestion.id && nextAnswers.refinement[question.id] === undefined);
-
-                  setRefinementIndex(nextUnansweredIndex >= 0 ? nextUnansweredIndex : nextQuestions.length);
-                }}
+                onAnswer={answerRefinementAndAdvance}
                 focusPrompt
               />
 
               <div className="question-controls">
-                <button
-                  className="quiet-button"
-                  onClick={() => {
-                    if (refinementIndex === 0) {
-                      setPhase("discovery");
-                      setDiscoveryCursor(discoveryHistory.length ? discoveryHistory.length - 1 : null);
-                    } else {
-                      setRefinementIndex((index) => index - 1);
-                    }
-                  }}
-                >
+                <button className="quiet-button" onClick={backFromRefinement}>
                   <ArrowLeft size={16} />
                   Back
                 </button>
@@ -297,14 +331,7 @@ export function AssessmentPage() {
             <StageComplete
               title={refinementQuestions.length ? "Refinement complete." : "No extra refinement is needed yet."}
               text={refinementQuestions.length ? "These answers add context to supported role patterns without changing your original Discovery alignment." : "Your Discovery evidence is preserved as-is. As refinement branches are added, only relevant follow-up questions will appear here."}
-              onBack={() => {
-                if (refinementQuestions.length) {
-                  setRefinementIndex(refinementQuestions.length - 1);
-                } else {
-                  setPhase("discovery");
-                  setDiscoveryCursor(discoveryHistory.length ? discoveryHistory.length - 1 : null);
-                }
-              }}
+              onBack={backFromRefinement}
               onContinue={() => setPhase("readiness")}
             />
           )}
@@ -343,7 +370,7 @@ export function AssessmentPage() {
                   className="quiet-button"
                   onClick={() => {
                     if (readinessIndex === 0) {
-                      setRefinementIndex(refinementQuestions.length ? refinementQuestions.length - 1 : 0);
+                      setRefinementCursor(refinementHistory.length ? refinementHistory.length - 1 : null);
                       setPhase("refinement");
                     } else {
                       setReadinessIndex((index) => index - 1);

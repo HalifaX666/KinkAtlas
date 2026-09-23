@@ -228,4 +228,40 @@ export const assessmentPersonas: AssessmentPersona[] = [
       roleplay: "want",
     },
   }),
+  createPersona({
+    id: "refined-little-vocabulary-pattern",
+    name: "Refined Little vocabulary pattern",
+    description: "Adult care interest with direct non-sexual Little position and vocabulary confirmation.",
+    discovery: {
+      "d-care": "some",
+      "r-care-receive": "some",
+    },
+    refinementDefault: "prefer-not",
+    refinement: {
+      "ref-age-roleplay-interest": "yes",
+      "ref-age-roleplay-position": "little",
+      "ref-little-vocabulary": "little",
+    },
+    boundaries: {
+      roleplay: "want",
+    },
+  }),
+  createPersona({
+    id: "refined-babygirl-vocabulary-pattern",
+    name: "Refined babygirl vocabulary pattern",
+    description: "Adult care interest with direct non-sexual Little position and babygirl vocabulary confirmation.",
+    discovery: {
+      "d-care": "some",
+      "r-care-receive": "some",
+    },
+    refinementDefault: "prefer-not",
+    refinement: {
+      "ref-age-roleplay-interest": "yes",
+      "ref-age-roleplay-position": "little",
+      "ref-little-vocabulary": "babygirl",
+    },
+    boundaries: {
+      roleplay: "want",
+    },
+  }),
 ];

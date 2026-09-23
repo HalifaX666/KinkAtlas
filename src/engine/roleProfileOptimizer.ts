@@ -2,7 +2,7 @@ import { roleById } from "../data/roles";
 import { traitById } from "../data/traits";
 import { relationshipsForLibraryRole, roleLibrary, roleLibraryRoleById, type RoleLibraryDecisionPathway, type RoleLibraryRole } from "../taxonomy/roleLibrary";
 import type { ConfidenceLevel, RoleResult, AssessmentAnswers } from "../types";
-import { evaluateRefinementEvidence, refinementTargetByRoleId } from "./refinementEvidence";
+import { evaluateRefinementEvidence, genericLittleIsSuperseded, refinementTargetByRoleId } from "./refinementEvidence";
 import { calculateTraitScores } from "./discoveryScoring";
 import { selectRefinementQuestions } from "./refinementRouting";
 
@@ -175,8 +175,10 @@ export function optimizeRoleProfile(candidates: RoleProfileCandidate[], maximum 
     .sort((left, right) => right.optimizerScore - left.optimizerScore || left.candidate.roleId.localeCompare(right.candidate.roleId));
 
   const primary = selectPrimaryRoleProfile(selected, options.preferredPrimaryRoleId);
-  const primaryExplanation = primary ? `${primary.candidate.label} is the suggested primary because it has the strongest combined evidence and overall-profile suitability among the recommended roles—not merely the highest raw percentage.` : undefined;
-  return { recommendations: selected, primary, primaryExplanation, alternates };
+  const primaryWasDirectlyPreferred = Boolean(primary && options.preferredPrimaryRoleId === primary.candidate.roleId);
+  const primaryExplanation = primary ? (primaryWasDirectlyPreferred ? `${primary.candidate.label} is the suggested primary because it is the most specific role vocabulary you directly selected among the eligible recommended roles.` : `${primary.candidate.label} is the suggested primary because it has the strongest combined evidence and overall-profile suitability among the recommended roles—not merely the highest raw percentage.`) : undefined;
+  const recommendations = primary ? [primary, ...selected.filter((item) => item.candidate.roleId !== primary.candidate.roleId)] : selected;
+  return { recommendations, primary, primaryExplanation, alternates };
 }
 
 const positiveAlignment = new Set(["strong", "explore"]);
@@ -191,6 +193,15 @@ function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], ref
   const refinementEvidence = refinementTarget ? evaluateRefinementEvidence(refinementAnswers).find((evidence) => evidence.targetId === refinementTarget.id) : undefined;
 
   const refinementSupported = refinementEvidence?.status === "supported";
+
+  if (role.id === "role:little-180ca01b" && genericLittleIsSuperseded(refinementAnswers)) {
+    return {
+      evidenceType: "hybrid" as const,
+      eligible: false,
+      confidence: undefined,
+      explanation: refinementAnswers["ref-little-vocabulary"] === "other" ? "The user indicated that another Little-related label fits better, so KinkAtlas does not force the generic Little label." : "A more specific directly confirmed Little vocabulary label supersedes generic Little in the suggested role set.",
+    };
+  }
 
   if (role.decisionPathway === "inferred") {
     return {
@@ -302,8 +313,7 @@ export interface EditableRoleProfileEntry {
 }
 
 export function buildEditableRoleProfileEntries(optimization: RoleProfileOptimization): EditableRoleProfileEntry[] {
-  const ordered = optimization.primary ? [optimization.primary, ...optimization.recommendations.filter((item) => item.candidate.roleId !== optimization.primary?.candidate.roleId)] : optimization.recommendations;
-  return ordered.map((item) => ({
+  return optimization.recommendations.map((item) => ({
     roleId: item.candidate.roleId,
     label: item.candidate.label,
     source: "recommended",

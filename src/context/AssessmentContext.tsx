@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { applyRefinementAnswer } from "../engine/refinementRouting";
 import type { AssessmentAnswers, BoundaryValue } from "../types";
 
 const emptyAnswers = (): AssessmentAnswers => ({
@@ -57,10 +58,7 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
       answerRefinement: (questionId, answerId) =>
         setAnswers((current) => ({
           ...current,
-          refinement: {
-            ...current.refinement,
-            [questionId]: answerId,
-          },
+          refinement: applyRefinementAnswer(current.refinement, questionId, answerId).refinement,
         })),
 
       answerReadiness: (questionId, answerId) =>

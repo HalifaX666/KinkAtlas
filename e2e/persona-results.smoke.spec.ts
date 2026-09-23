@@ -17,6 +17,7 @@ test("Persona smoke: completed assessment renders coherent Results", async ({ pa
   const current = await roleSetLabels(page, ".profile-role-list > li > div:first-child > strong");
   expect(suggested.length).toBeGreaterThan(0);
   expect(current).toEqual(suggested);
+  await expect(page.locator(".profile-recommendation-summary > ol > li").first()).toContainText("Suggested primary");
 
   await expectRenderedSanity(page);
   await guards.assertClean();

@@ -3057,12 +3057,14 @@
       "label": "babygirl",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
-      "familyIds": [],
-      "definition": "babygirl is flexible role or identity vocabulary centered on a consenting adult’s feminine-coded cared-for or childlike persona. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "decisionPathway": "hybrid",
+      "familyIds": [
+        "caregiver-little"
+      ],
+      "definition": "babygirl is flexible vocabulary for a consenting adult’s non-sexual Little persona with a feminine-coded, playful, comforting, or cared-for style. In KinkAtlas, the label never refers to an actual minor and does not imply reduced agency, dependency, sexual activity, readiness, or consent."
     },
     {
       "id": "role:babyboy-c13e7fab",

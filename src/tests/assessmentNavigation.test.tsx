@@ -40,6 +40,24 @@ function completeDiscovery() {
   expect(screen.getByText("Your discovery map has enough coverage for a first reading.")).toBeInTheDocument();
 }
 
+function reachAgeRoleplayGate() {
+  for (let index = 0; index < 26; index += 1) {
+    const group = screen.getByRole("group");
+
+    if (group.textContent?.includes("How appealing is an experience centered on nurturing, protection, reassurance, or being cared for?")) {
+      fireEvent.click(screen.getByRole("radio", { name: "Receiving care and reassurance appeals most" }));
+    } else {
+      fireEvent.click(currentRadios()[currentRadios().length - 2]);
+    }
+  }
+
+  fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+  while (screen.queryByRole("group") && !screen.getByRole("group").textContent?.includes("Does a non-sexual adult dynamic involving age-inspired roleplay")) {
+    fireEvent.click(currentRadios()[0]);
+  }
+}
+
 function completeReadiness() {
   for (let index = 0; index < readinessSet.length; index += 1) fireEvent.click(currentRadios()[0]);
   expect(screen.getByText("Reflection complete.")).toBeInTheDocument();
@@ -93,7 +111,48 @@ describe("assessment navigation", () => {
         name: /Little — a younger-feeling adult role/i,
       }),
     ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("radio", { name: /Little .* younger-feeling adult role/i }));
+    expect(screen.getByRole("group")).toHaveTextContent("If Little feels relevant, which non-sexual adult role vocabulary feels closest to how you would describe yourself?");
+    expect(screen.getByRole("radio", { name: "Babygirl / baby girl" })).toBeInTheDocument();
   });
+
+  it("uses visited-question history for Refine Back and clears invalid age-roleplay descendants", () => {
+    renderAssessment();
+    reachAgeRoleplayGate();
+
+    fireEvent.click(screen.getByRole("radio", { name: /Yes .* non-sexual adult dynamic feels relevant to me/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /Little .* younger-feeling adult role/i }));
+    fireEvent.click(screen.getByRole("radio", { name: "Little princess" }));
+
+    expect(screen.getByText(/Refinement complete/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("radio", { name: "Little princess" })).toBeChecked();
+    fireEvent.click(screen.getByRole("radio", { name: "Little princess" }));
+    expect(screen.getByText(/Refinement complete/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("radio", { name: /Little .* younger-feeling adult role/i })).toBeChecked();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("radio", { name: /Yes .* non-sexual adult dynamic feels relevant to me/i })).toBeChecked();
+
+    fireEvent.click(screen.getByRole("radio", { name: /No .* this kind of dynamic does not feel relevant to me/i }));
+    expect(screen.getByText(/Refinement complete/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(screen.getByRole("radio", { name: /Yes .* non-sexual adult dynamic feels relevant to me/i }));
+    expect(currentRadios().some((radio) => radio.checked)).toBe(false);
+
+    fireEvent.click(screen.getByRole("radio", { name: /Little .* younger-feeling adult role/i }));
+    expect(screen.getByRole("radio", { name: "Little princess" })).not.toBeChecked();
+    fireEvent.click(screen.getByRole("radio", { name: "Little princess" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(screen.getByRole("radio", { name: /Middle .* age-inspired adult role/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(screen.getByRole("radio", { name: /Little .* younger-feeling adult role/i }));
+    expect(screen.getByRole("radio", { name: "Little princess" })).not.toBeChecked();
+  });
+
   it("preserves Discover answers while revisiting, re-advances same answers, recalculates after a change, and resets only on request", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

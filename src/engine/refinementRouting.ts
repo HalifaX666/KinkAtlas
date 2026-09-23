@@ -2,7 +2,31 @@ import { discoveryQuestionById } from "../data/questions";
 import { refinementQuestions } from "../data/refinement";
 import type { AssessmentAnswers, RefinementFamilyId, RefinementQuestion, TraitId, TraitScores } from "../types";
 
-const MAX_REFINEMENT_QUESTIONS = 6;
+export const MAX_REFINEMENT_QUESTIONS = 6;
+
+const dependentQuestionIds: Record<string, readonly string[]> = {
+  "ref-age-roleplay-interest": ["ref-age-roleplay-position", "ref-caregiver-title", "ref-little-vocabulary"],
+  "ref-age-roleplay-position": ["ref-caregiver-title", "ref-little-vocabulary"],
+};
+
+export interface RefinementAnswerUpdate {
+  refinement: AssessmentAnswers["refinement"];
+  invalidatedQuestionIds: string[];
+}
+
+export function applyRefinementAnswer(current: AssessmentAnswers["refinement"], questionId: string, answerId: string): RefinementAnswerUpdate {
+  const answerChanged = current[questionId] !== answerId;
+  const invalidateAgeRoleplayBranch = questionId === "ref-age-roleplay-interest" && answerId !== "yes";
+  const invalidatePositionChildren = questionId === "ref-age-roleplay-position" && answerChanged;
+  const invalidatedQuestionIds = invalidateAgeRoleplayBranch || invalidatePositionChildren ? [...(dependentQuestionIds[questionId] ?? [])] : [];
+  const refinement = { ...current, [questionId]: answerId };
+
+  invalidatedQuestionIds.forEach((dependentQuestionId) => {
+    delete refinement[dependentQuestionId];
+  });
+
+  return { refinement, invalidatedQuestionIds };
+}
 
 function traitSupported(traitScores: TraitScores, trait: TraitId, minimumValue = 0.55, minimumEvidence = 2): boolean {
   const score = traitScores[trait];
@@ -183,7 +207,7 @@ function routeCandidates(answers: AssessmentAnswers, traitScores: TraitScores): 
     {
       questionId: "ref-age-roleplay-interest",
       eligible: shouldAskAdultAgeRoleplayGate(answers),
-      strength: traitStrength(traitScores, "caregiving", "beingCaredFor", "playfulness"),
+      strength: 1,
     },
     {
       questionId: "ref-age-roleplay-position",
@@ -235,9 +259,19 @@ export function eligibleRefinementFamilies(answers: AssessmentAnswers, traitScor
 
 export function selectRefinementQuestions(answers: AssessmentAnswers, traitScores: TraitScores): RefinementQuestion[] {
   const questionById = new Map(refinementQuestions.map((question) => [question.id, question]));
+  const strongestCandidateByQuestionId = new Map<string, RefinementRouteCandidate>();
 
-  return routeCandidates(answers, traitScores)
+  routeCandidates(answers, traitScores)
     .filter((candidate) => candidate.eligible)
+    .forEach((candidate) => {
+      const existing = strongestCandidateByQuestionId.get(candidate.questionId);
+
+      if (!existing || candidate.strength > existing.strength) {
+        strongestCandidateByQuestionId.set(candidate.questionId, candidate);
+      }
+    });
+
+  return [...strongestCandidateByQuestionId.values()]
     .sort((left, right) => right.strength - left.strength || left.questionId.localeCompare(right.questionId))
     .slice(0, MAX_REFINEMENT_QUESTIONS)
     .flatMap((candidate) => {

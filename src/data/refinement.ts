@@ -413,6 +413,11 @@ export const refinementQuestions: RefinementQuestion[] = [
         supports: ["bratty-little"],
       },
       {
+        id: "babygirl",
+        label: "Babygirl / baby girl",
+        supports: ["babygirl"],
+      },
+      {
         id: "other",
         label: "Another Little-related label fits me better",
         noScore: true,

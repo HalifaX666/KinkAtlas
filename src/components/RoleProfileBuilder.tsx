@@ -5,6 +5,7 @@ import { addRoleProfileEntry, buildEditableRoleProfileEntries, buildRoleProfileC
 import { buildRoleLabelList } from "../engine/roleProfileExport";
 import { searchRoleLibrary } from "../engine/roleProfileSearch";
 import { buildRelatedRoleProfiles } from "../engine/roleProfileExploration";
+import { preferredPrimaryRoleIdFromRefinement } from "../engine/refinementEvidence";
 import { copyText } from "../engine/shareResults";
 import type { AssessmentAnswers, RoleResult } from "../types";
 
@@ -22,7 +23,13 @@ function recommendationTrustLabel(evidenceType: "inferred" | "direct" | "hybrid"
 }
 
 export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAnswers, embedded = false, onRoleSetChange }: { roleResults: RoleResult[]; refinementAnswers?: AssessmentAnswers["refinement"]; discoveryAnswers?: AssessmentAnswers["discovery"]; embedded?: boolean; onRoleSetChange?: (roles: EditableRoleProfileEntry[]) => void }) {
-  const optimization = useMemo(() => optimizeRoleProfile(buildRoleProfileCandidates(roleResults, refinementAnswers ?? {}, discoveryAnswers ?? {})), [roleResults, refinementAnswers, discoveryAnswers]);
+  const optimization = useMemo(() => {
+    const currentRefinementAnswers = refinementAnswers ?? {};
+
+    return optimizeRoleProfile(buildRoleProfileCandidates(roleResults, currentRefinementAnswers, discoveryAnswers ?? {}), 5, {
+      preferredPrimaryRoleId: preferredPrimaryRoleIdFromRefinement(currentRefinementAnswers),
+    });
+  }, [roleResults, refinementAnswers, discoveryAnswers]);
   const initialRoles = useMemo(() => buildEditableRoleProfileEntries(optimization), [optimization]);
   const [selectedRoles, setSelectedRoles] = useState<EditableRoleProfileEntry[]>(initialRoles);
   const [query, setQuery] = useState("");

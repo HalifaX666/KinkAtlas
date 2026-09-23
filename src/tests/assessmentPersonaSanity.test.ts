@@ -12,7 +12,7 @@ import { evaluateAssessmentPersona, validateAssessmentPersona, validateAssessmen
 
 const roleIds = new Set(roles.map((role) => role.id));
 const publicRoleIds = new Set(roleLibrary.roles.map((role) => role.id));
-const substantivePersonaIds = new Set(["balanced-authority-pattern", "directive-leaning-pattern", "receptive-leaning-pattern", "service-giving-emphasis", "service-receiving-care-emphasis", "rope-bondage-emphasis", "impact-sensation-emphasis", "care-nurturing-emphasis", "playful-resistance-emphasis", "primal-emphasis", "observing-exhibition-emphasis", "broad-exploratory-pattern", "refined-primal-submission-pattern", "refined-puppy-pattern", "multiple-hard-limits-pattern"]);
+const substantivePersonaIds = new Set(["balanced-authority-pattern", "directive-leaning-pattern", "receptive-leaning-pattern", "service-giving-emphasis", "service-receiving-care-emphasis", "rope-bondage-emphasis", "impact-sensation-emphasis", "care-nurturing-emphasis", "playful-resistance-emphasis", "primal-emphasis", "observing-exhibition-emphasis", "broad-exploratory-pattern", "refined-primal-submission-pattern", "refined-puppy-pattern", "refined-little-vocabulary-pattern", "refined-babygirl-vocabulary-pattern", "multiple-hard-limits-pattern"]);
 
 function roleSnapshot(persona: AssessmentPersona) {
   return evaluateAssessmentPersona(persona).roleResults.map((result) => ({
@@ -35,8 +35,8 @@ function expectFinite(value: number, context: string) {
 }
 
 describe("assessment persona fixture validation", () => {
-  it("contains 17 completed, uniquely identified personas", () => {
-    expect(assessmentPersonas).toHaveLength(17);
+  it("contains 19 completed, uniquely identified personas", () => {
+    expect(assessmentPersonas).toHaveLength(19);
     expect(() => validateAssessmentPersonas(assessmentPersonas)).not.toThrow();
   });
 
@@ -163,6 +163,34 @@ describe("paired persona calibration tendencies", () => {
 
     expect(puppy?.candidate.rawAlignment).toBeUndefined();
     expect(puppy?.candidate.confidence).toBeUndefined();
+  });
+  it("makes directly confirmed Little vocabulary the scoreless suggested primary", () => {
+    const evaluation = evaluateAssessmentPersona(assessmentPersonas.find((persona) => persona.id === "refined-little-vocabulary-pattern")!);
+    const little = evaluation.roleProfile.recommendations.find((item) => item.candidate.roleId === "role:little-180ca01b");
+
+    expect(little?.candidate).toMatchObject({
+      evidenceType: "hybrid",
+      eligible: true,
+      rawAlignment: undefined,
+      confidence: undefined,
+    });
+    expect(evaluation.roleProfile.primary?.candidate.roleId).toBe("role:little-180ca01b");
+    expect(evaluation.roleProfile.recommendations[0]).toBe(evaluation.roleProfile.primary);
+    expect(evaluation.suggestedRoleSet[0]?.roleId).toBe("role:little-180ca01b");
+  });
+  it("makes directly confirmed babygirl vocabulary the scoreless suggested primary", () => {
+    const evaluation = evaluateAssessmentPersona(assessmentPersonas.find((persona) => persona.id === "refined-babygirl-vocabulary-pattern")!);
+    const babygirl = evaluation.roleProfile.recommendations.find((item) => item.candidate.roleId === "role:babygirl-f95fc9d2");
+
+    expect(babygirl?.candidate).toMatchObject({
+      evidenceType: "hybrid",
+      eligible: true,
+      rawAlignment: undefined,
+      confidence: undefined,
+    });
+    expect(evaluation.roleProfile.primary?.candidate.roleId).toBe("role:babygirl-f95fc9d2");
+    expect(evaluation.roleProfile.recommendations[0]).toBe(evaluation.roleProfile.primary);
+    expect(evaluation.suggestedRoleSet[0]?.roleId).toBe("role:babygirl-f95fc9d2");
   });
   it("shows meaningful evidence in both authority directions for the balanced pattern", () => {
     const scores = evaluateAssessmentPersona(assessmentPersonas.find((persona) => persona.id === "balanced-authority-pattern")!).traitScores;
