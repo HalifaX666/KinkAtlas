@@ -223,7 +223,6 @@
       "decisionPathway": "inferred",
       "familyIds": [
         "power-exchange",
-        "caregiver-little",
         "dominance"
       ],
       "definition": "Gentle Dom is flexible role or identity vocabulary centered on patient, supportive, and low-intimidation negotiated dominance. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
@@ -691,7 +690,6 @@
       "familyIds": [
         "pet-animal-roleplay",
         "power-exchange",
-        "caregiver-little",
         "roleplay"
       ],
       "definition": "An Owner participates in a consensual ownership-style dynamic with someone who may use property, pet, slave, or related vocabulary. Ownership here is symbolic and negotiated; it does not remove anyone's legal personhood, agency, or consent."
@@ -1100,7 +1098,7 @@
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "little thing is highly personal role or identity vocabulary sometimes used within little, caregiving, objectification, or other negotiated dynamics. Because the term is not standardized, the person using it should define what it means to them."
+      "definition": "little thing is highly personal vocabulary that a consenting adult may use within a non-sexual little or caregiving context, or in another separately negotiated role. Because the term is not standardized, KinkAtlas does not infer a specific age-roleplay meaning, authority structure, dependency, or sexual activity from it."
     },
     {
       "id": "role:entity-bca3685f",
@@ -2735,8 +2733,7 @@
       "evidenceCluster": "materials-gear",
       "decisionPathway": "hybrid",
       "familyIds": [
-        "material-fetish",
-        "caregiver-little"
+        "material-fetish"
       ],
       "definition": "Leather Daddy is an adult caregiver or authority persona that combines Daddy-style guidance with leather-focused play. It does not necessarily involve ageplay, and any care or authority is negotiated."
     },
@@ -2753,8 +2750,7 @@
       "evidenceCluster": "materials-gear",
       "decisionPathway": "hybrid",
       "familyIds": [
-        "material-fetish",
-        "caregiver-little"
+        "material-fetish"
       ],
       "definition": "Leather Mommy is an adult caregiver or authority persona that combines Mommy-style nurturing with leather-focused play. It does not necessarily involve ageplay, and any care or authority is negotiated."
     },
@@ -3303,14 +3299,14 @@
       "label": "Daddy",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "Daddy is an adult caregiver or authority title that can combine guidance, protection, affection, structure, or dominance. It does not necessarily involve ageplay, and any authority associated with it must be negotiated."
+      "definition": "Daddy is an adult caregiver title centered on non-sexual guidance, protection, affection, reassurance, or structure for another consenting adult. In KinkAtlas, this title does not describe sexual activity, does not imply a person's real age, and creates no authority beyond what the adults explicitly agree."
     },
     {
       "id": "role:daddi-49c560fa",
@@ -3337,7 +3333,7 @@
         "dominance",
         "caregiver-little"
       ],
-      "definition": "Daddy Dom is flexible role or identity vocabulary centered on adult Daddy-style care combined with negotiated dominance. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Daddy Dom is flexible vocabulary for a non-sexual adult Daddy-style caregiver role combined with separately negotiated dominance. In KinkAtlas, the caregiver/age-roleplay component is non-sexual, and the title does not expand authority beyond what the adults explicitly agree."
     },
     {
       "id": "role:femdaddy-40536205",
@@ -3363,7 +3359,7 @@
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "Femme Daddy is flexible role or identity vocabulary centered on feminine presentation combined with an adult Daddy-style caregiver or authority role. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Femme Daddy is flexible vocabulary for a feminine-presenting adult Daddy-style caregiver persona centered on non-sexual care, guidance, affection, or structure. Its meaning is personal and does not imply authority, a person's real age, or sexual activity."
     },
     {
       "id": "role:submissive-daddy-20be7381",
@@ -3378,7 +3374,7 @@
         "submission",
         "caregiver-little"
       ],
-      "definition": "Submissive Daddy is flexible role or identity vocabulary centered on an adult Daddy caregiver persona combined with chosen submission. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Submissive Daddy is flexible vocabulary for a non-sexual adult Daddy-style caregiver persona combined with separately chosen submission. The caregiver role and submission are distinct dimensions, and neither removes agency or implies sexual activity."
     },
     {
       "id": "role:switch-daddy-9f24aa70",
@@ -3393,7 +3389,7 @@
         "switching",
         "caregiver-little"
       ],
-      "definition": "Switch Daddy is flexible role or identity vocabulary centered on an adult Daddy caregiver persona combined with comfort in both dominant and submissive positions. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Switch Daddy is flexible vocabulary for a non-sexual adult Daddy-style caregiver persona combined with comfort in more than one negotiated power position. The caregiver role remains distinct from authority, submission, and sexual activity."
     },
     {
       "id": "role:step-daddy-e028878d",
@@ -3407,7 +3403,7 @@
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "Step-Daddy is flexible role or identity vocabulary centered on an adult Daddy-style caregiver persona framed as stepping into a supporting role. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Step-Daddy is flexible vocabulary for a consenting adult's non-sexual Daddy-style caregiver persona framed around stepping into a supportive or guiding role. It does not imply a real family relationship, a person's real age, automatic authority, or sexual activity."
     },
     {
       "id": "role:foster-daddy-66ccd00a",
@@ -3421,7 +3417,7 @@
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "Foster Daddy is flexible role or identity vocabulary centered on a temporary or transitional adult Daddy-style caregiver persona. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Foster Daddy is flexible vocabulary for a consenting adult's non-sexual Daddy-style caregiver persona framed as temporary, transitional, or situational support. It does not imply a real family relationship, a person's real age, automatic authority, or sexual activity."
     },
     {
       "id": "role:papa-4959de6e",
@@ -3451,14 +3447,14 @@
       "label": "Mommy",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "Mommy is an adult caregiver or authority title that can combine nurturing, protection, structure, affection, or dominance. It does not necessarily involve ageplay, and it creates no automatic control."
+      "definition": "Mommy is an adult caregiver title centered on non-sexual nurturing, protection, affection, reassurance, or structure for another consenting adult. In KinkAtlas, this title does not describe sexual activity, does not imply a person's real age, and creates no authority beyond what the adults explicitly agree."
     },
     {
       "id": "role:mommy-dom-e691064d",
@@ -3473,7 +3469,7 @@
         "dominance",
         "caregiver-little"
       ],
-      "definition": "Mommy Dom is flexible role or identity vocabulary centered on adult Mommy-style nurturing combined with negotiated dominance. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Mommy Dom is flexible vocabulary for a non-sexual adult Mommy-style caregiver role combined with separately negotiated dominance. In KinkAtlas, the caregiver/age-roleplay component is non-sexual, and the title does not expand authority beyond what the adults explicitly agree."
     },
     {
       "id": "role:mommy-domme-637fc9a1",
@@ -3488,7 +3484,7 @@
         "dominance",
         "caregiver-little"
       ],
-      "definition": "Mommy Domme is flexible role or identity vocabulary centered on adult Mommy-style nurturing combined with feminine-coded negotiated dominance. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Mommy Domme is feminine-coded vocabulary for a non-sexual adult Mommy-style caregiver role combined with separately negotiated dominance. In KinkAtlas, the caregiver/age-roleplay component is non-sexual, and the title does not expand authority beyond what the adults explicitly agree."
     },
     {
       "id": "role:submissive-mommy-5e4d0386",
@@ -3503,7 +3499,7 @@
         "submission",
         "caregiver-little"
       ],
-      "definition": "Submissive Mommy is flexible role or identity vocabulary centered on an adult Mommy caregiver persona combined with chosen submission. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Submissive Mommy is flexible vocabulary for a non-sexual adult Mommy-style caregiver persona combined with separately chosen submission. The caregiver role and submission are distinct dimensions, and neither removes agency or implies sexual activity."
     },
     {
       "id": "role:step-mommy-e6d1039d",
@@ -3516,7 +3512,8 @@
       "decisionPathway": "manual-only",
       "familyIds": [
         "caregiver-little"
-      ]
+      ],
+      "definition": "Step-Mommy is flexible vocabulary for a consenting adult's non-sexual Mommy-style caregiver persona framed around stepping into a supportive or guiding role. It does not imply a real family relationship, a person's real age, automatic authority, or sexual activity."
     },
     {
       "id": "role:foster-mommy-7628fb25",
@@ -3530,7 +3527,7 @@
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "Foster Mommy is flexible role or identity vocabulary centered on a temporary or transitional adult Mommy-style caregiver persona. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Foster Mommy is flexible vocabulary for a consenting adult's non-sexual Mommy-style caregiver persona framed as temporary, transitional, or situational support. It does not imply a real family relationship, a person's real age, automatic authority, or sexual activity."
     },
     {
       "id": "role:mama-bear-532b3b53",
@@ -3577,7 +3574,7 @@
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "A Caregiver offers negotiated nurturing, guidance, structure, or practical support within a dynamic. Caregiving may be dominant, equal, or nonsexual and does not replace the other person's agency."
+      "definition": "A Caregiver offers negotiated nurturing, reassurance, guidance, structure, or practical support to another consenting adult. Within KinkAtlas's Little, Middle, and Big vocabulary, Caregiver dynamics are non-sexual and do not replace the other person's independence, agency, boundaries, or consent."
     },
     {
       "id": "role:guardian-1d228f25",
@@ -3618,107 +3615,114 @@
       "label": "Big",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
-      "familyIds": [],
-      "definition": "Big is adult caregiver/little vocabulary for the nurturing, guiding, or more grounded position in a dynamic. The role may include authority, but only within the scope participants negotiate."
+      "decisionPathway": "hybrid",
+      "familyIds": [
+        "caregiver-little"
+      ],
+      "definition": "Big is adult age-roleplay vocabulary for a more mature, grounded, or independent position within a non-sexual caregiving dynamic. A Big may still have a Caregiver and may give or receive care according to the adults' agreement; the label does not establish authority, imply a person's real age, or reduce anyone's agency."
     },
     {
       "id": "role:middle-a4888af4",
       "label": "middle",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
-      "familyIds": [],
-      "definition": "A middle is a consenting adult who explores a younger, often adolescent-coded headspace or persona. Meanings range from comfort and playfulness to structured caregiver dynamics, and the role need not be sexual."
+      "decisionPathway": "hybrid",
+      "familyIds": [
+        "caregiver-little"
+      ],
+      "definition": "A middle is a consenting adult who explores an age-inspired persona that often emphasizes greater independence while still allowing care, comfort, playfulness, or guidance. In KinkAtlas, this role is non-sexual, never refers to an actual minor, and does not reduce the person's agency."
     },
     {
       "id": "role:little-180ca01b",
       "label": "little",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "A little is a consenting adult who explores a childlike headspace, persona, or need for care. The role may be playful, comforting, or structured, may be nonsexual, and never refers to an actual minor."
+      "definition": "A little is a consenting adult who explores a younger-feeling, playful, comforting, or care-oriented persona within non-sexual adult roleplay. In KinkAtlas, this vocabulary never refers to an actual minor, does not imply reduced agency or dependency, and is not used to describe sexual activity."
     },
     {
       "id": "role:little-one-55087e4f",
       "label": "little one",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "little one is flexible role or identity vocabulary centered on a consenting adult’s childlike, playful, or care-seeking headspace. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "little one is flexible vocabulary for a consenting adult who prefers a younger-feeling, playful, comforting, or cared-for persona within non-sexual adult roleplay. The term does not imply a person's real age, dependency, reduced agency, or sexual activity."
     },
     {
       "id": "role:little-girl-54f0c917",
       "label": "little girl",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "explicit-selection",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "explicit-confirmation",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "little girl is flexible role or identity vocabulary centered on a consenting adult’s feminine-coded childlike or care-seeking persona. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "little girl is feminine-coded vocabulary for a consenting adult's younger-feeling, playful, comforting, or care-oriented persona within non-sexual adult roleplay. In KinkAtlas, it never refers to an actual minor and does not imply dependency, reduced agency, or sexual activity."
     },
     {
       "id": "role:little-boy-1a98eee3",
       "label": "little boy",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "explicit-selection",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "explicit-confirmation",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "little boy is flexible role or identity vocabulary centered on a consenting adult’s masculine-coded childlike or care-seeking persona. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "little boy is masculine-coded vocabulary for a consenting adult's younger-feeling, playful, comforting, or care-oriented persona within non-sexual adult roleplay. In KinkAtlas, it never refers to an actual minor and does not imply dependency, reduced agency, or sexual activity."
     },
     {
       "id": "role:little-princess-eb248642",
       "label": "little princess",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
-        "caregiver-little"
+        "caregiver-little",
+        "persona-fantasy"
       ],
-      "definition": "little princess is flexible role or identity vocabulary centered on a consenting adult’s childlike headspace combined with pampering or regal play. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "little princess is flexible vocabulary for a consenting adult's non-sexual little persona with a pampered, regal, playful, or cared-for style. The label does not imply a person's real age, reduced agency, dependency, or sexual activity."
     },
     {
       "id": "role:little-prince-9c50bbd0",
       "label": "little prince",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
-        "caregiver-little"
-      ]
+        "caregiver-little",
+        "persona-fantasy"
+      ],
+      "definition": "little prince is flexible vocabulary for a consenting adult's non-sexual little persona with a pampered, regal, playful, or cared-for style. The label does not imply a person's real age, reduced agency, dependency, or sexual activity."
     },
     {
       "id": "role:baby-a3ca38ef",
@@ -4050,14 +4054,14 @@
       "label": "Bratty Little",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "Bratty Little is flexible role or identity vocabulary centered on a consenting adult little headspace combined with teasing or defiance. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Bratty Little is flexible vocabulary for a consenting adult's non-sexual little persona combined with negotiated teasing, mischief, or playful defiance. The label does not imply a person's real age, reduced agency, dependency, submission, or sexual activity."
     },
     {
       "id": "role:brat-king-64c32840",
@@ -4610,8 +4614,7 @@
       "nearestRoleIds": [],
       "decisionPathway": "manual-only",
       "familyIds": [
-        "primal",
-        "caregiver-little"
+        "primal"
       ],
       "definition": "Primal Daddy is an adult caregiver or authority persona that combines Daddy-style guidance with primal play. It does not necessarily involve ageplay, and any care or authority is negotiated."
     },
@@ -4625,8 +4628,7 @@
       "nearestRoleIds": [],
       "decisionPathway": "manual-only",
       "familyIds": [
-        "primal",
-        "caregiver-little"
+        "primal"
       ],
       "definition": "Primal Mommy is an adult caregiver or authority persona that combines Mommy-style nurturing with primal play. It does not necessarily involve ageplay, and any care or authority is negotiated."
     },
@@ -4860,7 +4862,6 @@
       "decisionPathway": "inferred",
       "familyIds": [
         "pet-animal-roleplay",
-        "caregiver-little",
         "roleplay"
       ],
       "definition": "A Handler guides, cares for, or directs a person in pet or animal roleplay. The role can include authority, training, or affection, but its scope depends entirely on negotiated agreements."
@@ -4889,7 +4890,6 @@
       "familyIds": [
         "pet-animal-roleplay",
         "power-exchange",
-        "caregiver-little",
         "roleplay"
       ],
       "definition": "A Trainer uses negotiated teaching, repetition, feedback, or structure to help another person develop behaviors or skills. Training can involve power exchange, but the title creates no authority on its own."
@@ -4972,7 +4972,6 @@
       "decisionPathway": "inferred",
       "familyIds": [
         "pet-animal-roleplay",
-        "caregiver-little",
         "roleplay",
         "power-exchange"
       ],
@@ -5177,8 +5176,10 @@
       "nearestRoleIds": [],
       "decisionPathway": "manual-only",
       "familyIds": [
-        "caregiver-little"
-      ]
+        "caregiver-little",
+        "pet-animal-roleplay"
+      ],
+      "definition": "little cow is flexible vocabulary for a consenting adult's non-sexual little persona combined with cow-inspired fantasy or animal roleplay. It never refers to an actual minor and does not by itself establish pet-play structure, authority, dependency, or sexual activity."
     },
     {
       "id": "role:hucow-faa2f3e1",
@@ -5367,8 +5368,10 @@
       "nearestRoleIds": [],
       "decisionPathway": "manual-only",
       "familyIds": [
-        "caregiver-little"
-      ]
+        "caregiver-little",
+        "pet-animal-roleplay"
+      ],
+      "definition": "little wolf is flexible vocabulary for a consenting adult's non-sexual little persona combined with wolf-inspired fantasy or animal roleplay. It never refers to an actual minor and does not by itself establish pet-play structure, authority, dependency, or sexual activity."
     },
     {
       "id": "role:tiger-410f76d0",
@@ -5939,9 +5942,10 @@
       "nearestRoleIds": [],
       "decisionPathway": "manual-only",
       "familyIds": [
-        "caregiver-little"
+        "caregiver-little",
+        "degradation-objectification"
       ],
-      "definition": "little bitch is flexible role or identity vocabulary centered on a consenting adult little or submissive persona using deliberately demeaning language. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "little bitch is highly personal vocabulary for a consenting adult's non-sexual little persona combined with negotiated teasing or demeaning language. KinkAtlas does not infer submission, dependency, reduced agency, or sexual activity from the label, and it never refers to an actual minor."
     },
     {
       "id": "role:hole-c4061b60",
@@ -6039,8 +6043,7 @@
       "evidenceCluster": "body-focus",
       "decisionPathway": "hybrid",
       "familyIds": [
-        "sexual-role-vocabulary",
-        "caregiver-little"
+        "sexual-role-vocabulary"
       ],
       "definition": "Fisting Daddy is an adult caregiver or authority persona that combines Daddy-style guidance with fisting. It does not necessarily involve ageplay, and any care or authority is negotiated."
     },
@@ -6057,8 +6060,7 @@
       "evidenceCluster": "body-focus",
       "decisionPathway": "hybrid",
       "familyIds": [
-        "sexual-role-vocabulary",
-        "caregiver-little"
+        "sexual-role-vocabulary"
       ],
       "definition": "Fisting Mommy is an adult caregiver or authority persona that combines Mommy-style nurturing with fisting. It does not necessarily involve ageplay, and any care or authority is negotiated."
     },
@@ -7136,8 +7138,7 @@
       "evidenceCluster": "temperature-electrical-sharps",
       "decisionPathway": "hybrid",
       "familyIds": [
-        "sensation-impact",
-        "caregiver-little"
+        "sensation-impact"
       ],
       "definition": "Shock Daddy is flexible role or identity vocabulary centered on an adult Daddy caregiver or authority persona combined with electrical stimulation play. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
     },
@@ -7154,8 +7155,7 @@
       "evidenceCluster": "temperature-electrical-sharps",
       "decisionPathway": "hybrid",
       "familyIds": [
-        "sensation-impact",
-        "caregiver-little"
+        "sensation-impact"
       ],
       "definition": "Shock Mommy is flexible role or identity vocabulary centered on an adult Mommy caregiver or authority persona combined with electrical stimulation play. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
     },
@@ -7584,8 +7584,7 @@
       "evidenceCluster": "food-energy",
       "decisionPathway": "hybrid",
       "familyIds": [
-        "material-fetish",
-        "caregiver-little"
+        "material-fetish"
       ],
       "definition": "Food Daddy is an adult caregiver or authority persona that combines Daddy-style guidance with food play. It does not necessarily involve ageplay, and any care or authority is negotiated."
     },
@@ -7602,8 +7601,7 @@
       "evidenceCluster": "food-energy",
       "decisionPathway": "hybrid",
       "familyIds": [
-        "material-fetish",
-        "caregiver-little"
+        "material-fetish"
       ],
       "definition": "Food Mommy is an adult caregiver or authority persona that combines Mommy-style nurturing with food play. It does not necessarily involve ageplay, and any care or authority is negotiated."
     },
@@ -8418,9 +8416,7 @@
       "recommendationEligibility": "exploration-only",
       "nearestRoleIds": [],
       "decisionPathway": "manual-only",
-      "familyIds": [
-        "caregiver-little"
-      ],
+      "familyIds": [],
       "definition": "Little Spoon names the inside position in a side-by-side cuddle, with a partner wrapped around them. It can communicate comfort or receptivity without implying submission or dependence."
     },
     {
@@ -8922,7 +8918,7 @@
         "service",
         "caregiver-little"
       ],
-      "definition": "Service Daddy is an adult caregiver or authority persona that combines Daddy-style guidance with service. It does not necessarily involve ageplay, and any care or authority is negotiated."
+      "definition": "Service Daddy is flexible vocabulary for a non-sexual adult Daddy-style caregiver persona combined with service-oriented support. In KinkAtlas, the caregiver component remains non-sexual and does not imply authority, self-sacrifice, or obligations beyond what the adults agree."
     },
     {
       "id": "role:service-whore-a1581edd",
@@ -9632,9 +9628,10 @@
       "nearestRoleIds": [],
       "decisionPathway": "manual-only",
       "familyIds": [
-        "caregiver-little"
+        "caregiver-little",
+        "pet-animal-roleplay"
       ],
-      "definition": "little lamb is flexible role or identity vocabulary centered on a small, gentle, cared-for lamb persona. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "little lamb is flexible vocabulary for a consenting adult's non-sexual little persona combined with a gentle lamb-inspired fantasy or animal role. It never refers to an actual minor and does not by itself establish pet-play structure, authority, dependency, or sexual activity."
     },
     {
       "id": "role:sacrificial-lamb-9ee595e3",
@@ -9710,7 +9707,8 @@
       "familyIds": [
         "caregiver-little",
         "persona-fantasy"
-      ]
+      ],
+      "definition": "Little Demon is flexible vocabulary for a consenting adult's non-sexual little persona combined with mischievous or demonic fantasy. It never refers to an actual minor and does not imply dependency, reduced agency, authority, or sexual activity."
     },
     {
       "id": "role:demon-daddy-4b91a03f",
@@ -9725,7 +9723,7 @@
         "caregiver-little",
         "persona-fantasy"
       ],
-      "definition": "Demon Daddy is flexible role or identity vocabulary centered on an adult Daddy persona mixed with demonic fantasy. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Demon Daddy is flexible vocabulary for a consenting adult's non-sexual Daddy-style caregiver persona combined with demonic fantasy. The fantasy does not create authority, imply a person's real age, or introduce sexual activity into KinkAtlas's caregiver/age-roleplay branch."
     },
     {
       "id": "role:demon-mommy-d0e61f65",
@@ -9740,7 +9738,7 @@
         "caregiver-little",
         "persona-fantasy"
       ],
-      "definition": "Demon Mommy is flexible role or identity vocabulary centered on an adult Mommy persona mixed with demonic fantasy. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Demon Mommy is flexible vocabulary for a consenting adult's non-sexual Mommy-style caregiver persona combined with demonic fantasy. The fantasy does not create authority, imply a person's real age, or introduce sexual activity into KinkAtlas's caregiver/age-roleplay branch."
     },
     {
       "id": "role:devil-c0f6167a",
@@ -9914,8 +9912,10 @@
       "nearestRoleIds": [],
       "decisionPathway": "manual-only",
       "familyIds": [
-        "caregiver-little"
-      ]
+        "caregiver-little",
+        "persona-fantasy"
+      ],
+      "definition": "little vamp is flexible vocabulary for a consenting adult's non-sexual little persona combined with vampire-inspired fantasy or presentation. It never refers to an actual minor and does not imply dependency, reduced agency, authority, or sexual activity."
     },
     {
       "id": "role:creature-fc1599a5",
@@ -9963,9 +9963,10 @@
       "nearestRoleIds": [],
       "decisionPathway": "manual-only",
       "familyIds": [
-        "caregiver-little"
+        "caregiver-little",
+        "persona-fantasy"
       ],
-      "definition": "Little Monster is flexible role or identity vocabulary centered on a small, cared-for adult persona mixed with mischievous monster energy. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Little Monster is flexible vocabulary for a consenting adult's non-sexual little persona combined with mischievous monster fantasy. It never refers to an actual minor and does not imply dependency, reduced agency, authority, or sexual activity."
     },
     {
       "id": "role:werewolf-a2a56397",
@@ -10375,7 +10376,7 @@
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "Muscle Daddy is flexible role or identity vocabulary centered on a muscular, masculine-coded adult caregiver or authority persona. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Muscle Daddy is flexible vocabulary for a muscular or masculine-coded adult Daddy-style caregiver persona centered on non-sexual care, reassurance, guidance, or presence. Presentation does not establish authority or imply sexual activity."
     },
     {
       "id": "role:muscle-mommy-dcff6841",
@@ -10389,7 +10390,7 @@
       "familyIds": [
         "caregiver-little"
       ],
-      "definition": "Muscle Mommy is flexible role or identity vocabulary centered on a muscular, feminine-coded adult caregiver or authority persona. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
+      "definition": "Muscle Mommy is flexible vocabulary for a muscular or feminine-coded adult Mommy-style caregiver persona centered on non-sexual care, reassurance, guidance, or presence. Presentation does not establish authority or imply sexual activity."
     },
     {
       "id": "role:muscle-bear-bdb0c52a",
@@ -10496,9 +10497,7 @@
       "recommendationEligibility": "exploration-only",
       "nearestRoleIds": [],
       "decisionPathway": "manual-only",
-      "familyIds": [
-        "caregiver-little"
-      ],
+      "familyIds": [],
       "definition": "Daddy Chaser is flexible role or identity vocabulary centered on strong attraction to Daddy-identified, mature, or caregiver-styled adults. Meanings vary by person, so the label does not by itself establish activities, power, readiness, or consent."
     },
     {
@@ -10991,7 +10990,6 @@
       ],
       "decisionPathway": "inferred",
       "familyIds": [
-        "caregiver-little",
         "power-exchange"
       ],
       "definition": "A Protector offers agreed support, advocacy, watchfulness, or practical help to another person. The title does not confer ownership, control, or the right to override that person's choices."

@@ -17,17 +17,16 @@ describe("recommendation quality report", () => {
       roles: 812,
       decisionPolicies: 812,
       definitionStates: 812,
-      usableDefinitions: 702,
-      unavailableDefinitions: 110,
-      automaticRecommendation: 217,
-      confirmationBased: 139,
-      legitimateTopFiveReach: 356,
-      manualOnly: 456,
+      usableDefinitions: 708,
+      unavailableDefinitions: 104,
+      automaticRecommendation: 228,
+      confirmationBased: 137,
+      legitimateTopFiveReach: 365,
+      manualOnly: 447,
       relationships: 60,
       familyCoverage: 448,
     });
-
-    expect(report.questions).toMatchObject({ broad: 20, refinements: 52, mandatoryMaximum: 26, optionalPool: 315 });
+    expect(report.questions).toMatchObject({ broad: 20, refinements: 52, mandatoryMaximum: 26, optionalPool: 324 });
     expect(report.questions.maximumRecommendationClarifications).toBeLessThanOrEqual(6);
     expect(report.roleSets.deterministicRepeat).toBe(true);
     expect(renderRecommendationReport(report)).toContain("recommendations 50/50");

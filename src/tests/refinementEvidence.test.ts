@@ -303,6 +303,131 @@ describe("Refine evidence architecture", () => {
 
     expect(candidate?.eligible).toBe(false);
   });
+  it("opens age-roleplay position only after direct non-sexual interest confirmation", () => {
+    const assessment = answers(
+      {
+        "d-care": "strong",
+      },
+      {
+        "ref-age-roleplay-interest": "yes",
+      },
+    );
+
+    const questions = selectRefinementQuestions(assessment, calculateTraitScores(assessment.discovery));
+
+    expect(questions.map((question) => question.id)).toContain("ref-age-roleplay-position");
+  });
+  it("opens caregiver title refinement only from the caregiver position", () => {
+    const assessment = answers(
+      {
+        "d-care": "strong",
+      },
+      {
+        "ref-age-roleplay-interest": "yes",
+        "ref-age-roleplay-position": "caregiver",
+      },
+    );
+
+    const questions = selectRefinementQuestions(assessment, calculateTraitScores(assessment.discovery));
+
+    expect(questions.map((question) => question.id)).toContain("ref-caregiver-title");
+
+    expect(questions.map((question) => question.id)).not.toContain("ref-little-vocabulary");
+  });
+  it("opens Little vocabulary refinement only from the Little position", () => {
+    const assessment = answers(
+      {
+        "d-care": "strong",
+      },
+      {
+        "ref-age-roleplay-interest": "yes",
+        "ref-age-roleplay-position": "little",
+      },
+    );
+
+    const questions = selectRefinementQuestions(assessment, calculateTraitScores(assessment.discovery));
+
+    expect(questions.map((question) => question.id)).toContain("ref-little-vocabulary");
+
+    expect(questions.map((question) => question.id)).not.toContain("ref-caregiver-title");
+  });
+  it("makes Little princess eligible only after direct Little vocabulary confirmation", () => {
+    const assessment = answers(
+      {
+        "d-care": "strong",
+      },
+      {
+        "ref-age-roleplay-interest": "yes",
+        "ref-age-roleplay-position": "little",
+        "ref-little-vocabulary": "little-princess",
+      },
+    );
+
+    const scores = calculateTraitScores(assessment.discovery);
+    const roleResults = matchRoles(scores, assessment.discovery);
+
+    const candidate = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery).find((item) => item.label === "little princess");
+
+    expect(candidate).toMatchObject({
+      decisionPathway: "hybrid",
+      evidenceType: "hybrid",
+      eligible: true,
+    });
+
+    expect(candidate?.rawAlignment).toBeUndefined();
+    expect(candidate?.confidence).toBeUndefined();
+  });
+  it("makes Daddy eligible only after direct caregiver-title confirmation", () => {
+    const assessment = answers(
+      {
+        "d-care": "strong",
+      },
+      {
+        "ref-age-roleplay-interest": "yes",
+        "ref-age-roleplay-position": "caregiver",
+        "ref-caregiver-title": "daddy",
+      },
+    );
+
+    const scores = calculateTraitScores(assessment.discovery);
+    const roleResults = matchRoles(scores, assessment.discovery);
+
+    const candidate = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery).find((item) => item.label === "Daddy");
+
+    expect(candidate).toMatchObject({
+      decisionPathway: "hybrid",
+      evidenceType: "hybrid",
+      eligible: true,
+    });
+  });
+  it("does not allow injected Little vocabulary to bypass the adult age-roleplay gate", () => {
+    const assessment = answers(
+      {
+        "d-care": "no",
+      },
+      {
+        "ref-little-vocabulary": "little",
+      },
+    );
+
+    const scores = calculateTraitScores(assessment.discovery);
+    const roleResults = matchRoles(scores, assessment.discovery);
+
+    const candidate = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery).find((item) => item.label === "little");
+
+    expect(candidate?.eligible).toBe(false);
+  });
+  it("does not infer age-roleplay positions from caregiving evidence alone", () => {
+    const assessment = answers({
+      "d-care": "strong",
+    });
+
+    const questions = selectRefinementQuestions(assessment, calculateTraitScores(assessment.discovery));
+
+    expect(questions.map((question) => question.id)).toContain("ref-age-roleplay-interest");
+
+    expect(questions.map((question) => question.id)).not.toContain("ref-age-roleplay-position");
+  });
   it("does not open Dominant Bottom without independent dominance evidence", () => {
     const assessment = answers({
       "d-position-receive": "strong",

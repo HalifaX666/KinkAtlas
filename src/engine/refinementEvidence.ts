@@ -9,6 +9,61 @@ export interface RefinementTargetDefinition {
 
 export const refinementTargets: RefinementTargetDefinition[] = [
   {
+    id: "daddy",
+    roleId: "role:daddy-e585737a",
+    label: "Daddy",
+  },
+  {
+    id: "mommy",
+    roleId: "role:mommy-f0ecd978",
+    label: "Mommy",
+  },
+  {
+    id: "little",
+    roleId: "role:little-180ca01b",
+    label: "little",
+  },
+  {
+    id: "little-one",
+    roleId: "role:little-one-55087e4f",
+    label: "little one",
+  },
+  {
+    id: "little-girl",
+    roleId: "role:little-girl-54f0c917",
+    label: "little girl",
+  },
+  {
+    id: "little-boy",
+    roleId: "role:little-boy-1a98eee3",
+    label: "little boy",
+  },
+  {
+    id: "little-princess",
+    roleId: "role:little-princess-eb248642",
+    label: "little princess",
+  },
+  {
+    id: "little-prince",
+    roleId: "role:little-prince-9c50bbd0",
+    label: "little prince",
+  },
+  {
+    id: "bratty-little",
+    roleId: "role:bratty-little-171240b6",
+    label: "Bratty Little",
+  },
+  {
+    id: "middle",
+    roleId: "role:middle-a4888af4",
+    label: "middle",
+  },
+  {
+    id: "big",
+    roleId: "role:big-f69fd263",
+    label: "Big",
+  },
+  {
     id: "submissive-top",
     roleId: "role:submissive-top-8b73cd98",
     label: "Submissive Top",

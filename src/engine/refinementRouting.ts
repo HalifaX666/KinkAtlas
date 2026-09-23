@@ -64,6 +64,24 @@ function petPersonaInterest(answers: AssessmentAnswers): boolean {
   return broadAnswer === "some" || broadAnswer === "curious" || petAnswer === "strong" || petAnswer === "some" || petAnswer === "curious";
 }
 
+function shouldAskAdultAgeRoleplayGate(answers: AssessmentAnswers): boolean {
+  const answerId = answers.discovery["d-care"];
+
+  return answerId === "strong" || answerId === "some" || answerId === "curious";
+}
+
+function adultAgeRoleplayInterest(answers: AssessmentAnswers): boolean {
+  return answers.refinement["ref-age-roleplay-interest"] === "yes";
+}
+
+function caregiverPositionSelected(answers: AssessmentAnswers): boolean {
+  return answers.refinement["ref-age-roleplay-position"] === "caregiver";
+}
+
+function littlePositionSelected(answers: AssessmentAnswers): boolean {
+  return answers.refinement["ref-age-roleplay-position"] === "little";
+}
+
 function routeCandidates(answers: AssessmentAnswers, traitScores: TraitScores): RefinementRouteCandidate[] {
   const submission = submissionSupported(answers, traitScores);
   const dominance = dominanceSupported(answers, traitScores);
@@ -162,6 +180,41 @@ function routeCandidates(answers: AssessmentAnswers, traitScores: TraitScores): 
       eligible: petPersonaInterest(answers),
       strength: traitStrength(traitScores, "roleplay", "beingCaredFor", "playfulness"),
     },
+    {
+      questionId: "ref-age-roleplay-interest",
+      eligible: shouldAskAdultAgeRoleplayGate(answers),
+      strength: traitStrength(traitScores, "caregiving", "beingCaredFor", "playfulness"),
+    },
+    {
+      questionId: "ref-age-roleplay-position",
+      eligible: adultAgeRoleplayInterest(answers),
+      strength: 1,
+    },
+    {
+      questionId: "ref-age-roleplay-style",
+      eligible: adultAgeRoleplayInterest(answers),
+      strength: 0.95,
+    },
+    {
+      questionId: "ref-age-roleplay-interest",
+      eligible: shouldAskAdultAgeRoleplayGate(answers),
+      strength: traitStrength(traitScores, "caregiving", "beingCaredFor", "playfulness"),
+    },
+    {
+      questionId: "ref-age-roleplay-position",
+      eligible: adultAgeRoleplayInterest(answers),
+      strength: 1,
+    },
+    {
+      questionId: "ref-caregiver-title",
+      eligible: adultAgeRoleplayInterest(answers) && caregiverPositionSelected(answers),
+      strength: 1,
+    },
+    {
+      questionId: "ref-little-vocabulary",
+      eligible: adultAgeRoleplayInterest(answers) && littlePositionSelected(answers),
+      strength: 1,
+    },
   ];
 }
 
@@ -188,13 +241,9 @@ export function eligibleRefinementFamilies(answers: AssessmentAnswers, traitScor
     families.push("pet");
   }
 
-  /*
-   * caregiver-little remains deliberately closed here.
-   *
-   * Generic caregiving, playfulness, roleplay, submission or receiving
-   * care are not sufficient evidence for adult age-roleplay vocabulary.
-   * That family gets its own direct-interest gate in a later checkpoint.
-   */
+  if (shouldAskAdultAgeRoleplayGate(answers) || adultAgeRoleplayInterest(answers)) {
+    families.push("caregiver-little");
+  }
 
   return families;
 }

@@ -52,7 +52,7 @@ export interface DiscoveryQuestion {
 
 export type RefinementFamilyId = "submission" | "dominance" | "primal" | "service" | "pet" | "caregiver-little";
 
-export type RefinementTargetId = "submissive-top" | "submissive-sadist" | "submissive-masochist" | "bratty-sub" | "pleasure-submissive" | "sensual-submissive" | "dominant-bottom" | "dominant-sadist" | "dominant-masochist" | "sensual-dominant" | "primal-sadist" | "primal-masochist" | "primal-top" | "primal-bottom" | "primal-sensualist" | "service-rigger" | "service-brat" | "puppy" | "kitten";
+export type RefinementTargetId = "submissive-top" | "submissive-sadist" | "submissive-masochist" | "bratty-sub" | "pleasure-submissive" | "sensual-submissive" | "dominant-bottom" | "dominant-sadist" | "dominant-masochist" | "sensual-dominant" | "primal-sadist" | "primal-masochist" | "primal-top" | "primal-bottom" | "primal-sensualist" | "service-rigger" | "service-brat" | "puppy" | "kitten" | "daddy" | "mommy" | "little" | "little-one" | "little-girl" | "little-boy" | "little-princess" | "little-prince" | "bratty-little" | "middle" | "big";
 
 export interface RefinementAnswerOption extends AnswerOption {
   supports?: RefinementTargetId[];

@@ -35,11 +35,12 @@ export const refinementFamilies: RefinementFamilyDefinition[] = [
   {
     id: "caregiver-little",
     label: "Caregiver / age-roleplay style",
-    description: "Explores adult caregiver and age-roleplay vocabulary without inferring age, regression, dependency, or minor status.",
+    description: "Explores non-sexual adult caregiving and age-inspired roleplay vocabulary between consenting adults.",
   },
 ];
 
 const intersectionContext = "This asks whether two already-supported patterns feel meaningfully connected for you. It does not change your Discovery alignment, assign an identity, or imply consent.";
+const adultAgeRoleplayContext = "In KinkAtlas, this vocabulary refers only to non-sexual roleplay or caregiving between consenting adults. It does not describe a person's real age, developmental state, dependency, or reduced agency.";
 const petPersonaContext = "This asks about an adult animal-inspired roleplay persona. It does not infer submission, ownership, dependency, identity outside the roleplay, or consent to any activity.";
 function connectionAnswers(targetId: NonNullable<RefinementAnswerOption["supports"]>[number]): RefinementAnswerOption[] {
   return [
@@ -235,6 +236,185 @@ export const refinementQuestions: RefinementQuestion[] = [
       {
         id: "other",
         label: "Another animal-inspired persona or a broad pet role fits better",
+        noScore: true,
+      },
+      {
+        id: "unknown",
+        label: "I do not know yet",
+        noScore: true,
+      },
+      {
+        id: "prefer-not",
+        label: "Prefer not to answer",
+        noScore: true,
+      },
+    ],
+  },
+  {
+    id: "ref-age-roleplay-interest",
+    kind: "refinement",
+    family: "caregiver-little",
+    prompt: "Does a non-sexual adult dynamic involving age-inspired roleplay, caregiving, comfort, or guidance feel relevant to you?",
+    context: adultAgeRoleplayContext,
+    answers: [
+      {
+        id: "yes",
+        label: "Yes — that kind of non-sexual adult dynamic feels relevant to me",
+        noScore: true,
+      },
+      {
+        id: "maybe",
+        label: "Maybe — I am curious, but I am not sure whether it fits me",
+        noScore: true,
+      },
+      {
+        id: "no",
+        label: "No — this kind of dynamic does not feel relevant to me",
+        noScore: true,
+      },
+      {
+        id: "unknown",
+        label: "I do not know yet",
+        noScore: true,
+      },
+      {
+        id: "prefer-not",
+        label: "Prefer not to answer",
+        noScore: true,
+      },
+    ],
+  },
+
+  {
+    id: "ref-age-roleplay-position",
+    kind: "refinement",
+    family: "caregiver-little",
+    prompt: "Within a non-sexual adult caregiving or age-inspired roleplay dynamic, which position feels closest to you?",
+    context: adultAgeRoleplayContext,
+    answers: [
+      {
+        id: "caregiver",
+        label: "Caregiver — I am most drawn to providing care, reassurance, guidance, or structure",
+        noScore: true,
+      },
+      {
+        id: "little",
+        label: "Little — a younger-feeling adult role centered on comfort, playfulness, care, or self-expression",
+        supports: ["little"],
+      },
+      {
+        id: "middle",
+        label: "Middle — an age-inspired adult role with more independence while still enjoying care, comfort, or playful expression",
+        supports: ["middle"],
+      },
+      {
+        id: "big",
+        label: "Big — a more mature, grounded, or independent adult age-roleplay position",
+        supports: ["big"],
+      },
+      {
+        id: "multiple",
+        label: "More than one of these can feel relevant depending on the context",
+        noScore: true,
+      },
+      {
+        id: "unknown",
+        label: "I am interested, but I do not know which position fits",
+        noScore: true,
+      },
+      {
+        id: "prefer-not",
+        label: "Prefer not to answer",
+        noScore: true,
+      },
+    ],
+  },
+
+  {
+    id: "ref-caregiver-title",
+    kind: "refinement",
+    family: "caregiver-little",
+    prompt: "If you take the caregiving side of this non-sexual adult dynamic, does either of these titles feel like a good fit?",
+    context: adultAgeRoleplayContext,
+    answers: [
+      {
+        id: "daddy",
+        label: "Daddy",
+        supports: ["daddy"],
+      },
+      {
+        id: "mommy",
+        label: "Mommy",
+        supports: ["mommy"],
+      },
+      {
+        id: "caregiver",
+        label: "Caregiver fits better than either title",
+        noScore: true,
+      },
+      {
+        id: "other",
+        label: "Another caregiver title fits me better",
+        noScore: true,
+      },
+      {
+        id: "unknown",
+        label: "I do not know yet",
+        noScore: true,
+      },
+      {
+        id: "prefer-not",
+        label: "Prefer not to answer",
+        noScore: true,
+      },
+    ],
+  },
+
+  {
+    id: "ref-little-vocabulary",
+    kind: "refinement",
+    family: "caregiver-little",
+    prompt: "If Little feels relevant, which non-sexual adult role vocabulary feels closest to how you would describe yourself?",
+    context: adultAgeRoleplayContext,
+    answers: [
+      {
+        id: "little",
+        label: "Little",
+        supports: ["little"],
+      },
+      {
+        id: "little-one",
+        label: "Little one",
+        supports: ["little-one"],
+      },
+      {
+        id: "little-girl",
+        label: "Little girl",
+        supports: ["little-girl"],
+      },
+      {
+        id: "little-boy",
+        label: "Little boy",
+        supports: ["little-boy"],
+      },
+      {
+        id: "little-princess",
+        label: "Little princess",
+        supports: ["little-princess"],
+      },
+      {
+        id: "little-prince",
+        label: "Little prince",
+        supports: ["little-prince"],
+      },
+      {
+        id: "bratty-little",
+        label: "Bratty Little",
+        supports: ["bratty-little"],
+      },
+      {
+        id: "other",
+        label: "Another Little-related label fits me better",
         noScore: true,
       },
       {
