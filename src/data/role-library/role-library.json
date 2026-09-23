@@ -5074,10 +5074,10 @@
       "label": "Puppy",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "pet-animal-roleplay"
       ],
@@ -5147,10 +5147,10 @@
       "label": "Kitten",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "pet-animal-roleplay"
       ],

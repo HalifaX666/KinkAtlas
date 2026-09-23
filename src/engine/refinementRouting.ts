@@ -4,8 +4,6 @@ import type { AssessmentAnswers, RefinementFamilyId, RefinementQuestion, TraitId
 
 const MAX_REFINEMENT_QUESTIONS = 6;
 
-const positiveQualificationAnswers = new Set(["strong", "some"]);
-
 function traitSupported(traitScores: TraitScores, trait: TraitId, minimumValue = 0.55, minimumEvidence = 2): boolean {
   const score = traitScores[trait];
 
@@ -40,14 +38,6 @@ function serviceSupported(traitScores: TraitScores): boolean {
   return traitSupported(traitScores, "serviceGiving") || traitSupported(traitScores, "serviceReceiving");
 }
 
-function petBroadInterest(answers: AssessmentAnswers): boolean {
-  const answerId = answers.discovery["d-pet"];
-
-  if (!answerId) return false;
-
-  return positiveQualificationAnswers.has(answerId) || answerId === "curious";
-}
-
 function sensualPatternSupported(traitScores: TraitScores): boolean {
   return traitSupported(traitScores, "sensorySeeking", 0.5, 2) && traitSupported(traitScores, "emotionalConnection", 0.5, 2);
 }
@@ -66,6 +56,12 @@ function traitStrength(traitScores: TraitScores, ...traits: TraitId[]): number {
   if (!traits.length) return 0;
 
   return traits.reduce((sum, trait) => sum + (traitScores[trait]?.value ?? 0), 0) / traits.length;
+}
+function petPersonaInterest(answers: AssessmentAnswers): boolean {
+  const broadAnswer = answers.discovery["d-pet"];
+  const petAnswer = answers.discovery["r-pet"];
+
+  return broadAnswer === "some" || broadAnswer === "curious" || petAnswer === "strong" || petAnswer === "some" || petAnswer === "curious";
 }
 
 function routeCandidates(answers: AssessmentAnswers, traitScores: TraitScores): RefinementRouteCandidate[] {
@@ -161,6 +157,11 @@ function routeCandidates(answers: AssessmentAnswers, traitScores: TraitScores): 
       eligible: traitSupported(traitScores, "serviceGiving", 0.55, 2) && traitSupported(traitScores, "brattiness", 0.55, 2),
       strength: traitStrength(traitScores, "serviceGiving", "brattiness"),
     },
+    {
+      questionId: "ref-pet-persona",
+      eligible: petPersonaInterest(answers),
+      strength: traitStrength(traitScores, "roleplay", "beingCaredFor", "playfulness"),
+    },
   ];
 }
 
@@ -183,7 +184,7 @@ export function eligibleRefinementFamilies(answers: AssessmentAnswers, traitScor
     families.push("service");
   }
 
-  if (petBroadInterest(answers)) {
+  if (petPersonaInterest(answers)) {
     families.push("pet");
   }
 

@@ -40,7 +40,7 @@ export const refinementFamilies: RefinementFamilyDefinition[] = [
 ];
 
 const intersectionContext = "This asks whether two already-supported patterns feel meaningfully connected for you. It does not change your Discovery alignment, assign an identity, or imply consent.";
-
+const petPersonaContext = "This asks about an adult animal-inspired roleplay persona. It does not infer submission, ownership, dependency, identity outside the roleplay, or consent to any activity.";
 function connectionAnswers(targetId: NonNullable<RefinementAnswerOption["supports"]>[number]): RefinementAnswerOption[] {
   return [
     {
@@ -209,6 +209,45 @@ export const refinementQuestions: RefinementQuestion[] = [
     prompt: "Can negotiated teasing or playful defiance coexist with service being meaningful to you?",
     context: intersectionContext,
     answers: connectionAnswers("service-brat"),
+  },
+  {
+    id: "ref-pet-persona",
+    kind: "refinement",
+    family: "pet",
+    prompt: "If you picture yourself in an adult animal-inspired role, which persona feels most relevant?",
+    context: petPersonaContext,
+    answers: [
+      {
+        id: "canine",
+        label: "A canine-inspired persona, such as a puppy or pup",
+        supports: ["puppy"],
+      },
+      {
+        id: "feline",
+        label: "A feline-inspired persona, such as a kitten or cat",
+        supports: ["kitten"],
+      },
+      {
+        id: "both",
+        label: "Both canine and feline themes feel relevant",
+        weakSupports: ["puppy", "kitten"],
+      },
+      {
+        id: "other",
+        label: "Another animal-inspired persona or a broad pet role fits better",
+        noScore: true,
+      },
+      {
+        id: "unknown",
+        label: "I do not know yet",
+        noScore: true,
+      },
+      {
+        id: "prefer-not",
+        label: "Prefer not to answer",
+        noScore: true,
+      },
+    ],
   },
 ];
 

@@ -19,15 +19,15 @@ describe("recommendation quality report", () => {
       definitionStates: 812,
       usableDefinitions: 702,
       unavailableDefinitions: 110,
-      automaticRecommendation: 215,
+      automaticRecommendation: 217,
       confirmationBased: 139,
-      legitimateTopFiveReach: 354,
-      manualOnly: 458,
+      legitimateTopFiveReach: 356,
+      manualOnly: 456,
       relationships: 60,
       familyCoverage: 448,
     });
 
-    expect(report.questions).toMatchObject({ broad: 20, refinements: 52, mandatoryMaximum: 26, optionalPool: 313 });
+    expect(report.questions).toMatchObject({ broad: 20, refinements: 52, mandatoryMaximum: 26, optionalPool: 315 });
     expect(report.questions.maximumRecommendationClarifications).toBeLessThanOrEqual(6);
     expect(report.roleSets.deterministicRepeat).toBe(true);
     expect(renderRecommendationReport(report)).toContain("recommendations 50/50");

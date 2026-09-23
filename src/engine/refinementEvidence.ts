@@ -93,6 +93,16 @@ export const refinementTargets: RefinementTargetDefinition[] = [
     roleId: "role:service-brat-8beb9ac8",
     label: "Service Brat",
   },
+  {
+    id: "puppy",
+    roleId: "role:puppy-75822bc4",
+    label: "Puppy",
+  },
+  {
+    id: "kitten",
+    roleId: "role:kitten-12d6736f",
+    label: "Kitten",
+  },
 ];
 
 export const refinementTargetById = new Map(refinementTargets.map((target) => [target.id, target]));

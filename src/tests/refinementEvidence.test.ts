@@ -201,7 +201,108 @@ describe("Refine evidence architecture", () => {
 
     expect(selectRefinementQuestions(assessment, scores).map((question) => question.id)).toContain("ref-sub-top");
   });
+  it("does not infer a pet persona from guiding or caring for an adult pet role", () => {
+    const assessment = answers({
+      "d-pet": "strong",
+    });
 
+    const questions = selectRefinementQuestions(assessment, calculateTraitScores(assessment.discovery));
+
+    expect(questions.map((question) => question.id)).not.toContain("ref-pet-persona");
+  });
+  it("opens direct pet-persona refinement from adult pet-role interest", () => {
+    const assessment = answers({
+      "d-pet": "some",
+    });
+
+    const questions = selectRefinementQuestions(assessment, calculateTraitScores(assessment.discovery));
+
+    expect(questions.map((question) => question.id)).toContain("ref-pet-persona");
+  });
+  it("makes Puppy eligible only after direct canine persona evidence", () => {
+    const assessment = answers(
+      {
+        "d-pet": "some",
+      },
+      {
+        "ref-pet-persona": "canine",
+      },
+    );
+
+    const scores = calculateTraitScores(assessment.discovery);
+    const roleResults = matchRoles(scores, assessment.discovery);
+
+    const candidate = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery).find((item) => item.label === "Puppy");
+
+    expect(candidate).toMatchObject({
+      decisionPathway: "hybrid",
+      evidenceType: "hybrid",
+      eligible: true,
+    });
+
+    expect(candidate?.rawAlignment).toBeUndefined();
+    expect(candidate?.confidence).toBeUndefined();
+  });
+  it("makes Kitten eligible only after direct feline persona evidence", () => {
+    const assessment = answers(
+      {
+        "d-pet": "some",
+      },
+      {
+        "ref-pet-persona": "feline",
+      },
+    );
+
+    const scores = calculateTraitScores(assessment.discovery);
+    const roleResults = matchRoles(scores, assessment.discovery);
+
+    const candidate = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery).find((item) => item.label === "Kitten");
+
+    expect(candidate).toMatchObject({
+      decisionPathway: "hybrid",
+      evidenceType: "hybrid",
+      eligible: true,
+    });
+
+    expect(candidate?.rawAlignment).toBeUndefined();
+    expect(candidate?.confidence).toBeUndefined();
+  });
+  it("keeps broad canine-and-feline interest exploratory rather than recommending both labels", () => {
+    const assessment = answers(
+      {
+        "d-pet": "some",
+      },
+      {
+        "ref-pet-persona": "both",
+      },
+    );
+
+    const scores = calculateTraitScores(assessment.discovery);
+    const roleResults = matchRoles(scores, assessment.discovery);
+
+    const candidates = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery);
+
+    expect(candidates.find((item) => item.label === "Puppy")?.eligible).toBe(false);
+
+    expect(candidates.find((item) => item.label === "Kitten")?.eligible).toBe(false);
+  });
+  it("does not allow injected pet-persona evidence to bypass broad pet-role interest", () => {
+    const assessment = answers(
+      {
+        "d-pet": "no",
+      },
+      {
+        "ref-pet-persona": "canine",
+      },
+    );
+
+    const scores = calculateTraitScores(assessment.discovery);
+    const roleResults = matchRoles(scores, assessment.discovery);
+
+    const candidate = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery).find((item) => item.label === "Puppy");
+
+    expect(candidate?.eligible).toBe(false);
+  });
   it("does not open Dominant Bottom without independent dominance evidence", () => {
     const assessment = answers({
       "d-position-receive": "strong",
