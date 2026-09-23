@@ -1,34 +1,144 @@
+import { discoveryQuestionById } from "../data/questions";
 import { refinementQuestions } from "../data/refinement";
 import type { AssessmentAnswers, RefinementFamilyId, RefinementQuestion, TraitId, TraitScores } from "../types";
 
-const supported = (traitScores: TraitScores, trait: TraitId, minimumValue = 0.5, minimumEvidence = 2) => {
-  const score = traitScores[trait];
-  return Boolean(score && score.evidence >= minimumEvidence && score.value >= minimumValue);
-};
+const MAX_REFINEMENT_QUESTIONS = 6;
 
-function serviceSupported(traitScores: TraitScores) {
-  return supported(traitScores, "serviceGiving") || supported(traitScores, "serviceReceiving");
+const positiveQualificationAnswers = new Set(["strong", "some"]);
+
+function traitSupported(traitScores: TraitScores, trait: TraitId, minimumValue = 0.55, minimumEvidence = 2): boolean {
+  const score = traitScores[trait];
+
+  return Boolean(score && score.evidence >= minimumEvidence && score.value >= minimumValue);
 }
 
-/**
- * These gates establish whether a refinement family is worth asking about.
- *
- * IMPORTANT:
- * A gate does not recommend a subtype.
- * A gate only permits relevant follow-up questions to appear.
- */
+function explicitSubmissionEvidence(discoveryAnswers: AssessmentAnswers["discovery"]): boolean {
+  return Object.entries(discoveryAnswers).some(([questionId, answerId]) => {
+    const answer = discoveryQuestionById[questionId]?.answers.find((candidate) => candidate.id === answerId);
+
+    return answer?.qualificationEvidence?.includes("explicit-submission") ?? false;
+  });
+}
+
+function explicitDominanceEvidence(discoveryAnswers: AssessmentAnswers["discovery"]): boolean {
+  return Object.entries(discoveryAnswers).some(([questionId, answerId]) => {
+    const answer = discoveryQuestionById[questionId]?.answers.find((candidate) => candidate.id === answerId);
+
+    return answer?.authorityEvidence === "explicit-authority";
+  });
+}
+
+function submissionSupported(answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  return traitSupported(traitScores, "submission") && explicitSubmissionEvidence(answers.discovery);
+}
+
+function dominanceSupported(answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  return traitSupported(traitScores, "dominance") && explicitDominanceEvidence(answers.discovery);
+}
+
+function serviceSupported(traitScores: TraitScores): boolean {
+  return traitSupported(traitScores, "serviceGiving") || traitSupported(traitScores, "serviceReceiving");
+}
+
+function petBroadInterest(answers: AssessmentAnswers): boolean {
+  const answerId = answers.discovery["d-pet"];
+
+  if (!answerId) return false;
+
+  return positiveQualificationAnswers.has(answerId) || answerId === "curious";
+}
+
+function sensualPatternSupported(traitScores: TraitScores): boolean {
+  return traitSupported(traitScores, "sensorySeeking", 0.5, 2) && traitSupported(traitScores, "emotionalConnection", 0.5, 2);
+}
+
+function pleasureGivingSupported(traitScores: TraitScores): boolean {
+  return traitSupported(traitScores, "pleasureGiving", 0.55, 2);
+}
+
+interface RefinementRouteCandidate {
+  questionId: string;
+  eligible: boolean;
+  strength: number;
+}
+
+function traitStrength(traitScores: TraitScores, ...traits: TraitId[]): number {
+  if (!traits.length) return 0;
+
+  return traits.reduce((sum, trait) => sum + (traitScores[trait]?.value ?? 0), 0) / traits.length;
+}
+
+function routeCandidates(answers: AssessmentAnswers, traitScores: TraitScores): RefinementRouteCandidate[] {
+  const submission = submissionSupported(answers, traitScores);
+  const dominance = dominanceSupported(answers, traitScores);
+
+  return [
+    {
+      questionId: "ref-sub-top",
+      eligible: submission && traitSupported(traitScores, "leadership", 0.5, 2) && traitSupported(traitScores, "pleasureGiving", 0.5, 2),
+      strength: traitStrength(traitScores, "submission", "leadership", "pleasureGiving"),
+    },
+    {
+      questionId: "ref-sub-sadist",
+      eligible: submission && traitSupported(traitScores, "painGiving", 0.55, 2),
+      strength: traitStrength(traitScores, "submission", "painGiving"),
+    },
+    {
+      questionId: "ref-sub-masochist",
+      eligible: submission && traitSupported(traitScores, "painReceiving", 0.55, 2),
+      strength: traitStrength(traitScores, "submission", "painReceiving"),
+    },
+    {
+      questionId: "ref-sub-brat",
+      eligible: submission && traitSupported(traitScores, "brattiness", 0.55, 2),
+      strength: traitStrength(traitScores, "submission", "brattiness"),
+    },
+    {
+      questionId: "ref-sub-pleasure",
+      eligible: submission && pleasureGivingSupported(traitScores),
+      strength: traitStrength(traitScores, "submission", "pleasureGiving"),
+    },
+    {
+      questionId: "ref-sub-sensual",
+      eligible: submission && sensualPatternSupported(traitScores),
+      strength: traitStrength(traitScores, "submission", "sensorySeeking", "emotionalConnection"),
+    },
+
+    {
+      questionId: "ref-dom-bottom",
+      eligible: dominance && traitSupported(traitScores, "pleasureReceiving", 0.5, 2) && traitSupported(traitScores, "sensorySeeking", 0.5, 2),
+      strength: traitStrength(traitScores, "dominance", "pleasureReceiving", "sensorySeeking"),
+    },
+    {
+      questionId: "ref-dom-sadist",
+      eligible: dominance && traitSupported(traitScores, "painGiving", 0.55, 2),
+      strength: traitStrength(traitScores, "dominance", "painGiving"),
+    },
+    {
+      questionId: "ref-dom-masochist",
+      eligible: dominance && traitSupported(traitScores, "painReceiving", 0.55, 2),
+      strength: traitStrength(traitScores, "dominance", "painReceiving"),
+    },
+    {
+      questionId: "ref-dom-sensual",
+      eligible: dominance && sensualPatternSupported(traitScores),
+      strength: traitStrength(traitScores, "dominance", "sensorySeeking", "emotionalConnection"),
+    },
+  ];
+}
+
 export function eligibleRefinementFamilies(answers: AssessmentAnswers, traitScores: TraitScores): RefinementFamilyId[] {
   const families: RefinementFamilyId[] = [];
 
-  if (supported(traitScores, "submission")) {
+  if (submissionSupported(answers, traitScores)) {
     families.push("submission");
   }
 
-  if (supported(traitScores, "dominance")) {
+  if (dominanceSupported(answers, traitScores)) {
     families.push("dominance");
   }
 
-  if (supported(traitScores, "primality")) {
+  if (traitSupported(traitScores, "primality")) {
     families.push("primal");
   }
 
@@ -36,36 +146,33 @@ export function eligibleRefinementFamilies(answers: AssessmentAnswers, traitScor
     families.push("service");
   }
 
-  /*
-   * Pet and caregiver/little are intentionally NOT opened from generic
-   * roleplay, playfulness, care or submission scores alone.
-   *
-   * Those signals are too broad:
-   *
-   * care != Little
-   * playfulness != Little
-   * roleplay != Pet
-   * submission != Little
-   *
-   * Their first refinement questions will serve as direct-interest gates
-   * in the next implementation checkpoint.
-   */
-  const petBroadAnswer = answers.discovery["d-pet"];
-  if (petBroadAnswer && petBroadAnswer !== "no" && petBroadAnswer !== "prefer-not") {
+  if (petBroadInterest(answers)) {
     families.push("pet");
   }
+
+  /*
+   * caregiver-little remains deliberately closed here.
+   *
+   * Generic caregiving, playfulness, roleplay, submission or receiving
+   * care are not sufficient evidence for adult age-roleplay vocabulary.
+   * That family gets its own direct-interest gate in a later checkpoint.
+   */
 
   return families;
 }
 
-/**
- * Returns only questions whose parent family was independently made
- * relevant by Discovery or by an approved direct-interest gate.
- */
 export function selectRefinementQuestions(answers: AssessmentAnswers, traitScores: TraitScores): RefinementQuestion[] {
-  const eligibleFamilies = new Set(eligibleRefinementFamilies(answers, traitScores));
+  const questionById = new Map(refinementQuestions.map((question) => [question.id, question]));
 
-  return refinementQuestions.filter((question) => eligibleFamilies.has(question.family));
+  return routeCandidates(answers, traitScores)
+    .filter((candidate) => candidate.eligible)
+    .sort((left, right) => right.strength - left.strength || left.questionId.localeCompare(right.questionId))
+    .slice(0, MAX_REFINEMENT_QUESTIONS)
+    .flatMap((candidate) => {
+      const question = questionById.get(candidate.questionId);
+
+      return question ? [question] : [];
+    });
 }
 
 export function unansweredRefinementQuestions(answers: AssessmentAnswers, traitScores: TraitScores): RefinementQuestion[] {

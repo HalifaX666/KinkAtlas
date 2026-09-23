@@ -247,10 +247,10 @@
       "label": "Pleasure submissive",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "submission"
       ],
@@ -505,10 +505,10 @@
       "label": "Submissive Top",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "submission",
         "play-position"
@@ -520,10 +520,10 @@
       "label": "Dominant Bottom",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "dominance",
         "play-position"
@@ -1192,10 +1192,10 @@
       "label": "Dominant Sadist",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "dominance",
         "sadomasochism"
@@ -1207,10 +1207,10 @@
       "label": "Submissive Sadist",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "submission",
         "sadomasochism"
@@ -1236,10 +1236,10 @@
       "label": "Submissive Masochist",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "submission",
         "sadomasochism"
@@ -1251,10 +1251,10 @@
       "label": "Dominant Masochist",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "dominance",
         "sadomasochism"
@@ -1719,10 +1719,10 @@
       "label": "Sensual Dominant",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "dominance"
       ],
@@ -1730,13 +1730,13 @@
     },
     {
       "id": "role:sensual-submissive-cb7e0fc3",
-      "label": "sensual submissive",
+      "label": "Sensual submissive",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "submission"
       ],
@@ -4008,10 +4008,10 @@
       "label": "Bratty sub",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "submission"
       ],

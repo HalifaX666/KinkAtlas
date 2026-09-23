@@ -103,7 +103,7 @@ export function ResultsPage() {
         </div>
       </section>
 
-      <RoleProfileBuilderLauncher roleResults={roleResults} onRoleSetChange={setCurrentRoleSet} />
+      <RoleProfileBuilderLauncher roleResults={roleResults} refinementAnswers={answers.refinement} onRoleSetChange={setCurrentRoleSet} />
       <section className="page-width role-set-export-section" aria-labelledby="role-set-export-heading">
         <div>
           <span className="eyebrow">When you are ready</span>

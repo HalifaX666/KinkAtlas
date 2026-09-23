@@ -20,8 +20,18 @@ function currentRadios(): HTMLInputElement[] {
 
 function continueThroughRefinement() {
   expect(screen.getByRole("heading", { name: "Refine" })).toBeInTheDocument();
-  expect(screen.getByText("No extra refinement is needed yet.")).toBeInTheDocument();
+
+  let question = screen.queryByRole("group");
+
+  while (question) {
+    fireEvent.click(currentRadios()[0]);
+    question = screen.queryByRole("group");
+  }
+
+  expect(screen.getByText(/Refinement complete|No extra refinement is needed yet/i)).toBeInTheDocument();
+
   fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
   expect(screen.getByRole("heading", { name: "Reflect" })).toBeInTheDocument();
 }
 
@@ -114,7 +124,10 @@ describe("assessment navigation", () => {
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(screen.getByRole("heading", { name: "Refine" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    while (screen.queryByRole("heading", { name: "Refine" })) {
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    }
+
     expect(screen.getByRole("heading", { name: "Discover" })).toBeInTheDocument();
     expect(currentRadios()[0]).toBeChecked();
 

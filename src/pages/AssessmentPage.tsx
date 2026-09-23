@@ -243,7 +243,7 @@ export function AssessmentPage() {
                 <div>
                   <span className="eyebrow">Role refinement</span>
 
-                  <p>Subtype and style exploration · separate from Discovery alignment</p>
+                  <p>Role style and intersection exploration · separate from Discovery alignment</p>
                 </div>
 
                 <span>

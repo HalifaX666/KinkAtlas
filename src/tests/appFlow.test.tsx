@@ -31,11 +31,23 @@ describe("assessment flow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
     expect(screen.getByRole("heading", { name: "Refine" })).toBeInTheDocument();
-    expect(screen.getByText("No extra refinement is needed yet.")).toBeInTheDocument();
+
+    let refinementQuestion = screen.queryByRole("group");
+
+    while (refinementQuestion) {
+      expect(refinementQuestion.querySelector("legend")).toHaveFocus();
+
+      fireEvent.click(screen.getAllByRole("radio")[0]);
+
+      refinementQuestion = screen.queryByRole("group");
+    }
+
+    expect(screen.getByText(/Refinement complete|No extra refinement is needed yet/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
     expect(screen.getByRole("heading", { name: "Reflect" })).toBeInTheDocument();
+
     expect(screen.getByRole("group").querySelector("legend")).toHaveFocus();
 
     fireEvent.click(screen.getAllByRole("radio")[0]);

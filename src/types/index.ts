@@ -52,13 +52,31 @@ export interface DiscoveryQuestion {
 
 export type RefinementFamilyId = "submission" | "dominance" | "primal" | "service" | "pet" | "caregiver-little";
 
+export type RefinementTargetId = "submissive-top" | "submissive-sadist" | "submissive-masochist" | "bratty-sub" | "pleasure-submissive" | "sensual-submissive" | "dominant-bottom" | "dominant-sadist" | "dominant-masochist" | "sensual-dominant";
+
+export interface RefinementAnswerOption extends AnswerOption {
+  supports?: RefinementTargetId[];
+  weakSupports?: RefinementTargetId[];
+  rejects?: RefinementTargetId[];
+}
+
 export interface RefinementQuestion {
   id: string;
   kind: "refinement";
   family: RefinementFamilyId;
   prompt: string;
   context?: string;
-  answers: AnswerOption[];
+  answers: RefinementAnswerOption[];
+}
+
+export type RefinementEvidenceStatus = "supported" | "possible" | "rejected" | "unanswered";
+
+export interface RefinementEvidence {
+  targetId: RefinementTargetId;
+  status: RefinementEvidenceStatus;
+  supportingQuestionIds: string[];
+  possibleQuestionIds: string[];
+  rejectingQuestionIds: string[];
 }
 export interface ReadinessQuestion {
   id: string;
