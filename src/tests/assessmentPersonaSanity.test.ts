@@ -3,7 +3,7 @@ import { boundaryItems } from "../data/boundaries";
 import { roles } from "../data/roles";
 import { calculateTraitScores } from "../engine/discoveryScoring";
 import { matchRoles } from "../engine/roleMatching";
-import { addRoleProfileEntry, removeRoleProfileEntry, reorderRoleProfileEntry } from "../engine/roleProfileOptimizer";
+import { addRoleProfileEntry, makeRoleProfileEntryPrimary, removeRoleProfileEntry, reorderRoleProfileEntry, replaceRoleProfileEntry, roleProfileEntriesEqual, selectDisplayableRoleProfileAlternates, type EditableRoleProfileEntry } from "../engine/roleProfileOptimizer";
 import { getShareableRoleSet } from "../engine/shareResults";
 import { roleLibrary } from "../taxonomy/roleLibrary";
 import type { AssessmentPersona } from "./fixtures/assessmentPersonas";
@@ -241,6 +241,57 @@ describe("paired persona calibration tendencies", () => {
 });
 
 describe("role-set and export constitution", () => {
+  it("moves a chosen role directly to primary without changing source or remaining-role order", () => {
+    const roles = [
+      { roleId: "a", label: "A", source: "recommended" as const },
+      { roleId: "b", label: "B", source: "recommended" as const },
+      { roleId: "c", label: "C", source: "user-selected" as const },
+      { roleId: "d", label: "D", source: "recommended" as const },
+    ];
+
+    const reordered = makeRoleProfileEntryPrimary(roles, "c");
+
+    expect(reordered.map((role) => role.roleId)).toEqual(["c", "a", "b", "d"]);
+    expect(reordered[0].source).toBe("user-selected");
+    expect(roles.map((role) => role.roleId)).toEqual(["a", "b", "c", "d"]);
+  });
+
+  it("compares complete editable role-set state and preserves replacement positions", () => {
+    const roles = [
+      { roleId: "a", label: "A", source: "recommended" as const, assessmentRoleId: "assessment-a" },
+      { roleId: "b", label: "B", source: "recommended" as const },
+    ];
+    const matchingCopy = roles.map((role) => ({ ...role }));
+    const sourceChanged = roles.map((role, index) => index === 0 ? { ...role, source: "user-selected" as const } : role);
+    const primaryReplacement = replaceRoleProfileEntry(roles, "a", { roleId: "c", label: "C", source: "user-selected" });
+    const secondReplacement = replaceRoleProfileEntry(roles, "b", { roleId: "d", label: "D", source: "user-selected" });
+
+    expect(roleProfileEntriesEqual(roles, matchingCopy)).toBe(true);
+    expect(roleProfileEntriesEqual(roles, sourceChanged)).toBe(false);
+    expect(primaryReplacement.map((role) => role.roleId)).toEqual(["c", "b"]);
+    expect(secondReplacement.map((role) => role.roleId)).toEqual(["a", "d"]);
+    expect(replaceRoleProfileEntry([roles[0]], "a", { roleId: "c", label: "C", source: "user-selected" }).map((role) => role.roleId)).toEqual(["c"]);
+  });
+
+  it("filters unusable alternates before applying the eight-entry display cap", () => {
+    const evaluation = evaluateAssessmentPersona(assessmentPersonas.find((persona) => persona.id === "broad-exploratory-pattern")!);
+    const invalid = evaluation.roleProfile.alternates.slice(0, 8).map((alternate) => ({ ...alternate, candidate: { ...alternate.candidate, label: " " } }));
+    const valid = evaluation.roleProfile.alternates.slice(8, 16);
+    const displayed = selectDisplayableRoleProfileAlternates([...invalid, ...valid]);
+
+    expect(valid).toHaveLength(8);
+    expect(displayed).toEqual(valid);
+  });
+
+  it("keeps a five-role maximum while allowing partial and empty sets", () => {
+    const roles: EditableRoleProfileEntry[] = Array.from({ length: 5 }, (_, index) => ({ roleId: String(index), label: String(index), source: "recommended" }));
+    const unchanged = addRoleProfileEntry(roles, { roleId: "six", label: "Six", source: "user-selected" });
+    const empty = roles.reduce((current, role) => removeRoleProfileEntry(current, role.roleId), roles);
+
+    expect(unchanged).toBe(roles);
+    expect(empty).toEqual([]);
+  });
+
   it("keeps Suggested Role Set separate from first-five Role Discovery assumptions", () => {
     const hasIndependentSuggestion = assessmentPersonas.some((persona) => {
       const evaluation = evaluateAssessmentPersona(persona);

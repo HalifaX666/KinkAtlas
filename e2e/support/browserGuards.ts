@@ -57,6 +57,10 @@ export async function roleSetLabels(page: Page, selector: string): Promise<strin
   return page.locator(selector).evaluateAll((nodes) => nodes.map((node) => node.textContent?.trim() ?? '').filter(Boolean))
 }
 
+export async function namedRoleSetLabels(page: Page, listName: string): Promise<string[]> {
+  return page.getByRole('list', { name: listName }).locator(':scope > li > div:first-child > strong').evaluateAll((nodes) => nodes.map((node) => node.textContent?.trim() ?? '').filter(Boolean))
+}
+
 export async function expectRenderedSanity(page: Page) {
   const text = await page.locator('body').innerText()
   expect(text).not.toMatch(/\b(?:NaN|Infinity|undefined)\b/)

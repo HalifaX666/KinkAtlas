@@ -347,6 +347,29 @@ export function reorderRoleProfileEntry(roles: EditableRoleProfileEntry[], from:
   return reordered;
 }
 
+export function makeRoleProfileEntryPrimary(roles: EditableRoleProfileEntry[], roleId: string): EditableRoleProfileEntry[] {
+  const index = roles.findIndex((role) => role.roleId === roleId);
+  return index > 0 ? reorderRoleProfileEntry(roles, index, 0) : roles;
+}
+
+export function roleProfileEntriesEqual(left: EditableRoleProfileEntry[], right: EditableRoleProfileEntry[]): boolean {
+  return left.length === right.length && left.every((role, index) => {
+    const other = right[index];
+    return role.roleId === other?.roleId
+      && role.label === other.label
+      && role.source === other.source
+      && role.definition === other.definition
+      && role.assessmentRoleId === other.assessmentRoleId;
+  });
+}
+
+export function selectDisplayableRoleProfileAlternates(alternates: RoleProfileAlternate[], maximum = 8): RoleProfileAlternate[] {
+  if (maximum <= 0) return [];
+  return alternates
+    .filter((alternate) => Boolean(alternate.candidate.label.trim() && (alternate.reason.trim() || alternate.explanation.trim())))
+    .slice(0, maximum);
+}
+
 export function getRoleProfileEntry(roleId: string) {
   return roleLibraryRoleById.get(roleId);
 }

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectRenderedSanity, installBrowserGuards, openPersonaResults, openRoleSetBuilder, roleSetLabels } from "./support/browserGuards";
+import { expectRenderedSanity, installBrowserGuards, namedRoleSetLabels, openPersonaResults, openRoleSetBuilder, roleSetLabels } from "./support/browserGuards";
 
 test("Persona smoke: completed assessment renders coherent Results", async ({ page }) => {
   const guards = await installBrowserGuards(page);
@@ -28,22 +28,54 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   await openPersonaResults(page, "balanced-authority-pattern");
   await openRoleSetBuilder(page);
 
-  const before = await roleSetLabels(page, ".profile-role-list > li > div:first-child > strong");
-  expect(before.length).toBeGreaterThan(1);
-  const replacedRole = before[1];
+  const suggested = await namedRoleSetLabels(page, "Suggested roles");
+  const before = await namedRoleSetLabels(page, "Current role set");
+  expect(before).toEqual(suggested);
+  expect(before.length).toBeGreaterThan(2);
+
+  await page.getByRole("button", { name: `Replace ${before[1]}` }).click();
+  await expect(page.getByRole("group", { name: "Replacement mode" })).toContainText(`Choose a role to replace ${before[1]}.`);
+  await page.getByRole("button", { name: "Cancel replacement" }).click();
+  await expect(page.getByRole("group", { name: "Replacement mode" })).toHaveCount(0);
+
+  const chosenPrimary = before[2];
+  await page.getByRole("button", { name: `Make ${chosenPrimary} primary` }).click();
+  const primaryOrder = [chosenPrimary, ...before.slice(0, 2), ...before.slice(3)];
+  await expect(page.getByRole("status")).toContainText(`${chosenPrimary} is now primary in your role set.`);
+  expect(await namedRoleSetLabels(page, "Current role set")).toEqual(primaryOrder);
+  expect(await namedRoleSetLabels(page, "Suggested roles")).toEqual(suggested);
+
+  await page.getByRole("button", { name: "Create my role cards" }).click();
+  let dialog = page.getByRole("dialog", { name: "Export & Share" });
+  await expect(dialog).toBeVisible();
+  expect(await roleSetLabels(page, ".role-card-options > label > span:last-child > strong")).toEqual(primaryOrder);
+  await dialog.getByRole("button", { name: "Close export and sharing dialog" }).click();
+
+  await page.getByRole("button", { name: "Restore suggested set" }).click();
+  await expect(page.getByRole("status")).toContainText("Suggested role set restored.");
+  expect(await namedRoleSetLabels(page, "Current role set")).toEqual(suggested);
+  expect(await namedRoleSetLabels(page, "Suggested roles")).toEqual(suggested);
+
+  await page.getByRole("button", { name: "Create my role cards" }).click();
+  dialog = page.getByRole("dialog", { name: "Export & Share" });
+  await expect(dialog).toBeVisible();
+  expect(await roleSetLabels(page, ".role-card-options > label > span:last-child > strong")).toEqual(suggested);
+  await dialog.getByRole("button", { name: "Close export and sharing dialog" }).click();
+
+  const replacedRole = suggested[1];
 
   await page.getByRole("button", { name: `Replace ${replacedRole}` }).click();
   await page.getByRole("searchbox", { name: "Search roles" }).fill("Soft Dom");
   await page.getByRole("button", { name: "Replace with Soft Dom", exact: true }).click();
   await expect(page.getByText("Soft Dom selected as a replacement. You can reorder it or make it primary.")).toBeVisible();
-  await page.getByRole("button", { name: "Move Soft Dom up" }).click();
+  await page.getByRole("button", { name: "Make Soft Dom primary" }).click();
 
-  const edited = await roleSetLabels(page, ".profile-role-list > li > div:first-child > strong");
+  const edited = await namedRoleSetLabels(page, "Current role set");
   expect(edited[0]).toBe("Soft Dom");
   expect(edited).not.toContain(replacedRole);
 
   await page.getByRole("button", { name: "Create my role cards" }).click();
-  const dialog = page.getByRole("dialog", { name: "Export & Share" });
+  dialog = page.getByRole("dialog", { name: "Export & Share" });
   await expect(dialog).toBeVisible();
   const exported = await roleSetLabels(page, ".role-card-options > label > span:last-child > strong");
   expect(exported).toEqual(edited);

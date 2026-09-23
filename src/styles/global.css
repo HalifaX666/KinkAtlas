@@ -2261,6 +2261,20 @@ p {
 .profile-role-editor header p + p {
   margin-top: 0.55rem;
 }
+.profile-role-editor-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.profile-role-editor-heading > div {
+  min-width: 0;
+}
+.profile-restore-button {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
 .profile-role-list {
   margin: 1rem 0;
   padding: 0;
@@ -2312,7 +2326,23 @@ p {
   font-size: 0.72rem;
 }
 .profile-replacement-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 10px;
+  background: rgba(212, 175, 55, 0.06);
   color: var(--gold-soft);
+}
+.profile-replacement-note .quiet-button,
+.profile-make-primary {
+  gap: 0.35rem;
+  padding-inline: 0.55rem;
+  font-size: 0.7rem;
+  white-space: nowrap;
 }
 .profile-role-actions {
   display: flex;
@@ -2914,6 +2944,13 @@ p {
   .profile-role-actions {
     align-self: stretch;
     justify-content: flex-end;
+  }
+  .profile-role-editor-heading {
+    flex-direction: column;
+  }
+  .profile-restore-button {
+    width: 100%;
+    justify-content: center;
   }
   .role-set-export-section {
     align-items: flex-start;

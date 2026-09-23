@@ -6,6 +6,7 @@ import { ShareResultsDialog } from '../components/ShareResultsDialog'
 import { calculateTraitScores } from '../engine/discoveryScoring'
 import { evaluateReadiness } from '../engine/readinessScoring'
 import { matchRoles } from '../engine/roleMatching'
+import { buildRelatedRoleProfiles } from '../engine/roleProfileExploration'
 import { buildEditableRoleProfileEntries, buildRoleProfileCandidates, optimizeRoleProfile, type EditableRoleProfileEntry } from '../engine/roleProfileOptimizer'
 import { getShareableRoleSet, roleCardFileName, type ShareResultsData } from '../engine/shareResults'
 import { roleLibrary } from '../taxonomy/roleLibrary'
@@ -69,6 +70,10 @@ function shareRoleLabels() {
   ))
 }
 
+function roleListLabels(name: string) {
+  return within(screen.getByRole('list', { name })).getAllByRole('listitem').map((item) => item.querySelector('strong')?.textContent)
+}
+
 describe('Export & Share dialog', () => {
   it('explains the suggested-to-editable role-set journey', () => {
     render(<RoleProfileBuilder roleResults={roleResults} />)
@@ -77,6 +82,86 @@ describe('Export & Share dialog', () => {
     expect(screen.getByRole('heading', { name: 'Suggested role set' })).toBeInTheDocument()
     expect(screen.getByText(/make it yours: reorder, replace, remove, or add roles/i)).toBeInTheDocument()
     expect(screen.getByText(/shareable cards always use this current set/i)).toBeInTheDocument()
+    const explanation = screen.getByText(/KinkAtlas favors meaningful evidence/i)
+    expect(explanation).toHaveTextContent(/avoiding a set of near-duplicates/i)
+    expect(explanation).toHaveTextContent(/five is a maximum, not a target/i)
+  })
+
+  it('makes a role primary, preserves the Suggested Role Set, and restores exact initial state', () => {
+    render(<RoleProfileBuilder roleResults={roleResults} />)
+    const suggested = roleListLabels('Suggested roles')
+    const chosen = suggested[2]!
+
+    expect(screen.queryByRole('button', { name: 'Restore suggested set' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: `Make ${chosen} primary` }))
+
+    expect(roleListLabels('Current role set')).toEqual([chosen, ...suggested.slice(0, 2), ...suggested.slice(3)])
+    expect(roleListLabels('Suggested roles')).toEqual(suggested)
+    expect(screen.getByRole('status')).toHaveTextContent(`${chosen} is now primary in your role set.`)
+    expect(screen.queryByRole('button', { name: `Make ${chosen} primary` })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: `Replace ${suggested[0]}` }))
+    expect(screen.getByRole('group', { name: 'Replacement mode' })).toHaveTextContent(`Choose a role to replace ${suggested[0]}.`)
+    fireEvent.click(screen.getByRole('button', { name: 'Restore suggested set' }))
+
+    expect(roleListLabels('Current role set')).toEqual(suggested)
+    expect(screen.queryByRole('group', { name: 'Replacement mode' })).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Suggested role set restored.')
+    expect(screen.queryByRole('button', { name: 'Restore suggested set' })).not.toBeInTheDocument()
+  })
+
+  it('allows replacement cancellation without changing the current role set', () => {
+    render(<RoleProfileBuilder roleResults={roleResults} />)
+    const before = roleListLabels('Current role set')
+
+    fireEvent.click(screen.getByRole('button', { name: `Replace ${before[0]}` }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel replacement' }))
+
+    expect(roleListLabels('Current role set')).toEqual(before)
+    expect(screen.queryByRole('group', { name: 'Replacement mode' })).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Replacement cancelled.')
+  })
+
+  it('cancels replacement mode when its target role is removed', () => {
+    render(<RoleProfileBuilder roleResults={roleResults} />)
+    const target = roleListLabels('Current role set')[0]!
+
+    fireEvent.click(screen.getByRole('button', { name: `Replace ${target}` }))
+    fireEvent.click(screen.getByRole('button', { name: `Remove ${target}` }))
+
+    expect(screen.queryByRole('group', { name: 'Replacement mode' })).not.toBeInTheDocument()
+    expect(roleListLabels('Current role set')).not.toContain(target)
+  })
+
+  it('restores the Suggested Role Set after the editable set reaches zero roles', () => {
+    render(<RoleProfileBuilder roleResults={roleResults} />)
+    const suggested = roleListLabels('Suggested roles')
+
+    suggested.forEach((label) => fireEvent.click(screen.getByRole('button', { name: `Remove ${label}` })))
+
+    expect(screen.queryByRole('list', { name: 'Current role set' })).not.toBeInTheDocument()
+    expect(screen.getByText(/no roles selected/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Restore suggested set' }))
+    expect(roleListLabels('Current role set')).toEqual(suggested)
+  })
+
+  it('derives related-role exploration from the current edited set', async () => {
+    render(<RoleProfileBuilder roleResults={roleResults} />)
+    const suggested = roleListLabels('Current role set')
+    suggested.forEach((label) => fireEvent.click(screen.getByRole('button', { name: `Remove ${label}` })))
+
+    const relatedRegion = screen.getByRole('region', { name: 'Explore related roles' })
+    expect(relatedRegion).toHaveTextContent('No relationship-reviewed nearby roles are available for the current role set.')
+
+    const seed = roleLibrary.roles.find((role) => buildRelatedRoleProfiles([role.id]).length > 0)!
+    const expectedRelated = buildRelatedRoleProfiles([seed.id]).map((role) => role.label)
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search roles' }), { target: { value: seed.label } })
+    fireEvent.click(await screen.findByRole('button', { name: `Add ${seed.label}` }))
+
+    const displayedRelated = within(relatedRegion).getAllByRole('listitem').map((item) => item.querySelector('strong')?.textContent)
+    expect(displayedRelated).toEqual(expectedRelated)
+    expect(displayedRelated).not.toContain(seed.label)
+    expect(screen.getByText(`${seed.label} added by you.`)).toBeInTheDocument()
   })
 
   it('starts with every role in the current role set selected and labelled', () => {

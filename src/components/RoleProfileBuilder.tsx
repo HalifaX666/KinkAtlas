@@ -1,7 +1,7 @@
-import { ArrowDown, ArrowUp, Clipboard, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Clipboard, Crown, Plus, RefreshCw, Search, Trash2, Undo2, X } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { roleLibrary, roleLibraryRoleById } from "../taxonomy/roleLibrary";
-import { addRoleProfileEntry, buildEditableRoleProfileEntries, buildRoleProfileCandidates, optimizeRoleProfile, removeRoleProfileEntry, reorderRoleProfileEntry, replaceRoleProfileEntry, type EditableRoleProfileEntry } from "../engine/roleProfileOptimizer";
+import { addRoleProfileEntry, buildEditableRoleProfileEntries, buildRoleProfileCandidates, makeRoleProfileEntryPrimary, optimizeRoleProfile, removeRoleProfileEntry, reorderRoleProfileEntry, replaceRoleProfileEntry, roleProfileEntriesEqual, selectDisplayableRoleProfileAlternates, type EditableRoleProfileEntry } from "../engine/roleProfileOptimizer";
 import { buildRoleLabelList } from "../engine/roleProfileExport";
 import { searchRoleLibrary } from "../engine/roleProfileSearch";
 import { buildRelatedRoleProfiles } from "../engine/roleProfileExploration";
@@ -39,11 +39,23 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
   const selectedIds = new Set(selectedRoles.map((role) => role.roleId));
   const selectedRoleById = useMemo(() => new Map(selectedRoles.map((role) => [role.roleId, role])), [selectedRoles]);
   const recommendationById = useMemo(() => new Map(optimization.recommendations.map((item) => [item.candidate.roleId, item])), [optimization]);
-  const relatedRoles = useMemo(() => buildRelatedRoleProfiles(optimization.recommendations.map((item) => item.candidate.roleId)), [optimization]);
+  const relatedRoles = useMemo(() => buildRelatedRoleProfiles(selectedRoles.map((role) => role.roleId).sort((left, right) => left.localeCompare(right))), [selectedRoles]);
   const searchResults = useMemo(() => searchRoleLibrary(roleLibrary.roles, query), [query]);
-  const omittedAlternates = optimization.alternates.slice(0, 8).filter((alternate) => Boolean(alternate.candidate.label.trim() && (alternate.reason.trim() || alternate.explanation.trim())));
+  const omittedAlternates = selectDisplayableRoleProfileAlternates(optimization.alternates);
+  const roleSetMatchesSuggestion = roleProfileEntriesEqual(selectedRoles, initialRoles);
 
   useEffect(() => onRoleSetChange?.(selectedRoles), [onRoleSetChange, selectedRoles]);
+
+  const restoreSuggestedSet = () => {
+    setSelectedRoles(initialRoles.map((role) => ({ ...role })));
+    setReplacementRoleId(undefined);
+    setStatus("Suggested role set restored.");
+  };
+
+  const cancelReplacement = () => {
+    setReplacementRoleId(undefined);
+    setStatus("Replacement cancelled.");
+  };
 
   const addRole = (roleId: string, label: string, definition?: string) => {
     if (replacementRoleId) {
@@ -80,16 +92,17 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
         <h3>Your role set is ready</h3>
         <p>KinkAtlas built a suggested starting set from roles that represent different parts of your results. Keep it as-is or make it yours before sharing; suggestions are not assignments.</p>
       </div>
-      <div className="profile-recommendation-summary" aria-labelledby="role-recommendations-heading">
+      <section className="profile-recommendation-summary" aria-labelledby="role-recommendations-heading">
         <h3 id="role-recommendations-heading">Suggested role set</h3>
         <p>KinkAtlas suggested these roles from your assessment evidence. You can keep fewer or none; manually adding a role is separate from receiving an assessment suggestion.</p>
+        <p className="profile-suggestion-explanation"><strong>Why these roles?</strong> KinkAtlas favors meaningful evidence while avoiding a set of near-duplicates, and may include a role that represents a distinct part of your results. Directly chosen vocabulary can shape the suggested primary. Five is a maximum, not a target; suggestions are not assignments.</p>
         {optimization.primaryExplanation && (
           <p>
             <strong>Why this suggested primary:</strong> {optimization.primaryExplanation}
           </p>
         )}
         {optimization.recommendations.length ? (
-          <ol>
+          <ol aria-label="Suggested roles">
             {optimization.recommendations.map((recommendation) => (
               <li key={recommendation.candidate.roleId}>
                 <div>
@@ -105,18 +118,24 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
             <p>Your answers do not currently support an automatic role suggestion. Choosing none—or exploring labels manually—is valid.</p>
           </div>
         )}
-      </div>
+      </section>
       <div className="profile-builder-grid">
-        <div className="profile-role-editor">
-          <header>
+        <section className="profile-role-editor" aria-labelledby="current-role-set-heading">
+          <header className="profile-role-editor-heading">
             <div>
-              <h3>Your role set</h3>
+              <h3 id="current-role-set-heading">Your role set</h3>
               <p>Make it yours: reorder, replace, remove, or add roles. Shareable cards always use this current set.</p>
               <p>{selectedRoles.length} of 5 roles in your set; fewer or none is valid. The first role is primary within this role set.</p>
             </div>
+            {!roleSetMatchesSuggestion && (
+              <button type="button" className="button secondary profile-restore-button" onClick={restoreSuggestedSet}>
+                <Undo2 size={16} />
+                Restore suggested set
+              </button>
+            )}
           </header>
           {selectedRoles.length ? (
-            <ol className="profile-role-list">
+            <ol className="profile-role-list" aria-label="Current role set">
               {selectedRoles.map((role, index) => (
                 <li key={role.roleId}>
                   <div>
@@ -133,6 +152,20 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
                     )}
                   </div>
                   <div className="profile-role-actions">
+                    {index > 0 && (
+                      <button
+                        type="button"
+                        className="quiet-button profile-make-primary"
+                        aria-label={`Make ${role.label} primary`}
+                        onClick={() => {
+                          setSelectedRoles((current) => makeRoleProfileEntryPrimary(current, role.roleId));
+                          setStatus(`${role.label} is now primary in your role set.`);
+                        }}
+                      >
+                        <Crown size={16} />
+                        Make primary
+                      </button>
+                    )}
                     <button type="button" className="quiet-button" aria-label={`Move ${role.label} up`} disabled={index === 0} onClick={() => setSelectedRoles((current) => reorderRoleProfileEntry(current, index, index - 1))}>
                       <ArrowUp size={17} />
                     </button>
@@ -178,7 +211,7 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
               Copy role labels
             </button>
           </div>
-        </div>
+        </section>
 
         <div className="profile-catalog-search">
           <section className="profile-related-roles" aria-labelledby="related-roles-heading">
@@ -200,7 +233,7 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
                 ))}
               </ul>
             ) : (
-              <p>No relationship-reviewed nearby roles are available for the current recommendations.</p>
+              <p>No relationship-reviewed nearby roles are available for the current role set.</p>
             )}
           </section>
           <section className="profile-vocabulary-browser" aria-labelledby="role-vocabulary-heading">
@@ -211,7 +244,15 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
               <Search size={18} />
               <input id="role-vocabulary-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Try Dominant, pup, Latex…" />
             </div>
-            {replacementRoleId && <p className="profile-replacement-note">Choose a role to replace {selectedRoles.find((role) => role.roleId === replacementRoleId)?.label}.</p>}
+            {replacementRoleId && (
+              <div className="profile-replacement-note" role="group" aria-label="Replacement mode">
+                <span>Choose a role to replace <strong>{selectedRoles.find((role) => role.roleId === replacementRoleId)?.label}</strong>.</span>
+                <button type="button" className="quiet-button" onClick={cancelReplacement}>
+                  <X size={15} />
+                  Cancel replacement
+                </button>
+              </div>
+            )}
             {query && (
               <ul className="profile-search-results">
                 {searchResults.map((role) => {
