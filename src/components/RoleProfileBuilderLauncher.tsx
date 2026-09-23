@@ -7,7 +7,7 @@ const LazyRoleProfileBuilder = lazy(async () => {
   return { default: module.RoleProfileBuilder };
 });
 
-export function RoleProfileBuilderLauncher({ roleResults, refinementAnswers, onRoleSetChange }: { roleResults: RoleResult[]; refinementAnswers: AssessmentAnswers["refinement"]; onRoleSetChange: (roles: EditableRoleProfileEntry[]) => void }) {
+export function RoleProfileBuilderLauncher({ roleResults, refinementAnswers, discoveryAnswers, onRoleSetChange }: { roleResults: RoleResult[]; refinementAnswers: AssessmentAnswers["refinement"]; discoveryAnswers: AssessmentAnswers["discovery"]; onRoleSetChange: (roles: EditableRoleProfileEntry[]) => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -49,7 +49,7 @@ export function RoleProfileBuilderLauncher({ roleResults, refinementAnswers, onR
           <div className="profile-builder-content-inner">
             <p className="profile-builder-help">Choose up to five roles that feel useful to you. Reorder them, choose a primary role, replace them, or leave the set empty.</p>
             <Suspense fallback={<p role="status">Loading role suggestionsâ€¦</p>}>
-              <LazyRoleProfileBuilder roleResults={roleResults} refinementAnswers={refinementAnswers} embedded onRoleSetChange={onRoleSetChange} />
+              <LazyRoleProfileBuilder roleResults={roleResults} refinementAnswers={refinementAnswers} discoveryAnswers={discoveryAnswers} embedded onRoleSetChange={onRoleSetChange} />
             </Suspense>
           </div>
         </div>

@@ -13,9 +13,21 @@ describe("recommendation quality report", () => {
 
   it("preserves coverage, question, and deterministic role-set invariants", () => {
     const report = buildRecommendationReport();
-    expect(report.coverage).toEqual({ roles: 812, decisionPolicies: 812, definitionStates: 812, usableDefinitions: 702, unavailableDefinitions: 110, automaticRecommendation: 208, confirmationBased: 139, legitimateTopFiveReach: 347, manualOnly: 465, relationships: 60, familyCoverage: 448 });
+    expect(report.coverage).toEqual({
+      roles: 812,
+      decisionPolicies: 812,
+      definitionStates: 812,
+      usableDefinitions: 702,
+      unavailableDefinitions: 110,
+      automaticRecommendation: 215,
+      confirmationBased: 139,
+      legitimateTopFiveReach: 354,
+      manualOnly: 458,
+      relationships: 60,
+      familyCoverage: 448,
+    });
 
-    expect(report.questions).toMatchObject({ broad: 20, refinements: 52, mandatoryMaximum: 26, optionalPool: 306 });
+    expect(report.questions).toMatchObject({ broad: 20, refinements: 52, mandatoryMaximum: 26, optionalPool: 313 });
     expect(report.questions.maximumRecommendationClarifications).toBeLessThanOrEqual(6);
     expect(report.roleSets.deterministicRepeat).toBe(true);
     expect(renderRecommendationReport(report)).toContain("recommendations 50/50");

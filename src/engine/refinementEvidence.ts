@@ -58,6 +58,41 @@ export const refinementTargets: RefinementTargetDefinition[] = [
     roleId: "role:sensual-dominant-d22d9b07",
     label: "Sensual Dominant",
   },
+  {
+    id: "primal-sadist",
+    roleId: "role:primal-sadist-fa0161a7",
+    label: "Primal Sadist",
+  },
+  {
+    id: "primal-masochist",
+    roleId: "role:primal-masochist-49aa4ec8",
+    label: "Primal Masochist",
+  },
+  {
+    id: "primal-top",
+    roleId: "role:primal-top-fcb7c944",
+    label: "Primal Top",
+  },
+  {
+    id: "primal-bottom",
+    roleId: "role:primal-bottom-c8f93544",
+    label: "Primal Bottom",
+  },
+  {
+    id: "primal-sensualist",
+    roleId: "role:primal-sensualist-388946ad",
+    label: "Primal Sensualist",
+  },
+  {
+    id: "service-rigger",
+    roleId: "role:service-rigger-01721e49",
+    label: "Service Rigger",
+  },
+  {
+    id: "service-brat",
+    roleId: "role:service-brat-8beb9ac8",
+    label: "Service Brat",
+  },
 ];
 
 export const refinementTargetById = new Map(refinementTargets.map((target) => [target.id, target]));

@@ -124,6 +124,43 @@ function routeCandidates(answers: AssessmentAnswers, traitScores: TraitScores): 
       eligible: dominance && sensualPatternSupported(traitScores),
       strength: traitStrength(traitScores, "dominance", "sensorySeeking", "emotionalConnection"),
     },
+
+    {
+      questionId: "ref-primal-sadist",
+      eligible: traitSupported(traitScores, "primality") && traitSupported(traitScores, "painGiving", 0.55, 2),
+      strength: traitStrength(traitScores, "primality", "painGiving"),
+    },
+    {
+      questionId: "ref-primal-masochist",
+      eligible: traitSupported(traitScores, "primality") && traitSupported(traitScores, "painReceiving", 0.55, 2),
+      strength: traitStrength(traitScores, "primality", "painReceiving"),
+    },
+    {
+      questionId: "ref-primal-top",
+      eligible: traitSupported(traitScores, "primality") && traitSupported(traitScores, "leadership", 0.5, 2) && traitSupported(traitScores, "pleasureGiving", 0.5, 2),
+      strength: traitStrength(traitScores, "primality", "leadership", "pleasureGiving"),
+    },
+    {
+      questionId: "ref-primal-bottom",
+      eligible: traitSupported(traitScores, "primality") && traitSupported(traitScores, "pleasureReceiving", 0.5, 2) && traitSupported(traitScores, "sensorySeeking", 0.5, 2),
+      strength: traitStrength(traitScores, "primality", "pleasureReceiving", "sensorySeeking"),
+    },
+    {
+      questionId: "ref-primal-sensual",
+      eligible: traitSupported(traitScores, "primality") && traitSupported(traitScores, "sensorySeeking", 0.55, 2),
+      strength: traitStrength(traitScores, "primality", "sensorySeeking"),
+    },
+
+    {
+      questionId: "ref-service-rigger",
+      eligible: traitSupported(traitScores, "serviceGiving", 0.55, 2) && traitSupported(traitScores, "ropeGiving", 0.55, 2) && traitSupported(traitScores, "technicalInterest", 0.5, 2),
+      strength: traitStrength(traitScores, "serviceGiving", "ropeGiving", "technicalInterest"),
+    },
+    {
+      questionId: "ref-service-brat",
+      eligible: traitSupported(traitScores, "serviceGiving", 0.55, 2) && traitSupported(traitScores, "brattiness", 0.55, 2),
+      strength: traitStrength(traitScores, "serviceGiving", "brattiness"),
+    },
   ];
 }
 

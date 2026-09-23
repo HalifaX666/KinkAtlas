@@ -153,6 +153,63 @@ export const refinementQuestions: RefinementQuestion[] = [
     context: intersectionContext,
     answers: connectionAnswers("sensual-dominant"),
   },
+  {
+    id: "ref-primal-sadist",
+    kind: "refinement",
+    family: "primal",
+    prompt: "Can giving consensual pain or strong intensity feel like a meaningful part of your primal play?",
+    context: intersectionContext,
+    answers: connectionAnswers("primal-sadist"),
+  },
+  {
+    id: "ref-primal-masochist",
+    kind: "refinement",
+    family: "primal",
+    prompt: "Can receiving consensual pain or strong intensity feel like a meaningful part of your primal play?",
+    context: intersectionContext,
+    answers: connectionAnswers("primal-masochist"),
+  },
+  {
+    id: "ref-primal-top",
+    kind: "refinement",
+    family: "primal",
+    prompt: "Can taking the active or giving position feel like a meaningful part of your primal play?",
+    context: intersectionContext,
+    answers: connectionAnswers("primal-top"),
+  },
+  {
+    id: "ref-primal-bottom",
+    kind: "refinement",
+    family: "primal",
+    prompt: "Can taking the receiving position feel like a meaningful part of your primal play?",
+    context: intersectionContext,
+    answers: connectionAnswers("primal-bottom"),
+  },
+  {
+    id: "ref-primal-sensual",
+    kind: "refinement",
+    family: "primal",
+    prompt: "Can sensory pleasure, touch, texture, or bodily awareness feel central to your primal play?",
+    context: intersectionContext,
+    answers: connectionAnswers("primal-sensualist"),
+  },
+
+  {
+    id: "ref-service-rigger",
+    kind: "refinement",
+    family: "service",
+    prompt: "Can tying another adult feel meaningful partly because you are creating the rope experience they want?",
+    context: intersectionContext,
+    answers: connectionAnswers("service-rigger"),
+  },
+  {
+    id: "ref-service-brat",
+    kind: "refinement",
+    family: "service",
+    prompt: "Can negotiated teasing or playful defiance coexist with service being meaningful to you?",
+    context: intersectionContext,
+    answers: connectionAnswers("service-brat"),
+  },
 ];
 
 export const refinementQuestionById = Object.fromEntries(refinementQuestions.map((question) => [question.id, question])) as Record<string, RefinementQuestion>;

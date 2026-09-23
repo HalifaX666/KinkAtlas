@@ -21,8 +21,8 @@ function recommendationTrustLabel(evidenceType: "inferred" | "direct" | "hybrid"
   return "Needs your confirmation";
 }
 
-export function RoleProfileBuilder({ roleResults, refinementAnswers, embedded = false, onRoleSetChange }: { roleResults: RoleResult[]; refinementAnswers?: AssessmentAnswers["refinement"]; embedded?: boolean; onRoleSetChange?: (roles: EditableRoleProfileEntry[]) => void }) {
-  const optimization = useMemo(() => optimizeRoleProfile(buildRoleProfileCandidates(roleResults, refinementAnswers ?? {})), [roleResults, refinementAnswers]);
+export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAnswers, embedded = false, onRoleSetChange }: { roleResults: RoleResult[]; refinementAnswers?: AssessmentAnswers["refinement"]; discoveryAnswers?: AssessmentAnswers["discovery"]; embedded?: boolean; onRoleSetChange?: (roles: EditableRoleProfileEntry[]) => void }) {
+  const optimization = useMemo(() => optimizeRoleProfile(buildRoleProfileCandidates(roleResults, refinementAnswers ?? {}, discoveryAnswers ?? {})), [roleResults, refinementAnswers, discoveryAnswers]);
   const initialRoles = useMemo(() => buildEditableRoleProfileEntries(optimization), [optimization]);
   const [selectedRoles, setSelectedRoles] = useState<EditableRoleProfileEntry[]>(initialRoles);
   const [query, setQuery] = useState("");

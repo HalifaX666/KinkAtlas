@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { calculateTraitScores } from "../engine/discoveryScoring";
 import { evaluateRefinementEvidence, supportedRefinementTargets } from "../engine/refinementEvidence";
 import { eligibleRefinementFamilies, selectRefinementQuestions } from "../engine/refinementRouting";
-import type { AssessmentAnswers } from "../types";
 import { buildRoleProfileCandidates, optimizeRoleProfile } from "../engine/roleProfileOptimizer";
 import { matchRoles } from "../engine/roleMatching";
+import type { AssessmentAnswers } from "../types";
 
 const answers = (discovery: Record<string, string>, refinement: Record<string, string> = {}): AssessmentAnswers => ({
   discovery,
@@ -15,6 +15,30 @@ const answers = (discovery: Record<string, string>, refinement: Record<string, s
 });
 
 describe("Refine evidence architecture", () => {
+  it("does not allow injected Refine confirmation to bypass Discovery routing", () => {
+    const assessment = answers(
+      {
+        "d-power-receive": "no",
+        "d-position-give": "strong",
+        "r-top": "strong",
+        "r-lead": "strong",
+      },
+      {
+        "ref-sub-top": "yes",
+      },
+    );
+
+    const scores = calculateTraitScores(assessment.discovery);
+    const roleResults = matchRoles(scores, assessment.discovery);
+
+    const candidate = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery).find((item) => item.label === "Submissive Top");
+
+    expect(candidate).toMatchObject({
+      evidenceType: "hybrid",
+      eligible: false,
+    });
+  });
+
   it("does not recommend Submissive Top from Discovery evidence alone", () => {
     const assessment = answers({
       "d-power-receive": "strong",
@@ -28,7 +52,7 @@ describe("Refine evidence architecture", () => {
     const scores = calculateTraitScores(assessment.discovery);
     const roleResults = matchRoles(scores, assessment.discovery);
 
-    const candidates = buildRoleProfileCandidates(roleResults, assessment.refinement);
+    const candidates = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery);
 
     const candidate = candidates.find((item) => item.label === "Submissive Top");
 
@@ -59,7 +83,7 @@ describe("Refine evidence architecture", () => {
     const scores = calculateTraitScores(assessment.discovery);
     const roleResults = matchRoles(scores, assessment.discovery);
 
-    const candidates = buildRoleProfileCandidates(roleResults, assessment.refinement);
+    const candidates = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery);
 
     const candidate = candidates.find((item) => item.label === "Submissive Top");
 
@@ -91,9 +115,36 @@ describe("Refine evidence architecture", () => {
     const scores = calculateTraitScores(assessment.discovery);
     const roleResults = matchRoles(scores, assessment.discovery);
 
-    const optimization = optimizeRoleProfile(buildRoleProfileCandidates(roleResults, assessment.refinement));
+    const optimization = optimizeRoleProfile(buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery));
 
     expect(optimization.recommendations.map((item) => item.candidate.label)).not.toContain("Submissive Top");
+  });
+
+  it("opens Primal Sadist refinement only when primal and pain-giving evidence coexist", () => {
+    const assessment = answers({
+      "d-primal": "strong",
+      "r-primal-give": "strong",
+      "d-intensity": "strong",
+      "r-pain-give": "strong",
+    });
+
+    const questions = selectRefinementQuestions(assessment, calculateTraitScores(assessment.discovery));
+
+    expect(questions.map((question) => question.id)).toContain("ref-primal-sadist");
+  });
+
+  it("opens Service Rigger refinement only when service-giving and rope-giving evidence coexist", () => {
+    const assessment = answers({
+      "d-service": "strong",
+      "r-service-give": "strong",
+      "d-rope": "strong",
+      "r-rope-give": "strong",
+      "r-rope-motivation": "strong",
+    });
+
+    const questions = selectRefinementQuestions(assessment, calculateTraitScores(assessment.discovery));
+
+    expect(questions.map((question) => question.id)).toContain("ref-service-rigger");
   });
 
   it("does not treat maybe as sufficient hybrid evidence", () => {
@@ -114,7 +165,7 @@ describe("Refine evidence architecture", () => {
     const scores = calculateTraitScores(assessment.discovery);
     const roleResults = matchRoles(scores, assessment.discovery);
 
-    const candidate = buildRoleProfileCandidates(roleResults, assessment.refinement).find((item) => item.label === "Submissive Top");
+    const candidate = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery).find((item) => item.label === "Submissive Top");
 
     expect(candidate?.eligible).toBe(false);
   });
@@ -195,6 +246,7 @@ describe("Refine evidence architecture", () => {
     const questions = selectRefinementQuestions(assessment, calculateTraitScores(assessment.discovery));
 
     expect(questions.length).toBeLessThanOrEqual(6);
+
     expect(new Set(questions.map((question) => question.id)).size).toBe(questions.length);
   });
 

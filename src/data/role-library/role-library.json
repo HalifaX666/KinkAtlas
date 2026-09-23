@@ -1487,10 +1487,10 @@
       "label": "Primal Sadist",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "sadomasochism",
         "primal"
@@ -1502,10 +1502,10 @@
       "label": "Primal Masochist",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "sadomasochism",
         "primal"
@@ -4406,10 +4406,10 @@
       "label": "Primal Top",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "play-position",
         "primal"
@@ -4421,10 +4421,10 @@
       "label": "Primal Bottom",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "play-position",
         "primal"
@@ -4635,10 +4635,10 @@
       "label": "Primal Sensualist",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "primal"
       ],
@@ -8957,10 +8957,10 @@
       "label": "Service Rigger",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "service",
         "rope-bondage"
@@ -8972,10 +8972,10 @@
       "label": "Service Brat",
       "aliases": [],
       "facets": [],
-      "assessmentMode": "exploration",
-      "recommendationEligibility": "exploration-only",
+      "assessmentMode": "hybrid",
+      "recommendationEligibility": "eligible-with-direct-evidence",
       "nearestRoleIds": [],
-      "decisionPathway": "manual-only",
+      "decisionPathway": "hybrid",
       "familyIds": [
         "service",
         "brat-dynamics"
