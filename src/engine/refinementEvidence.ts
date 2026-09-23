@@ -1,5 +1,7 @@
-import { refinementQuestionById } from "../data/refinement";
-import type { AssessmentAnswers, RefinementEvidence, RefinementTargetId } from "../types";
+import { refinementQuestionById, refinementQuestions } from "../data/refinement";
+import type { AssessmentAnswers, RefinementEvidence, RefinementPrimaryPreference, RefinementTargetId } from "../types";
+import { calculateTraitScores } from "./discoveryScoring";
+import { selectRefinementQuestions } from "./refinementRouting";
 
 export interface RefinementTargetDefinition {
   id: RefinementTargetId;
@@ -169,62 +171,64 @@ export const refinementTargetById = new Map(refinementTargets.map((target) => [t
 
 export const refinementTargetByRoleId = new Map(refinementTargets.map((target) => [target.roleId, target]));
 
-const directTargetByQuestionAndAnswer: Record<string, Record<string, RefinementTargetId>> = {
-  "ref-little-vocabulary": {
-    little: "little",
-    "little-one": "little-one",
-    "little-girl": "little-girl",
-    "little-boy": "little-boy",
-    "little-princess": "little-princess",
-    "little-prince": "little-prince",
-    "bratty-little": "bratty-little",
-    babygirl: "babygirl",
-  },
-  "ref-caregiver-title": {
-    daddy: "daddy",
-    mommy: "mommy",
-  },
-  "ref-pet-persona": {
-    canine: "puppy",
-    feline: "kitten",
-  },
-  "ref-age-roleplay-position": {
-    middle: "middle",
-    big: "big",
-  },
-};
-
-const specificLittleVocabulary = new Set(["little-one", "little-girl", "little-boy", "little-princess", "little-prince", "bratty-little", "babygirl"]);
-
-function roleIdForTarget(targetId: RefinementTargetId | undefined): string | undefined {
-  return targetId ? refinementTargetById.get(targetId)?.roleId : undefined;
+interface SelectedPrimaryPreference {
+  preference: RefinementPrimaryPreference;
 }
 
-export function preferredPrimaryRoleIdFromRefinement(refinementAnswers: AssessmentAnswers["refinement"]): string | undefined {
-  const priorityQuestionIds = ["ref-little-vocabulary", "ref-caregiver-title", "ref-pet-persona", "ref-age-roleplay-position"];
+function selectedPrimaryPreferences(refinementAnswers: AssessmentAnswers["refinement"], routedQuestionIds: ReadonlySet<string>): SelectedPrimaryPreference[] {
+  return refinementQuestions.flatMap((question) => {
+    if (!routedQuestionIds.has(question.id)) return [];
 
-  for (const questionId of priorityQuestionIds) {
-    const answerId = refinementAnswers[questionId];
-    const targetId = answerId ? directTargetByQuestionAndAnswer[questionId]?.[answerId] : undefined;
-    const roleId = roleIdForTarget(targetId);
+    const answerId = refinementAnswers[question.id];
+    const preference = question.answers.find((answer) => answer.id === answerId)?.primaryPreference;
 
-    if (roleId) return roleId;
-  }
-
-  const littlePositionSelected = refinementAnswers["ref-age-roleplay-position"] === "little";
-  const littleVocabularyAnswer = refinementAnswers["ref-little-vocabulary"];
-
-  if (littlePositionSelected && littleVocabularyAnswer !== "other") {
-    return roleIdForTarget("little");
-  }
-
-  return undefined;
+    return preference ? [{ preference }] : [];
+  });
 }
 
-export function genericLittleIsSuperseded(refinementAnswers: AssessmentAnswers["refinement"]): boolean {
-  const littleVocabularyAnswer = refinementAnswers["ref-little-vocabulary"];
+function roleIdForTarget(targetId: RefinementTargetId): string | undefined {
+  return refinementTargetById.get(targetId)?.roleId;
+}
 
-  return littleVocabularyAnswer === "other" || (littleVocabularyAnswer !== undefined && specificLittleVocabulary.has(littleVocabularyAnswer));
+export function preferredPrimaryRoleIdsFromRefinement(refinementAnswers: AssessmentAnswers["refinement"], discoveryAnswers: AssessmentAnswers["discovery"] = {}): string[] {
+  const assessment: AssessmentAnswers = {
+    discovery: discoveryAnswers,
+    refinement: refinementAnswers,
+    readiness: {},
+    boundaries: {},
+    negotiation: {},
+  };
+  const routedQuestionIds = new Set(selectRefinementQuestions(assessment, calculateTraitScores(discoveryAnswers)).map((question) => question.id));
+  const selected = selectedPrimaryPreferences(refinementAnswers, routedQuestionIds);
+  const blockedFallbackGroups = new Set(
+    selected.flatMap(({ preference }) => (preference.kind === "direct" && preference.fallbackGroup ? [preference.fallbackGroup] : preference.kind === "suppress-fallback" ? [preference.fallbackGroup] : [])),
+  );
+  const roleIds = selected.flatMap(({ preference }) => {
+    if (preference.kind === "suppress-fallback") return [];
+    if (preference.kind === "fallback" && blockedFallbackGroups.has(preference.fallbackGroup)) return [];
+
+    const roleId = roleIdForTarget(preference.targetId);
+    return roleId ? [roleId] : [];
+  });
+
+  return [...new Set(roleIds)].sort((left, right) => left.localeCompare(right));
+}
+
+export function refinementFallbackIsSuperseded(targetId: RefinementTargetId, refinementAnswers: AssessmentAnswers["refinement"], routedQuestionIds: ReadonlySet<string>): boolean {
+  const fallbackGroups = new Set(
+    refinementQuestions.flatMap((question) =>
+      question.answers.flatMap((answer) => {
+        const preference = answer.primaryPreference;
+        return preference?.kind === "fallback" && preference.targetId === targetId ? [preference.fallbackGroup] : [];
+      }),
+    ),
+  );
+  const selected = selectedPrimaryPreferences(refinementAnswers, routedQuestionIds);
+
+  return selected.some(({ preference }) => {
+    if (preference.kind === "suppress-fallback") return fallbackGroups.has(preference.fallbackGroup);
+    return preference.kind === "direct" && preference.targetId !== targetId && Boolean(preference.fallbackGroup && fallbackGroups.has(preference.fallbackGroup));
+  });
 }
 
 export function evaluateRefinementEvidence(refinementAnswers: AssessmentAnswers["refinement"]): RefinementEvidence[] {

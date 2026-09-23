@@ -54,10 +54,18 @@ export type RefinementFamilyId = "submission" | "dominance" | "primal" | "servic
 
 export type RefinementTargetId = "submissive-top" | "submissive-sadist" | "submissive-masochist" | "bratty-sub" | "pleasure-submissive" | "sensual-submissive" | "dominant-bottom" | "dominant-sadist" | "dominant-masochist" | "sensual-dominant" | "primal-sadist" | "primal-masochist" | "primal-top" | "primal-bottom" | "primal-sensualist" | "service-rigger" | "service-brat" | "puppy" | "kitten" | "daddy" | "mommy" | "little" | "little-one" | "little-girl" | "little-boy" | "little-princess" | "little-prince" | "bratty-little" | "babygirl" | "middle" | "big";
 
+export type RefinementPrimaryPreferenceGroup = "little-vocabulary";
+
+export type RefinementPrimaryPreference =
+  | { kind: "direct"; targetId: RefinementTargetId; fallbackGroup?: RefinementPrimaryPreferenceGroup }
+  | { kind: "fallback"; targetId: RefinementTargetId; fallbackGroup: RefinementPrimaryPreferenceGroup }
+  | { kind: "suppress-fallback"; fallbackGroup: RefinementPrimaryPreferenceGroup };
+
 export interface RefinementAnswerOption extends AnswerOption {
   supports?: RefinementTargetId[];
   weakSupports?: RefinementTargetId[];
   rejects?: RefinementTargetId[];
+  primaryPreference?: RefinementPrimaryPreference;
 }
 
 export interface RefinementQuestion {

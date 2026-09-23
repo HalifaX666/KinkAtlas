@@ -2,7 +2,7 @@ import { roleById } from "../data/roles";
 import { traitById } from "../data/traits";
 import { relationshipsForLibraryRole, roleLibrary, roleLibraryRoleById, type RoleLibraryDecisionPathway, type RoleLibraryRole } from "../taxonomy/roleLibrary";
 import type { ConfidenceLevel, RoleResult, AssessmentAnswers } from "../types";
-import { evaluateRefinementEvidence, genericLittleIsSuperseded, refinementTargetByRoleId } from "./refinementEvidence";
+import { evaluateRefinementEvidence, refinementFallbackIsSuperseded, refinementTargetByRoleId } from "./refinementEvidence";
 import { calculateTraitScores } from "./discoveryScoring";
 import { selectRefinementQuestions } from "./refinementRouting";
 
@@ -55,6 +55,7 @@ export interface RoleProfileOptimization {
 export interface RoleProfileOptimizationOptions {
   excludedRoleIds?: Iterable<string>;
   preferredPrimaryRoleId?: string;
+  preferredPrimaryRoleIds?: Iterable<string>;
 }
 
 const confidenceValue: Record<ConfidenceLevel, number> = { high: 1, moderate: 0.72, low: 0.35 };
@@ -111,16 +112,18 @@ function primaryCentrality(candidate: RoleProfileCandidate, selected: RoleProfil
   return clamp(connectionValue / (selected.length - 1));
 }
 
-export function selectPrimaryRoleProfile(selected: RoleProfileRecommendation[], preferredPrimaryRoleId?: string): RoleProfileRecommendation | undefined {
-  const preferred = preferredPrimaryRoleId ? selected.find((item) => item.candidate.roleId === preferredPrimaryRoleId) : undefined;
-  return (
-    preferred ??
-    [...selected].sort((left, right) => {
-      const leftScore = baseScore(left.candidate) * 0.55 + left.candidate.primarySuitability * 0.3 + primaryCentrality(left.candidate, selected) * 0.1 + left.candidate.representationValue * 0.05;
-      const rightScore = baseScore(right.candidate) * 0.55 + right.candidate.primarySuitability * 0.3 + primaryCentrality(right.candidate, selected) * 0.1 + right.candidate.representationValue * 0.05;
-      return rightScore - leftScore || compareCandidateQuality(left.candidate, right.candidate);
-    })[0]
-  );
+function comparePrimaryQuality(left: RoleProfileRecommendation, right: RoleProfileRecommendation, selected: RoleProfileRecommendation[]): number {
+  const leftScore = baseScore(left.candidate) * 0.55 + left.candidate.primarySuitability * 0.3 + primaryCentrality(left.candidate, selected) * 0.1 + left.candidate.representationValue * 0.05;
+  const rightScore = baseScore(right.candidate) * 0.55 + right.candidate.primarySuitability * 0.3 + primaryCentrality(right.candidate, selected) * 0.1 + right.candidate.representationValue * 0.05;
+  return rightScore - leftScore || compareCandidateQuality(left.candidate, right.candidate);
+}
+
+export function selectPrimaryRoleProfile(selected: RoleProfileRecommendation[], preferredPrimaryRoleIds?: Iterable<string> | string): RoleProfileRecommendation | undefined {
+  const preferredIds = new Set(typeof preferredPrimaryRoleIds === "string" ? [preferredPrimaryRoleIds] : preferredPrimaryRoleIds ?? []);
+  const preferred = selected.filter((item) => preferredIds.has(item.candidate.roleId));
+  const candidates = preferred.length ? preferred : selected;
+
+  return [...candidates].sort((left, right) => comparePrimaryQuality(left, right, selected))[0];
 }
 
 function strongestOverlap(candidate: RoleProfileCandidate, selected: RoleProfileRecommendation[]): RoleProfileRecommendation | undefined {
@@ -174,9 +177,11 @@ export function optimizeRoleProfile(candidates: RoleProfileCandidate[], maximum 
     })
     .sort((left, right) => right.optimizerScore - left.optimizerScore || left.candidate.roleId.localeCompare(right.candidate.roleId));
 
-  const primary = selectPrimaryRoleProfile(selected, options.preferredPrimaryRoleId);
-  const primaryWasDirectlyPreferred = Boolean(primary && options.preferredPrimaryRoleId === primary.candidate.roleId);
-  const primaryExplanation = primary ? (primaryWasDirectlyPreferred ? `${primary.candidate.label} is the suggested primary because it is the most specific role vocabulary you directly selected among the eligible recommended roles.` : `${primary.candidate.label} is the suggested primary because it has the strongest combined evidence and overall-profile suitability among the recommended roles—not merely the highest raw percentage.`) : undefined;
+  const preferredPrimaryRoleIds = new Set(options.preferredPrimaryRoleIds ?? []);
+  if (options.preferredPrimaryRoleId) preferredPrimaryRoleIds.add(options.preferredPrimaryRoleId);
+  const primary = selectPrimaryRoleProfile(selected, preferredPrimaryRoleIds);
+  const primaryWasDirectlyPreferred = Boolean(primary && preferredPrimaryRoleIds.has(primary.candidate.roleId));
+  const primaryExplanation = primary ? (primaryWasDirectlyPreferred ? `${primary.candidate.label} is the suggested primary because it is directly selected role vocabulary and is the strongest fit among your eligible directly selected role labels.` : `${primary.candidate.label} is the suggested primary because it has the strongest combined evidence and overall-profile suitability among the recommended roles—not merely the highest raw percentage.`) : undefined;
   const recommendations = primary ? [primary, ...selected.filter((item) => item.candidate.roleId !== primary.candidate.roleId)] : selected;
   return { recommendations, primary, primaryExplanation, alternates };
 }
@@ -194,7 +199,7 @@ function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], ref
 
   const refinementSupported = refinementEvidence?.status === "supported";
 
-  if (role.id === "role:little-180ca01b" && genericLittleIsSuperseded(refinementAnswers)) {
+  if (role.id === "role:little-180ca01b" && refinementFallbackIsSuperseded("little", refinementAnswers, refinementQuestionIds)) {
     return {
       evidenceType: "hybrid" as const,
       eligible: false,

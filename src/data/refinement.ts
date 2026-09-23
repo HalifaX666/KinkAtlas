@@ -222,11 +222,13 @@ export const refinementQuestions: RefinementQuestion[] = [
         id: "canine",
         label: "A canine-inspired persona, such as a puppy or pup",
         supports: ["puppy"],
+        primaryPreference: { kind: "direct", targetId: "puppy" },
       },
       {
         id: "feline",
         label: "A feline-inspired persona, such as a kitten or cat",
         supports: ["kitten"],
+        primaryPreference: { kind: "direct", targetId: "kitten" },
       },
       {
         id: "both",
@@ -301,16 +303,19 @@ export const refinementQuestions: RefinementQuestion[] = [
         id: "little",
         label: "Little — a younger-feeling adult role centered on comfort, playfulness, care, or self-expression",
         supports: ["little"],
+        primaryPreference: { kind: "fallback", targetId: "little", fallbackGroup: "little-vocabulary" },
       },
       {
         id: "middle",
         label: "Middle — an age-inspired adult role with more independence while still enjoying care, comfort, or playful expression",
         supports: ["middle"],
+        primaryPreference: { kind: "direct", targetId: "middle" },
       },
       {
         id: "big",
         label: "Big — a more mature, grounded, or independent adult age-roleplay position",
         supports: ["big"],
+        primaryPreference: { kind: "direct", targetId: "big" },
       },
       {
         id: "multiple",
@@ -341,11 +346,13 @@ export const refinementQuestions: RefinementQuestion[] = [
         id: "daddy",
         label: "Daddy",
         supports: ["daddy"],
+        primaryPreference: { kind: "direct", targetId: "daddy" },
       },
       {
         id: "mommy",
         label: "Mommy",
         supports: ["mommy"],
+        primaryPreference: { kind: "direct", targetId: "mommy" },
       },
       {
         id: "caregiver",
@@ -381,46 +388,55 @@ export const refinementQuestions: RefinementQuestion[] = [
         id: "little",
         label: "Little",
         supports: ["little"],
+        primaryPreference: { kind: "direct", targetId: "little", fallbackGroup: "little-vocabulary" },
       },
       {
         id: "little-one",
         label: "Little one",
         supports: ["little-one"],
+        primaryPreference: { kind: "direct", targetId: "little-one", fallbackGroup: "little-vocabulary" },
       },
       {
         id: "little-girl",
         label: "Little girl",
         supports: ["little-girl"],
+        primaryPreference: { kind: "direct", targetId: "little-girl", fallbackGroup: "little-vocabulary" },
       },
       {
         id: "little-boy",
         label: "Little boy",
         supports: ["little-boy"],
+        primaryPreference: { kind: "direct", targetId: "little-boy", fallbackGroup: "little-vocabulary" },
       },
       {
         id: "little-princess",
         label: "Little princess",
         supports: ["little-princess"],
+        primaryPreference: { kind: "direct", targetId: "little-princess", fallbackGroup: "little-vocabulary" },
       },
       {
         id: "little-prince",
         label: "Little prince",
         supports: ["little-prince"],
+        primaryPreference: { kind: "direct", targetId: "little-prince", fallbackGroup: "little-vocabulary" },
       },
       {
         id: "bratty-little",
         label: "Bratty Little",
         supports: ["bratty-little"],
+        primaryPreference: { kind: "direct", targetId: "bratty-little", fallbackGroup: "little-vocabulary" },
       },
       {
         id: "babygirl",
         label: "Babygirl / baby girl",
         supports: ["babygirl"],
+        primaryPreference: { kind: "direct", targetId: "babygirl", fallbackGroup: "little-vocabulary" },
       },
       {
         id: "other",
         label: "Another Little-related label fits me better",
         noScore: true,
+        primaryPreference: { kind: "suppress-fallback", fallbackGroup: "little-vocabulary" },
       },
       {
         id: "unknown",

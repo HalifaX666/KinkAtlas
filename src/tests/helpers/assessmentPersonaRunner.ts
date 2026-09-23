@@ -10,7 +10,7 @@ import { calculateTraitScores } from "../../engine/discoveryScoring";
 import { generateRecommendations } from "../../engine/recommendations";
 import { evaluateReadiness } from "../../engine/readinessScoring";
 import { matchRoles } from "../../engine/roleMatching";
-import { preferredPrimaryRoleIdFromRefinement } from "../../engine/refinementEvidence";
+import { preferredPrimaryRoleIdsFromRefinement } from "../../engine/refinementEvidence";
 import { buildEditableRoleProfileEntries, buildRoleProfileCandidates, optimizeRoleProfile } from "../../engine/roleProfileOptimizer";
 import { getShareableRoleSet, type ShareResultsData } from "../../engine/shareResults";
 import type { AssessmentAnswers } from "../../types";
@@ -98,7 +98,7 @@ export function evaluateAssessmentPersona(persona: AssessmentPersona) {
   const traitScores = calculateTraitScores(persona.answers.discovery);
   const roleResults = matchRoles(traitScores, persona.answers.discovery);
   const roleProfile = optimizeRoleProfile(buildRoleProfileCandidates(roleResults, persona.answers.refinement, persona.answers.discovery), 5, {
-    preferredPrimaryRoleId: preferredPrimaryRoleIdFromRefinement(persona.answers.refinement),
+    preferredPrimaryRoleIds: preferredPrimaryRoleIdsFromRefinement(persona.answers.refinement, persona.answers.discovery),
   });
   const suggestedRoleSet = buildEditableRoleProfileEntries(roleProfile);
   const yourRoleSet = [...suggestedRoleSet];
