@@ -255,8 +255,21 @@ export function AssessmentPage() {
                 question={refinementQuestion}
                 selected={answers.refinement[refinementQuestion.id]}
                 onAnswer={(answerId) => {
+                  const nextAnswers = {
+                    ...answers,
+                    refinement: {
+                      ...answers.refinement,
+                      [refinementQuestion.id]: answerId,
+                    },
+                  };
+
                   answerRefinement(refinementQuestion.id, answerId);
-                  setRefinementIndex((index) => index + 1);
+
+                  const nextQuestions = selectRefinementQuestions(nextAnswers, traitScores);
+
+                  const nextUnansweredIndex = nextQuestions.findIndex((question) => question.id !== refinementQuestion.id && nextAnswers.refinement[question.id] === undefined);
+
+                  setRefinementIndex(nextUnansweredIndex >= 0 ? nextUnansweredIndex : nextQuestions.length);
                 }}
                 focusPrompt
               />

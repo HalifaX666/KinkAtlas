@@ -57,6 +57,43 @@ function completeNegotiation() {
 }
 
 describe("assessment navigation", () => {
+  it("advances into a newly opened Refine branch after answering the age-roleplay gate", () => {
+    renderAssessment();
+
+    for (let index = 0; index < 26; index += 1) {
+      const group = screen.getByRole("group");
+
+      if (group.textContent?.includes("How appealing is an experience centered on nurturing, protection, reassurance, or being cared for?")) {
+        fireEvent.click(
+          screen.getByRole("radio", {
+            name: "Receiving care and reassurance appeals most",
+          }),
+        );
+      } else {
+        fireEvent.click(currentRadios()[currentRadios().length - 2]);
+      }
+    }
+
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    while (screen.queryByRole("group") && !screen.getByRole("group").textContent?.includes("Does a non-sexual adult dynamic involving age-inspired roleplay")) {
+      fireEvent.click(currentRadios()[0]);
+    }
+
+    fireEvent.click(
+      screen.getByRole("radio", {
+        name: /Yes — that kind of non-sexual adult dynamic feels relevant to me/i,
+      }),
+    );
+
+    expect(screen.getByRole("group")).toHaveTextContent("Within a non-sexual adult caregiving or age-inspired roleplay dynamic, which position feels closest to you?");
+
+    expect(
+      screen.getByRole("radio", {
+        name: /Little — a younger-feeling adult role/i,
+      }),
+    ).toBeInTheDocument();
+  });
   it("preserves Discover answers while revisiting, re-advances same answers, recalculates after a change, and resets only on request", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
