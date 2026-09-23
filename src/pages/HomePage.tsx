@@ -4,10 +4,31 @@ import { PrivacyNote } from "../components/PrivacyNote";
 import { CompletionCounter } from "../components/CompletionCounter";
 
 const pillars = [
-  { icon: Compass, title: "Discover", text: "Find vocabulary for dynamics and experiences that may appeal—without having an identity assigned to you." },
-  { icon: Brain, title: "Learn", text: "Reflect on consent, communication, risk awareness, and the limits of what a quiz can know." },
-  { icon: ShieldCheck, title: "Define", text: "Name wants, curiosity, uncertainty, and hard limits independently of role results." },
-  { icon: MessageCircle, title: "Communicate", text: "Clarify how you prefer to negotiate, check in, pause, and follow up." },
+  {
+    icon: Compass,
+    title: "Discover",
+    text: "Explore broad interests and patterns that may fit you, then see role vocabulary supported by your answers without having an identity assigned to you.",
+  },
+  {
+    icon: Sparkles,
+    title: "Refine",
+    text: "Explore more specific styles, subtypes, and intersections only where your Discovery answers already provide enough relevant evidence.",
+  },
+  {
+    icon: Brain,
+    title: "Reflect",
+    text: "Reflect on knowledge, communication, risk awareness, and possible blind spots separately from role alignment.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Define",
+    text: "Name wants, curiosity, uncertainty, and hard limits independently of your role results.",
+  },
+  {
+    icon: MessageCircle,
+    title: "Communicate",
+    text: "Clarify how you prefer to negotiate, check in, pause, and follow up. These preferences are conversation prompts, not consent.",
+  },
 ];
 
 export function HomePage() {
@@ -64,9 +85,9 @@ export function HomePage() {
       </div>
       <section id="how" className="section page-width">
         <div className="section-heading">
-          <span className="eyebrow">Four separate lenses</span>
+          <span className="eyebrow">Five separate lenses</span>
           <h2>Clarity comes from keeping different questions apart.</h2>
-          <p>What appeals to you is not the same as what you call yourself, what you know, what your boundaries are, or what you consent to right now.</p>
+          <p>What appeals to you is not the same as how you refine that vocabulary, what you know, what your boundaries are, or what you consent to right now.</p>
         </div>
         <div className="pillar-grid">
           {pillars.map(({ icon: Icon, title, text }, index) => (

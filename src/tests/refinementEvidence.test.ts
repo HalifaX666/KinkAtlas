@@ -512,4 +512,183 @@ describe("Refine evidence architecture", () => {
 
     expect(supported.map((item) => item.target.label)).toEqual(["Submissive Top"]);
   });
+
+  it("never returns duplicate refinement questions across mixed families", () => {
+    const assessment = answers(
+      {
+        "d-power-give": "strong",
+        "r-authority-style": "strong",
+        "r-lead": "strong",
+
+        "d-power-receive": "strong",
+        "r-surrender": "strong",
+        "r-yielding-motivation": "strong",
+
+        "d-position-give": "strong",
+        "r-top": "strong",
+
+        "d-position-receive": "strong",
+        "r-bottom": "strong",
+        "r-receiving-focus": "some",
+
+        "d-intensity": "strong",
+        "r-pain-give": "strong",
+        "r-pain-receive": "strong",
+
+        "d-care": "strong",
+        "r-care-receive": "strong",
+      },
+      {
+        "ref-age-roleplay-interest": "yes",
+      },
+    );
+
+    const questions = selectRefinementQuestions(assessment, calculateTraitScores(assessment.discovery));
+
+    const ids = questions.map((question) => question.id);
+
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("keeps mixed-family refinement within the six-question cap", () => {
+    const assessment = answers(
+      {
+        "d-power-give": "strong",
+        "r-authority-style": "strong",
+        "r-lead": "strong",
+
+        "d-power-receive": "strong",
+        "r-surrender": "strong",
+        "r-yielding-motivation": "strong",
+
+        "d-position-give": "strong",
+        "r-top": "strong",
+
+        "d-position-receive": "strong",
+        "r-bottom": "strong",
+        "r-receiving-focus": "some",
+
+        "d-intensity": "strong",
+        "r-pain-give": "strong",
+        "r-pain-receive": "strong",
+
+        "d-primal": "strong",
+        "r-primal-give": "strong",
+
+        "d-service": "strong",
+        "r-service-give": "strong",
+
+        "d-rope": "strong",
+        "r-rope-give": "strong",
+        "r-rope-motivation": "strong",
+
+        "d-brat": "strong",
+        "r-brat": "strong",
+
+        "d-pet": "some",
+
+        "d-care": "strong",
+        "r-care-receive": "strong",
+      },
+      {
+        "ref-age-roleplay-interest": "yes",
+      },
+    );
+
+    const questions = selectRefinementQuestions(assessment, calculateTraitScores(assessment.discovery));
+
+    expect(questions.length).toBeLessThanOrEqual(6);
+    expect(new Set(questions.map((question) => question.id)).size).toBe(questions.length);
+  });
+
+  it("can route refinement across multiple supported families at once", () => {
+    const assessment = answers({
+      "d-power-receive": "strong",
+      "r-surrender": "strong",
+      "r-yielding-motivation": "strong",
+
+      "d-intensity": "strong",
+      "r-pain-receive": "strong",
+
+      "d-primal": "strong",
+      "r-primal-receive": "strong",
+
+      "d-service": "strong",
+      "r-service-give": "strong",
+
+      "d-brat": "strong",
+      "r-brat": "strong",
+
+      "d-pet": "some",
+    });
+
+    const scores = calculateTraitScores(assessment.discovery);
+    const families = eligibleRefinementFamilies(assessment, scores);
+
+    expect(families).toContain("submission");
+    expect(families).toContain("primal");
+    expect(families).toContain("service");
+    expect(families).toContain("pet");
+  });
+
+  it.each(["maybe", "no", "unknown", "prefer-not"])("does not make a hybrid role eligible from %s refinement evidence", (answerId) => {
+    const assessment = answers(
+      {
+        "d-power-receive": "strong",
+        "r-surrender": "strong",
+        "r-yielding-motivation": "strong",
+        "d-position-give": "strong",
+        "r-top": "strong",
+        "r-lead": "strong",
+      },
+      {
+        "ref-sub-top": answerId,
+      },
+    );
+
+    const scores = calculateTraitScores(assessment.discovery);
+    const roleResults = matchRoles(scores, assessment.discovery);
+
+    const candidate = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery).find((item) => item.label === "Submissive Top");
+
+    expect(candidate?.eligible).toBe(false);
+  });
+
+  it("keeps directly refined hybrid roles scoreless", () => {
+    const assessment = answers(
+      {
+        "d-pet": "some",
+        "d-care": "strong",
+      },
+      {
+        "ref-pet-persona": "canine",
+        "ref-age-roleplay-interest": "yes",
+        "ref-age-roleplay-position": "little",
+        "ref-little-vocabulary": "little",
+      },
+    );
+
+    const scores = calculateTraitScores(assessment.discovery);
+    const roleResults = matchRoles(scores, assessment.discovery);
+
+    const candidates = buildRoleProfileCandidates(roleResults, assessment.refinement, assessment.discovery);
+
+    const puppy = candidates.find((item) => item.label === "Puppy");
+    const little = candidates.find((item) => item.label === "little");
+
+    expect(puppy).toMatchObject({
+      eligible: true,
+      evidenceType: "hybrid",
+    });
+
+    expect(little).toMatchObject({
+      eligible: true,
+      evidenceType: "hybrid",
+    });
+
+    expect(puppy?.rawAlignment).toBeUndefined();
+    expect(puppy?.confidence).toBeUndefined();
+    expect(little?.rawAlignment).toBeUndefined();
+    expect(little?.confidence).toBeUndefined();
+  });
 });

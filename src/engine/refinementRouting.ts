@@ -191,21 +191,6 @@ function routeCandidates(answers: AssessmentAnswers, traitScores: TraitScores): 
       strength: 1,
     },
     {
-      questionId: "ref-age-roleplay-style",
-      eligible: adultAgeRoleplayInterest(answers),
-      strength: 0.95,
-    },
-    {
-      questionId: "ref-age-roleplay-interest",
-      eligible: shouldAskAdultAgeRoleplayGate(answers),
-      strength: traitStrength(traitScores, "caregiving", "beingCaredFor", "playfulness"),
-    },
-    {
-      questionId: "ref-age-roleplay-position",
-      eligible: adultAgeRoleplayInterest(answers),
-      strength: 1,
-    },
-    {
       questionId: "ref-caregiver-title",
       eligible: adultAgeRoleplayInterest(answers) && caregiverPositionSelected(answers),
       strength: 1,

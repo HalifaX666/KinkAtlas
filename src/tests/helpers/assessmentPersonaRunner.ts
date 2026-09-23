@@ -96,7 +96,7 @@ export function evaluateAssessmentPersona(persona: AssessmentPersona) {
   validateAssessmentPersona(persona);
   const traitScores = calculateTraitScores(persona.answers.discovery);
   const roleResults = matchRoles(traitScores, persona.answers.discovery);
-  const roleProfile = optimizeRoleProfile(buildRoleProfileCandidates(roleResults));
+  const roleProfile = optimizeRoleProfile(buildRoleProfileCandidates(roleResults, persona.answers.refinement, persona.answers.discovery));
   const suggestedRoleSet = buildEditableRoleProfileEntries(roleProfile);
   const yourRoleSet = [...suggestedRoleSet];
   const readiness = evaluateReadiness(persona.answers.readiness);

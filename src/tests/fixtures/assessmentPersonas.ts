@@ -19,6 +19,7 @@ interface PersonaSeed {
   description: string;
   discoveryDefault?: string;
   discovery?: Record<string, string>;
+  refinement?: Record<string, string>;
   refinementDefault?: string;
   readinessDefault?: string;
   boundariesDefault?: BoundaryValue;
@@ -66,7 +67,7 @@ function createPersona(seed: PersonaSeed): AssessmentPersona {
     description: seed.description,
     answers: {
       discovery: completeDiscovery(seed),
-      refinement: {},
+      refinement: seed.refinement ?? {},
       readiness: createAnswerRecord(
         "readiness",
         readinessQuestions.map((question) => [question.id, seed.readinessDefault ?? "a"]),
@@ -188,5 +189,43 @@ export const assessmentPersonas: AssessmentPersona[] = [
     boundariesDefault: "neutral",
     boundaries: { rope: "hard-limit", impact: "hard-limit", primal: "hard-limit", psychological: "hard-limit", roleplay: "hard-limit" },
     negotiationDefault: "p2",
+  }),
+  createPersona({
+    id: "refined-primal-submission-pattern",
+    name: "Refined primal submission pattern",
+    description: "Strong submission, primal, and pain-receiving evidence with direct confirmation that those patterns overlap.",
+    discovery: {
+      "d-power-receive": "strong",
+      "r-surrender": "strong",
+      "r-yielding-motivation": "strong",
+
+      "d-primal": "strong",
+      "r-primal-receive": "strong",
+
+      "d-intensity": "strong",
+      "r-pain-receive": "strong",
+    },
+    refinement: {
+      "ref-sub-masochist": "yes",
+      "ref-primal-masochist": "yes",
+    },
+    boundaries: {
+      primal: "want",
+      impact: "curious",
+    },
+  }),
+  createPersona({
+    id: "refined-puppy-pattern",
+    name: "Refined puppy pattern",
+    description: "Adult pet-role interest with direct canine persona confirmation.",
+    discovery: {
+      "d-pet": "some",
+    },
+    refinement: {
+      "ref-pet-persona": "canine",
+    },
+    boundaries: {
+      roleplay: "want",
+    },
   }),
 ];

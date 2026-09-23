@@ -549,13 +549,25 @@ p {
 }
 .pillar-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1px;
   background: var(--line);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
 }
+
+@media (max-width: 900px) {
+  .pillar-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .pillar-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .pillar {
   background: var(--surface);
   padding: 2rem;
@@ -805,11 +817,12 @@ p {
 }
 .stage-nav {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   border-bottom: 1px solid var(--line);
   margin-block: 25px 55px;
 }
 .stage-nav span {
+  min-width: 0;
   color: var(--dim);
   display: flex;
   align-items: center;
