@@ -3203,9 +3203,19 @@ summary:focus-visible {
   font-size: 0.72rem;
   line-height: 1.45;
 }
-.profile-role-definition > small {
-  color: var(--muted);
-  font-size: 0.65rem;
+.profile-role-assessment,
+.profile-role-handling {
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--line);
+}
+.profile-role-assessment > strong,
+.profile-role-handling > strong {
+  color: var(--text);
+  font-size: 0.68rem;
+}
+.profile-role-assessment p b {
+  color: var(--gold-soft);
 }
 .profile-role-definition .profile-role-nonimplication {
   font-size: 0.68rem;

@@ -43,6 +43,7 @@ export interface RoleProfileAlternate {
   optimizerScore: number;
   reason: "user-excluded" | "confirmation-required" | "manual-only" | "unresolved" | "insufficient-evidence" | "below-threshold" | "redundant" | "slot-limit";
   explanation: string;
+  overlappingRoleLabel?: string;
 }
 
 export interface RoleProfileOptimization {
@@ -172,6 +173,7 @@ export function optimizeRoleProfile(candidates: RoleProfileCandidate[], maximum 
         candidate,
         optimizerScore: score - redundancyPenalty,
         reason,
+        overlappingRoleLabel: reason === "redundant" ? overlappingRecommendation?.candidate.label : undefined,
         explanation: reason === "user-excluded" ? "The user excluded this recommendation; KinkAtlas does not override that choice." : reason === "confirmation-required" ? "This exact label can be recommended only after the user confirms that it fits; unanswered and unsure states are not positive evidence." : reason === "manual-only" ? "This label remains available for user selection, but its reviewed policy does not support a KinkAtlas recommendation." : reason === "redundant" ? `Strong evidence was present, but ${candidate.label} overlaps strongly with ${overlappingRecommendation?.candidate.label ?? "a selected role"}, which represents the same pattern more clearly in this set.` : reason === "slot-limit" ? "The role remained a strong alternative after the five-slot constraint was applied." : "Current evidence does not justify an automatic profile recommendation.",
       };
     })

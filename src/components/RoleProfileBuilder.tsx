@@ -5,6 +5,7 @@ import { addRoleProfileEntry, buildEditableRoleProfileEntries, buildRoleProfileC
 import { buildRoleLabelList } from "../engine/roleProfileExport";
 import { searchRoleLibrary } from "../engine/roleProfileSearch";
 import { buildRelatedRoleProfiles } from "../engine/roleProfileExploration";
+import { buildRoleAssessmentExplanationMap } from "../engine/roleAssessmentExplanation";
 import { preferredPrimaryRoleIdsFromRefinement } from "../engine/refinementEvidence";
 import { copyText } from "../engine/shareResults";
 import type { AssessmentAnswers, RoleResult } from "../types";
@@ -37,12 +38,12 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
   const [replacementRoleId, setReplacementRoleId] = useState<string>();
   const [status, setStatus] = useState("");
   const selectedIds = new Set(selectedRoles.map((role) => role.roleId));
-  const selectedRoleById = useMemo(() => new Map(selectedRoles.map((role) => [role.roleId, role])), [selectedRoles]);
   const recommendationById = useMemo(() => new Map(optimization.recommendations.map((item) => [item.candidate.roleId, item])), [optimization]);
   const relatedRoles = useMemo(() => buildRelatedRoleProfiles(selectedRoles.map((role) => role.roleId).sort((left, right) => left.localeCompare(right))), [selectedRoles]);
   const searchResults = useMemo(() => searchRoleLibrary(roleLibrary.roles, query), [query]);
   const omittedAlternates = selectDisplayableRoleProfileAlternates(optimization.alternates);
   const roleSetMatchesSuggestion = roleProfileEntriesEqual(selectedRoles, initialRoles);
+  const assessmentExplanationByRoleId = useMemo(() => buildRoleAssessmentExplanationMap(optimization, selectedRoles), [optimization, selectedRoles]);
 
   useEffect(() => onRoleSetChange?.(selectedRoles), [onRoleSetChange, selectedRoles]);
 
@@ -256,14 +257,12 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
             {query && (
               <ul className="profile-search-results">
                 {searchResults.map((role) => {
-                  const selectedRole = selectedRoleById.get(role.id);
-                  const displayStatus = selectedRole?.source === "recommended" ? "recommended" : selectedRole ? "selected" : undefined;
                   return (
                     <li key={role.id}>
                       <div className="profile-search-copy">
                         <strong>{role.label}</strong>
                         <Suspense fallback={<small>Loading role details…</small>}>
-                          <LazyRoleDefinitionDetails roleId={role.id} displayStatus={displayStatus} />
+                          <LazyRoleDefinitionDetails roleId={role.id} assessmentExplanation={assessmentExplanationByRoleId.get(role.id)} />
                         </Suspense>
                       </div>
                       <button type="button" className="quiet-button" disabled={selectedIds.has(role.id)} aria-label={`${replacementRoleId ? "Replace with" : "Add"} ${role.label}`} onClick={() => addRole(role.id, role.label, role.definition)}>
@@ -280,20 +279,15 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
               <summary>Why other suggestions were not included</summary>
               {omittedAlternates.length ? (
                 <ul>
-                  {omittedAlternates.map((alternate) => (
-                    <li key={alternate.candidate.roleId}>
-                      <strong>{alternate.candidate.label}</strong>
-                      {alternate.reason.trim() && alternate.explanation.trim() ? (
-                        <span>
-                          {alternate.reason.replace("-", " ")}: {alternate.explanation}
-                        </span>
-                      ) : alternate.explanation.trim() ? (
-                        <span>{alternate.explanation}</span>
-                      ) : (
-                        <span>{alternate.reason.replace("-", " ")}</span>
-                      )}
-                    </li>
-                  ))}
+                  {omittedAlternates.map((alternate) => {
+                    const explanation = assessmentExplanationByRoleId.get(alternate.candidate.roleId);
+                    return (
+                      <li key={alternate.candidate.roleId}>
+                        <strong>{alternate.candidate.label}</strong>
+                        {explanation && <span><b>{explanation.heading}.</b> {explanation.message}</span>}
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <p>No additional supported suggestions are available right now.</p>

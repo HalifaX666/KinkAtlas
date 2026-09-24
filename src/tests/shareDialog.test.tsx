@@ -74,7 +74,21 @@ function roleListLabels(name: string) {
   return within(screen.getByRole('list', { name })).getAllByRole('listitem').map((item) => item.querySelector('strong')?.textContent)
 }
 
+async function searchResultFor(label: string) {
+  fireEvent.change(screen.getByRole('searchbox', { name: 'Search roles' }), { target: { value: label } })
+  const action = await screen.findByRole('button', { name: `Add ${label}` })
+  return action.closest('li')!
+}
+
 describe('Export & Share dialog', () => {
+  it('renders safely when the assessment produced no suggested role set', () => {
+    render(<RoleProfileBuilder roleResults={[]} />)
+
+    expect(screen.getByText(/do not currently support an automatic role suggestion/i)).toBeInTheDocument()
+    expect(screen.getByText(/0 of 5 roles in your set/i)).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search roles' })).toBeInTheDocument()
+  })
+
   it('explains the suggested-to-editable role-set journey', () => {
     render(<RoleProfileBuilder roleResults={roleResults} />)
 
@@ -85,6 +99,55 @@ describe('Export & Share dialog', () => {
     const explanation = screen.getByText(/KinkAtlas favors meaningful evidence/i)
     expect(explanation).toHaveTextContent(/avoiding a set of near-duplicates/i)
     expect(explanation).toHaveTextContent(/five is a maximum, not a target/i)
+  })
+
+  it('shows assessment-aware search explanations without changing immutable suggested-primary status', async () => {
+    const optimization = optimizeRoleProfile(buildRoleProfileCandidates(roleResults))
+    const suggestedPrimary = optimization.primary!.candidate.label
+    render(<RoleProfileBuilder roleResults={roleResults} />)
+
+    let result = await searchResultFor(suggestedPrimary)
+    fireEvent.click(await within(result).findByText('About this role'))
+    expect(within(result).getByText('How this relates to your results')).toBeInTheDocument()
+    expect(within(result).getByText(/Suggested primary\./)).toBeInTheDocument()
+
+    const manuallyPromoted = roleListLabels('Current role set')[1]!
+    fireEvent.click(screen.getByRole('button', { name: `Make ${manuallyPromoted} primary` }))
+    result = await searchResultFor(manuallyPromoted)
+    fireEvent.click(await within(result).findByText('About this role'))
+    expect(within(result).getByText(/Suggested from your assessment\./)).toBeInTheDocument()
+    expect(within(result).queryByText(/Suggested primary\./)).not.toBeInTheDocument()
+
+    result = await searchResultFor(suggestedPrimary)
+    fireEvent.click(await within(result).findByText('About this role'))
+    expect(within(result).getByText(/Suggested primary\./)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Restore suggested set' }))
+    expect(within(result).getByText(/Suggested primary\./)).toBeInTheDocument()
+  })
+
+  it('shows manual selection alongside its independent assessment outcome without fabricated metrics', async () => {
+    render(<RoleProfileBuilder roleResults={roleResults} />)
+    const removed = roleListLabels('Current role set').at(-1)!
+    fireEvent.click(screen.getByRole('button', { name: `Remove ${removed}` }))
+
+    const result = await searchResultFor('Soft Dom')
+    fireEvent.click(await within(result).findByText('About this role'))
+    expect(within(result).getByText(/Available for self-exploration\./)).toBeInTheDocument()
+    expect(within(result).getByText('How KinkAtlas handles this role')).toBeInTheDocument()
+    fireEvent.click(within(result).getByRole('button', { name: 'Add Soft Dom' }))
+
+    await waitFor(() => expect(within(result).getByText(/Added by you\./)).toBeInTheDocument())
+    expect(within(result).getByText(/Adding it does not create an assessment score or confidence/i)).toBeInTheDocument()
+    expect(result).not.toHaveTextContent(/Strong alignment|High confidence|Medium confidence|evidence breadth/i)
+  })
+
+  it('uses user-facing explanation language for omitted alternates', () => {
+    const { container } = render(<RoleProfileBuilder roleResults={roleResults} />)
+    fireEvent.click(screen.getByText('Why other suggestions were not included'))
+    const alternateDetails = container.querySelector('.profile-alternates')!
+
+    expect(alternateDetails).not.toHaveTextContent(/slot-limit:|insufficient-evidence:|confirmation-required:|manual-only:/i)
+    expect(alternateDetails).toHaveTextContent(/Not suggested automatically|Supported alternative|Overlapping evidence|Direct confirmation needed|Available for self-exploration/i)
   })
 
   it('makes a role primary, preserves the Suggested Role Set, and restores exact initial state', () => {

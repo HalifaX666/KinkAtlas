@@ -62,12 +62,25 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   expect(await roleSetLabels(page, ".role-card-options > label > span:last-child > strong")).toEqual(suggested);
   await dialog.getByRole("button", { name: "Close export and sharing dialog" }).click();
 
+  await page.getByRole("searchbox", { name: "Search roles" }).fill("Kinkster");
+  const alternateResult = page.getByRole("button", { name: "Add Kinkster", exact: true }).locator("..");
+  await alternateResult.getByText("About this role").click();
+  await expect(alternateResult.getByText("How this relates to your results")).toBeVisible();
+  await expect(alternateResult).toContainText(/Not suggested automatically|Supported alternative|Overlapping evidence/);
+
+  await page.getByRole("searchbox", { name: "Search roles" }).fill("Soft Dom");
+  const manualResult = page.getByRole("button", { name: "Add Soft Dom", exact: true }).locator("..");
+  await manualResult.getByText("About this role").click();
+  await expect(manualResult).toContainText("Available for self-exploration");
+  await expect(manualResult).toContainText("How KinkAtlas handles this role");
+
   const replacedRole = suggested[1];
 
   await page.getByRole("button", { name: `Replace ${replacedRole}` }).click();
-  await page.getByRole("searchbox", { name: "Search roles" }).fill("Soft Dom");
   await page.getByRole("button", { name: "Replace with Soft Dom", exact: true }).click();
   await expect(page.getByText("Soft Dom selected as a replacement. You can reorder it or make it primary.")).toBeVisible();
+  await expect(manualResult).toContainText("Added by you");
+  await expect(manualResult).not.toContainText(/Strong alignment|High confidence|Medium confidence|evidence breadth/i);
   await page.getByRole("button", { name: "Make Soft Dom primary" }).click();
 
   const edited = await namedRoleSetLabels(page, "Current role set");
