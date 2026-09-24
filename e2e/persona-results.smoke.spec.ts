@@ -1,6 +1,26 @@
 import { expect, test } from "@playwright/test";
 import { expectRenderedSanity, installBrowserGuards, namedRoleSetLabels, openPersonaResults, openRoleSetBuilder, roleSetLabels } from "./support/browserGuards";
 
+test("Assessment smoke: questions and answers remain readable and selectable", async ({ page }) => {
+  const guards = await installBrowserGuards(page);
+  await page.goto("/assessment");
+  await page.getByRole("button", { name: /begin/i }).click();
+
+  const question = page.locator("fieldset.question-card");
+  const prompt = (await question.locator("legend").textContent())?.trim();
+  const labels = (await question.locator(".answer-option > span:last-child").allTextContents()).map((label) => label.trim());
+
+  expect(prompt).toBeTruthy();
+  expect(labels.length).toBeGreaterThan(0);
+  expect(labels.every(Boolean)).toBe(true);
+  expect(new Set(labels).size).toBe(labels.length);
+
+  await question.locator(".answer-option").first().click();
+  await expect(question.locator("legend")).not.toHaveText(prompt!);
+  await expect(question.getByRole("radio")).not.toHaveCount(0);
+  await guards.assertClean();
+});
+
 test("Persona smoke: completed assessment renders coherent Results", async ({ page }) => {
   const guards = await installBrowserGuards(page);
   await openPersonaResults(page, "balanced-authority-pattern");

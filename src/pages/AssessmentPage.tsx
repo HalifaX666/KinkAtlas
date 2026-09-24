@@ -285,8 +285,8 @@ export function AssessmentPage() {
             </>
           ) : (
             <StageComplete
-              title="Your discovery map has enough coverage for a first reading."
-              text="Next, Refine can look more closely at relevant role patterns without changing your underlying Discovery alignment."
+              title="You’ve answered enough for a first discovery map."
+              text="Next, Refine looks more closely at relevant role patterns without changing your Discovery alignment."
               onBack={backFromDiscovery}
               onContinue={() => {
                 setRefinementCursor(null);
@@ -305,7 +305,7 @@ export function AssessmentPage() {
                 <div>
                   <span className="eyebrow">Role refinement</span>
 
-                  <p>Role style and intersection exploration · separate from Discovery alignment</p>
+                  <p>How supported role patterns connect · separate from Discovery alignment</p>
                 </div>
 
                 <span>Question {refinementCursor === null ? refinementHistory.length + 1 : refinementCursor + 1} of up to {MAX_REFINEMENT_QUESTIONS}</span>
@@ -324,13 +324,13 @@ export function AssessmentPage() {
                   Back
                 </button>
 
-                <p>Refine can distinguish supported patterns, but it cannot create a parent role or change your Discovery score.</p>
+                <p>Refine can add detail to supported patterns, but it cannot create a parent role or change your Discovery score.</p>
               </div>
             </>
           ) : (
             <StageComplete
               title={refinementQuestions.length ? "Refinement complete." : "No extra refinement is needed yet."}
-              text={refinementQuestions.length ? "These answers add context to supported role patterns without changing your original Discovery alignment." : "Your Discovery evidence is preserved as-is. As refinement branches are added, only relevant follow-up questions will appear here."}
+              text={refinementQuestions.length ? "These answers add detail to supported role patterns without changing your Discovery alignment." : "Your Discovery evidence stays as-is. Only relevant follow-up questions appear here."}
               onBack={backFromRefinement}
               onContinue={() => setPhase("readiness")}
             />
@@ -346,7 +346,7 @@ export function AssessmentPage() {
                 <div>
                   <span className="eyebrow">Reflection scenario</span>
 
-                  <p>Knowledge and attitudes · separate from discovery</p>
+                  <p>Consent and communication scenarios · separate from Discovery</p>
                 </div>
 
                 <span>
@@ -381,7 +381,7 @@ export function AssessmentPage() {
                   Back
                 </button>
 
-                <p>These scenarios measure concepts expressed in your answers, not conduct.</p>
+                <p>These scenarios reflect ideas in your answers, not your real-world conduct.</p>
               </div>
             </>
           ) : (
@@ -397,7 +397,7 @@ export function AssessmentPage() {
 
             <h2>These choices stand on their own.</h2>
 
-            <p>Your boundaries stay separate from role alignment. A limit can remove an activity from suggestions without making a role less valid or less aligned. Choose a response for every item. If you would rather not answer something, select “Prefer not to answer.”</p>
+            <p>Your boundaries stay separate from role alignment. A limit can remove an activity suggestion without changing a role result. Choose one response for each item, including “Prefer not to answer” if you wish.</p>
           </div>
 
           <div className="boundary-grid">

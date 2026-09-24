@@ -10,58 +10,58 @@ export const refinementFamilies: RefinementFamilyDefinition[] = [
   {
     id: "submission",
     label: "Submission style",
-    description: "Explores how already-supported submission may express itself.",
+    description: "Looks at how your supported submission interests may connect with other patterns.",
   },
   {
     id: "dominance",
     label: "Dominance style",
-    description: "Explores how already-supported dominance may express itself.",
+    description: "Looks at how your supported dominance interests may connect with other patterns.",
   },
   {
     id: "primal",
     label: "Primal style",
-    description: "Explores more specific patterns inside already-supported primal interests.",
+    description: "Looks more closely at your supported primal interests.",
   },
   {
     id: "service",
     label: "Service style",
-    description: "Explores intersections between service and other independently supported patterns.",
+    description: "Looks at how service may connect with other supported patterns.",
   },
   {
     id: "pet",
     label: "Pet-play style",
-    description: "Explores adult animal-inspired roleplay preferences without inferring a persona from unrelated traits.",
+    description: "Looks at adult animal-inspired roleplay without guessing a persona from unrelated answers.",
   },
   {
     id: "caregiver-little",
     label: "Caregiver / age-roleplay style",
-    description: "Explores non-sexual adult caregiving and age-inspired roleplay vocabulary between consenting adults.",
+    description: "Looks at non-sexual adult caregiving and age-inspired roleplay language.",
   },
 ];
 
-const intersectionContext = "This asks whether two already-supported patterns feel meaningfully connected for you. It does not change your Discovery alignment, assign an identity, or imply consent.";
-const adultAgeRoleplayContext = "In KinkAtlas, this vocabulary refers only to non-sexual roleplay or caregiving between consenting adults. It does not describe a person's real age, developmental state, dependency, or reduced agency.";
-const petPersonaContext = "This asks about an adult animal-inspired roleplay persona. It does not infer submission, ownership, dependency, identity outside the roleplay, or consent to any activity.";
+const intersectionContext = "This asks whether two patterns already supported by your answers feel connected. It does not change your Discovery alignment, assign an identity, or imply consent.";
+const adultAgeRoleplayContext = "KinkAtlas uses this language only for non-sexual roleplay or caregiving between consenting adults. It never describes someone’s real age, development, dependency, or agency.";
+const petPersonaContext = "This asks about an adult animal-inspired roleplay persona. It does not assume submission, ownership, dependency, identity outside the roleplay, or consent to any activity.";
 function connectionAnswers(targetId: NonNullable<RefinementAnswerOption["supports"]>[number]): RefinementAnswerOption[] {
   return [
     {
       id: "yes",
-      label: "Yes — those patterns feel meaningfully connected for me",
+      label: "Yes — they feel connected for me",
       supports: [targetId],
     },
     {
       id: "maybe",
-      label: "Maybe — I can see the overlap, but I am not sure I would combine them",
+      label: "Maybe — I see the overlap, but I’m not sure",
       weakSupports: [targetId],
     },
     {
       id: "no",
-      label: "No — I prefer to keep those patterns separate",
+      label: "No — I prefer to keep them separate",
       rejects: [targetId],
     },
     {
       id: "unknown",
-      label: "I do not know yet",
+      label: "I’m not sure yet",
       noScore: true,
     },
     {
@@ -77,7 +77,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-sub-top",
     kind: "refinement",
     family: "submission",
-    prompt: "When you are in a submissive frame, can taking the active or giving position still feel like part of that submission?",
+    prompt: "When you’re feeling submissive, can taking the active or giving role still feel like part of your submission?",
     context: intersectionContext,
     answers: connectionAnswers("submissive-top"),
   },
@@ -85,7 +85,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-sub-sadist",
     kind: "refinement",
     family: "submission",
-    prompt: "When you are in a submissive frame, can giving consensual pain or strong intensity feel meaningfully connected to that submission?",
+    prompt: "When you’re feeling submissive, can giving pain or strong intensity feel connected to your submission?",
     context: intersectionContext,
     answers: connectionAnswers("submissive-sadist"),
   },
@@ -93,7 +93,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-sub-masochist",
     kind: "refinement",
     family: "submission",
-    prompt: "When you are in a submissive frame, can receiving consensual pain or strong intensity feel meaningfully connected to that submission?",
+    prompt: "When you’re feeling submissive, can receiving pain or strong intensity feel connected to your submission?",
     context: intersectionContext,
     answers: connectionAnswers("submissive-masochist"),
   },
@@ -101,7 +101,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-sub-brat",
     kind: "refinement",
     family: "submission",
-    prompt: "Can negotiated teasing or playful defiance feel like one way your submission expresses itself?",
+    prompt: "Can agreed teasing or playful defiance be part of how you express submission?",
     context: intersectionContext,
     answers: connectionAnswers("bratty-sub"),
   },
@@ -109,7 +109,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-sub-pleasure",
     kind: "refinement",
     family: "submission",
-    prompt: "Can supporting or creating a partner’s pleasure feel like a meaningful expression of your submission?",
+    prompt: "Can supporting or creating a partner’s pleasure be part of how you express submission?",
     context: intersectionContext,
     answers: connectionAnswers("pleasure-submissive"),
   },
@@ -117,7 +117,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-sub-sensual",
     kind: "refinement",
     family: "submission",
-    prompt: "Can closeness, touch, atmosphere, or sensory pleasure feel central to how your submission expresses itself?",
+    prompt: "Can closeness, touch, atmosphere, or sensory pleasure be central to your submission?",
     context: intersectionContext,
     answers: connectionAnswers("sensual-submissive"),
   },
@@ -126,7 +126,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-dom-bottom",
     kind: "refinement",
     family: "dominance",
-    prompt: "When you hold negotiated authority, can receiving an activity still feel compatible with being the person directing the dynamic?",
+    prompt: "When you hold agreed authority, can you still receive an activity while directing the dynamic?",
     context: intersectionContext,
     answers: connectionAnswers("dominant-bottom"),
   },
@@ -134,7 +134,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-dom-sadist",
     kind: "refinement",
     family: "dominance",
-    prompt: "Can giving consensual pain or strong intensity feel meaningfully connected to how you express negotiated authority?",
+    prompt: "Can giving pain or strong intensity be part of how you express agreed authority?",
     context: intersectionContext,
     answers: connectionAnswers("dominant-sadist"),
   },
@@ -142,7 +142,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-dom-masochist",
     kind: "refinement",
     family: "dominance",
-    prompt: "Can receiving consensual pain or strong intensity feel compatible with how you express negotiated authority?",
+    prompt: "Can receiving pain or strong intensity fit with how you express agreed authority?",
     context: intersectionContext,
     answers: connectionAnswers("dominant-masochist"),
   },
@@ -150,7 +150,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-dom-sensual",
     kind: "refinement",
     family: "dominance",
-    prompt: "Can touch, intimacy, atmosphere, or sensory pleasure feel central to how you express negotiated authority?",
+    prompt: "Can touch, intimacy, atmosphere, or sensory pleasure be central to how you express agreed authority?",
     context: intersectionContext,
     answers: connectionAnswers("sensual-dominant"),
   },
@@ -158,7 +158,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-primal-sadist",
     kind: "refinement",
     family: "primal",
-    prompt: "Can giving consensual pain or strong intensity feel like a meaningful part of your primal play?",
+    prompt: "Can giving pain or strong intensity be a meaningful part of your primal play?",
     context: intersectionContext,
     answers: connectionAnswers("primal-sadist"),
   },
@@ -166,7 +166,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-primal-masochist",
     kind: "refinement",
     family: "primal",
-    prompt: "Can receiving consensual pain or strong intensity feel like a meaningful part of your primal play?",
+    prompt: "Can receiving pain or strong intensity be a meaningful part of your primal play?",
     context: intersectionContext,
     answers: connectionAnswers("primal-masochist"),
   },
@@ -174,7 +174,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-primal-top",
     kind: "refinement",
     family: "primal",
-    prompt: "Can taking the active or giving position feel like a meaningful part of your primal play?",
+    prompt: "Can taking the active or giving role be a meaningful part of your primal play?",
     context: intersectionContext,
     answers: connectionAnswers("primal-top"),
   },
@@ -182,7 +182,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-primal-bottom",
     kind: "refinement",
     family: "primal",
-    prompt: "Can taking the receiving position feel like a meaningful part of your primal play?",
+    prompt: "Can taking the receiving role be a meaningful part of your primal play?",
     context: intersectionContext,
     answers: connectionAnswers("primal-bottom"),
   },
@@ -190,7 +190,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-primal-sensual",
     kind: "refinement",
     family: "primal",
-    prompt: "Can sensory pleasure, touch, texture, or bodily awareness feel central to your primal play?",
+    prompt: "Can touch, texture, sensory pleasure, or body awareness be central to your primal play?",
     context: intersectionContext,
     answers: connectionAnswers("primal-sensualist"),
   },
@@ -199,7 +199,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-service-rigger",
     kind: "refinement",
     family: "service",
-    prompt: "Can tying another adult feel meaningful partly because you are creating the rope experience they want?",
+    prompt: "Can tying another adult feel meaningful because you’re creating the rope experience they want?",
     context: intersectionContext,
     answers: connectionAnswers("service-rigger"),
   },
@@ -207,7 +207,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-service-brat",
     kind: "refinement",
     family: "service",
-    prompt: "Can negotiated teasing or playful defiance coexist with service being meaningful to you?",
+    prompt: "Can agreed teasing or playful defiance be part of service for you?",
     context: intersectionContext,
     answers: connectionAnswers("service-brat"),
   },
@@ -215,18 +215,18 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-pet-persona",
     kind: "refinement",
     family: "pet",
-    prompt: "If you picture yourself in an adult animal-inspired role, which persona feels most relevant?",
+    prompt: "If you picture yourself in an adult animal-inspired role, which persona feels closest?",
     context: petPersonaContext,
     answers: [
       {
         id: "canine",
-        label: "A canine-inspired persona, such as a puppy or pup",
+        label: "A canine-inspired persona, such as puppy or pup",
         supports: ["puppy"],
         primaryPreference: { kind: "direct", targetId: "puppy" },
       },
       {
         id: "feline",
-        label: "A feline-inspired persona, such as a kitten or cat",
+        label: "A feline-inspired persona, such as kitten or cat",
         supports: ["kitten"],
         primaryPreference: { kind: "direct", targetId: "kitten" },
       },
@@ -237,12 +237,12 @@ export const refinementQuestions: RefinementQuestion[] = [
       },
       {
         id: "other",
-        label: "Another animal-inspired persona or a broad pet role fits better",
+        label: "Another animal-inspired persona or a broader pet role fits better",
         noScore: true,
       },
       {
         id: "unknown",
-        label: "I do not know yet",
+        label: "I’m not sure yet",
         noScore: true,
       },
       {
@@ -256,27 +256,27 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-age-roleplay-interest",
     kind: "refinement",
     family: "caregiver-little",
-    prompt: "Does a non-sexual adult dynamic involving age-inspired roleplay, caregiving, comfort, or guidance feel relevant to you?",
+    prompt: "Does non-sexual adult age-inspired roleplay or caregiving feel relevant to you?",
     context: adultAgeRoleplayContext,
     answers: [
       {
         id: "yes",
-        label: "Yes — that kind of non-sexual adult dynamic feels relevant to me",
+        label: "Yes — that kind of adult dynamic feels relevant to me",
         noScore: true,
       },
       {
         id: "maybe",
-        label: "Maybe — I am curious, but I am not sure whether it fits me",
+        label: "Maybe — I’m curious, but not sure yet",
         noScore: true,
       },
       {
         id: "no",
-        label: "No — this kind of dynamic does not feel relevant to me",
+        label: "No — this kind of adult dynamic doesn’t feel relevant to me",
         noScore: true,
       },
       {
         id: "unknown",
-        label: "I do not know yet",
+        label: "I’m not sure yet",
         noScore: true,
       },
       {
@@ -291,12 +291,12 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-age-roleplay-position",
     kind: "refinement",
     family: "caregiver-little",
-    prompt: "Within a non-sexual adult caregiving or age-inspired roleplay dynamic, which position feels closest to you?",
+    prompt: "In non-sexual adult caregiving or age-inspired roleplay, which position feels closest to you?",
     context: adultAgeRoleplayContext,
     answers: [
       {
         id: "caregiver",
-        label: "Caregiver — I am most drawn to providing care, reassurance, guidance, or structure",
+        label: "Caregiver — I’m drawn to providing care, reassurance, guidance, or structure",
         noScore: true,
       },
       {
@@ -319,12 +319,12 @@ export const refinementQuestions: RefinementQuestion[] = [
       },
       {
         id: "multiple",
-        label: "More than one of these can feel relevant depending on the context",
+        label: "More than one can fit, depending on the context",
         noScore: true,
       },
       {
         id: "unknown",
-        label: "I am interested, but I do not know which position fits",
+        label: "I’m interested, but I’m not sure which position fits",
         noScore: true,
       },
       {
@@ -339,7 +339,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-caregiver-title",
     kind: "refinement",
     family: "caregiver-little",
-    prompt: "If you take the caregiving side of this non-sexual adult dynamic, does either of these titles feel like a good fit?",
+    prompt: "On the caregiving side of this non-sexual adult dynamic, does either title fit?",
     context: adultAgeRoleplayContext,
     answers: [
       {
@@ -366,7 +366,7 @@ export const refinementQuestions: RefinementQuestion[] = [
       },
       {
         id: "unknown",
-        label: "I do not know yet",
+        label: "I’m not sure yet",
         noScore: true,
       },
       {
@@ -381,7 +381,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-little-vocabulary",
     kind: "refinement",
     family: "caregiver-little",
-    prompt: "If Little feels relevant, which non-sexual adult role vocabulary feels closest to how you would describe yourself?",
+    prompt: "If Little feels relevant, which non-sexual adult role label feels closest to you?",
     context: adultAgeRoleplayContext,
     answers: [
       {
@@ -440,7 +440,7 @@ export const refinementQuestions: RefinementQuestion[] = [
       },
       {
         id: "unknown",
-        label: "I do not know yet",
+        label: "I’m not sure yet",
         noScore: true,
       },
       {

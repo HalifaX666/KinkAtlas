@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { traits as traitDefinitions } from '../data/traits'
+import { boundaryOptions } from '../data/boundaries'
+import { negotiationQuestions } from '../data/negotiation'
+import { discoveryQuestions } from '../data/questions'
+import { readinessQuestions } from '../data/readiness'
+import { refinementQuestions } from '../data/refinement'
 import { analyzeQuestionCoverage, analyzeTraitCorrelations, analyzeTraitCoverage } from '../calibration/questionCoverage'
 
 describe('trait and question coverage diagnostics', () => {
@@ -26,5 +31,20 @@ describe('trait and question coverage diagnostics', () => {
     expect(keys).not.toContain(['exploration', 'communityConnection'].sort().join('|'))
     expect(keys).not.toContain(['submission', 'surrender'].sort().join('|'))
     expect(keys).not.toContain(['pleasureReceiving', 'sensorySeeking'].sort().join('|'))
+  })
+
+  it('keeps every assessment prompt and visible answer non-empty and unambiguous within its question', () => {
+    const questions = [...discoveryQuestions, ...refinementQuestions, ...readinessQuestions, ...negotiationQuestions]
+
+    questions.forEach((question) => {
+      expect(question.prompt.trim(), `${question.id} has an empty prompt`).not.toBe('')
+      const labels = question.answers.map((answer) => answer.label.trim())
+      expect(labels.every(Boolean), `${question.id} has an empty answer label`).toBe(true)
+      expect(new Set(labels).size, `${question.id} repeats an answer label`).toBe(labels.length)
+      expect(question.answers.some((answer) => answer.id === 'prefer-not'), `${question.id} is missing Prefer not to answer`).toBe(true)
+    })
+
+    expect(boundaryOptions.every((option) => option.label.trim().length > 0)).toBe(true)
+    expect(new Set(boundaryOptions.map((option) => option.label.trim())).size).toBe(boundaryOptions.length)
   })
 })
