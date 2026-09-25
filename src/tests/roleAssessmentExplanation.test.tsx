@@ -106,13 +106,13 @@ describe("role assessment explanation language", () => {
     expect(shared.evidenceBreadth).toBeUndefined();
   });
 
-  it("renders a safe assessment fallback and handling guidance when a reviewed definition is unavailable", () => {
+  it("renders one centralized assessment explanation when a reviewed definition is unavailable", () => {
     const role = roleLibrary.roles.find((item) => !item.definition?.trim())!;
     render(<RoleDefinitionDetails roleId={role.id} assessmentExplanation={explainRoleAssessment({})} />);
     fireEvent.click(screen.getByText("About this role"));
 
     expect(screen.getByText(/doesn.t currently have a description/i)).toBeInTheDocument();
     expect(screen.getByText("How this relates to your results")).toBeInTheDocument();
-    expect(screen.getByText("How KinkAtlas handles this role")).toBeInTheDocument();
+    expect(screen.queryByText("How KinkAtlas handles this role")).not.toBeInTheDocument();
   });
 });

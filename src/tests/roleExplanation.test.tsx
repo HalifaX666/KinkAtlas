@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { AssessmentProvider } from '../context/AssessmentContext'
 import { RoleCard } from '../components/RoleCard'
 import { roleById, roles } from '../data/roles'
@@ -16,6 +16,8 @@ const dominantAnswers = {
   'r-responsibility': 'strong',
   'r-structure': 'some',
 }
+
+afterEach(cleanup)
 
 describe('role result explanations', () => {
   it('gives every scored role a specific meaning without repeated reflection filler', () => {
@@ -76,7 +78,9 @@ describe('role result explanations', () => {
 
     render(<MemoryRouter><RoleCard result={result} /></MemoryRouter>)
     expect(screen.getByRole('heading', { name: 'Role meaning' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Why it matched' })).toBeInTheDocument()
+    const disclosure = screen.getByText('Why this result appeared')
+    expect(disclosure.closest('details')).not.toHaveAttribute('open')
+    fireEvent.click(disclosure)
     const block = screen.getByRole('heading', { name: 'Strongest contributing signals' }).parentElement!
     const displayedSignals = [...block.querySelectorAll('.trait-up')].map((element) => element.textContent)
 
@@ -84,6 +88,19 @@ describe('role result explanations', () => {
     expect(new Set(displayedSignals).size).toBe(displayedSignals.length)
     expect(strongestContributingSignals(explanation)).toEqual(strongestContributingSignals(explanation))
     expect(result).toEqual(resultBeforePresentation)
+  })
+
+  it('keeps long labels with punctuation and Unicode inside the role-card structure', () => {
+    const result = matchRole(roleById.bottom, {
+      pleasureReceiving: { value: .9, evidence: 1, positive: 1, negative: 0 },
+    }, {})
+    const label = 'Very Long Role Label — Teacher’s Pet / Explorer'
+
+    render(<MemoryRouter><RoleCard result={{ ...result, role: { ...result.role, name: label } }} /></MemoryRouter>)
+
+    expect(screen.getByRole('heading', { name: label })).toBeInTheDocument()
+    expect(screen.getByText('Why this result appeared')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /explore this result/i })).toBeInTheDocument()
   })
 
   it('builds supporting and differentiating signals only from scoring evidence', () => {

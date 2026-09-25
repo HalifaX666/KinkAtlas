@@ -92,9 +92,9 @@ describe('Export & Share dialog', () => {
   it('explains the suggested-to-editable role-set journey', () => {
     render(<RoleProfileBuilder roleResults={roleResults} />)
 
-    expect(screen.getByRole('heading', { name: 'Your role set is ready' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Suggested role set' })).toBeInTheDocument()
-    expect(screen.getByText(/make it yours: reorder, replace, remove, or add roles/i)).toBeInTheDocument()
+    expect(screen.getByText(/changes below affect only what you keep and share, not this assessment output/i)).toBeInTheDocument()
+    expect(screen.getByText(/reorder, replace, remove, or add roles here/i)).toBeInTheDocument()
     expect(screen.getByText(/shareable cards always use this current set/i)).toBeInTheDocument()
     const explanation = screen.getByText(/KinkAtlas favors meaningful evidence/i)
     expect(explanation).toHaveTextContent(/avoiding a set of near-duplicates/i)
@@ -133,7 +133,7 @@ describe('Export & Share dialog', () => {
     const result = await searchResultFor('Soft Dom')
     fireEvent.click(await within(result).findByText('About this role'))
     expect(within(result).getByText(/Available for self-exploration\./)).toBeInTheDocument()
-    expect(within(result).getByText('How KinkAtlas handles this role')).toBeInTheDocument()
+    expect(within(result).getAllByText('How this relates to your results')).toHaveLength(1)
     fireEvent.click(within(result).getByRole('button', { name: 'Add Soft Dom' }))
 
     await waitFor(() => expect(within(result).getByText(/Added by you\./)).toBeInTheDocument())
@@ -160,7 +160,7 @@ describe('Export & Share dialog', () => {
 
     expect(roleListLabels('Current role set')).toEqual([chosen, ...suggested.slice(0, 2), ...suggested.slice(3)])
     expect(roleListLabels('Suggested roles')).toEqual(suggested)
-    expect(screen.getByRole('status')).toHaveTextContent(`${chosen} is now primary in your role set.`)
+    expect(screen.getByRole('status')).toHaveTextContent(`${chosen} is now your primary. KinkAtlas’s suggested primary is unchanged.`)
     expect(screen.queryByRole('button', { name: `Make ${chosen} primary` })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: `Replace ${suggested[0]}` }))
@@ -169,7 +169,7 @@ describe('Export & Share dialog', () => {
 
     expect(roleListLabels('Current role set')).toEqual(suggested)
     expect(screen.queryByRole('group', { name: 'Replacement mode' })).not.toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent('Suggested role set restored.')
+    expect(screen.getByRole('status')).toHaveTextContent('Your role set was restored to the assessment suggestion.')
     expect(screen.queryByRole('button', { name: 'Restore suggested set' })).not.toBeInTheDocument()
   })
 
@@ -224,7 +224,57 @@ describe('Export & Share dialog', () => {
     const displayedRelated = within(relatedRegion).getAllByRole('listitem').map((item) => item.querySelector('strong')?.textContent)
     expect(displayedRelated).toEqual(expectedRelated)
     expect(displayedRelated).not.toContain(seed.label)
-    expect(screen.getByText(`${seed.label} added by you.`)).toBeInTheDocument()
+    expect(screen.getByText(`${seed.label} was added by you. The assessment suggestion is unchanged.`)).toBeInTheDocument()
+  })
+
+  it('uses the same centralized role details in suggestions, the current set, related roles, and search', async () => {
+    render(<RoleProfileBuilder roleResults={roleResults} />)
+
+    const suggestedItem = within(screen.getByRole('list', { name: 'Suggested roles' })).getAllByRole('listitem')[0]
+    fireEvent.click(await within(suggestedItem).findByText('About this role'))
+    expect(within(suggestedItem).getByText('How this relates to your results')).toBeInTheDocument()
+
+    const currentItem = within(screen.getByRole('list', { name: 'Current role set' })).getAllByRole('listitem')[0]
+    fireEvent.click(await within(currentItem).findByText('About this role'))
+    expect(within(currentItem).getByText('How this relates to your results')).toBeInTheDocument()
+
+    const relatedItem = within(screen.getByRole('region', { name: 'Explore related roles' })).getAllByRole('listitem')[0]
+    fireEvent.click(await within(relatedItem).findByText('About this role'))
+    expect(within(relatedItem).getByText('How this relates to your results')).toBeInTheDocument()
+
+    const searchItem = await searchResultFor('Kinkster')
+    fireEvent.click(await within(searchItem).findByText('About this role'))
+    expect(within(searchItem).getByText('How this relates to your results')).toBeInTheDocument()
+  })
+
+  it('preserves assessment history when a suggestion is removed and then added by the user', async () => {
+    render(<RoleProfileBuilder roleResults={roleResults} />)
+    const originalSuggestion = roleListLabels('Suggested roles')[0]!
+
+    fireEvent.click(screen.getByRole('button', { name: `Remove ${originalSuggestion}` }))
+    const result = await searchResultFor(originalSuggestion)
+    fireEvent.click(await within(result).findByText('About this role'))
+    expect(within(result).getByText(/Suggested primary\.|Suggested from your assessment\./)).toBeInTheDocument()
+
+    fireEvent.click(within(result).getByRole('button', { name: `Add ${originalSuggestion}` }))
+    await waitFor(() => expect(within(result).getByText(/Added by you\./)).toBeInTheDocument())
+    expect(within(result).getByText(/Suggested primary\.|Suggested from your assessment\./)).toBeInTheDocument()
+    expect(roleListLabels('Suggested roles')).toContain(originalSuggestion)
+  })
+
+  it('blocks a sixth role cleanly and renders a useful empty-search state', async () => {
+    render(<RoleProfileBuilder roleResults={roleResults} />)
+    const current = roleListLabels('Current role set')
+    expect(current).toHaveLength(5)
+    const extraRole = roleLibrary.roles.find((role) => !current.includes(role.label))!
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search roles' }), { target: { value: extraRole.label } })
+    fireEvent.click(await screen.findByRole('button', { name: `Add ${extraRole.label}` }))
+    expect(screen.getByRole('status')).toHaveTextContent('Remove a role before adding another; the role set allows at most five.')
+    expect(roleListLabels('Current role set')).toEqual(current)
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search roles' }), { target: { value: 'no-such-role-zzzz' } })
+    expect(screen.getByText('No roles match that search.')).toBeInTheDocument()
   })
 
   it('starts with every role in the current role set selected and labelled', () => {

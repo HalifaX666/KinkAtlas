@@ -33,11 +33,14 @@ test("Persona smoke: completed assessment renders coherent Results", async ({ pa
   await expect(page.getByRole("button", { name: "Create my role cards" })).toBeVisible();
 
   await openRoleSetBuilder(page);
-  const suggested = await roleSetLabels(page, ".profile-recommendation-summary > ol > li strong");
+  const suggested = await roleSetLabels(page, ".profile-recommendation-summary > ol > li .profile-suggestion-heading > strong");
   const current = await roleSetLabels(page, ".profile-role-list > li > div:first-child > strong");
   expect(suggested.length).toBeGreaterThan(0);
   expect(current).toEqual(suggested);
-  await expect(page.locator(".profile-recommendation-summary > ol > li").first()).toContainText("Suggested primary");
+  const suggestedPrimary = page.locator(".profile-recommendation-summary > ol > li").first();
+  await expect(suggestedPrimary).toContainText("Suggested primary");
+  await suggestedPrimary.getByText("About this role").click();
+  await expect(suggestedPrimary.getByText("How this relates to your results")).toBeVisible();
 
   await expectRenderedSanity(page);
   await guards.assertClean();
@@ -58,12 +61,20 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   await page.getByRole("button", { name: "Cancel replacement" }).click();
   await expect(page.getByRole("group", { name: "Replacement mode" })).toHaveCount(0);
 
+  const movedRole = before[1];
+  await page.getByRole("button", { name: `Move ${movedRole} down` }).click();
+  await expect(page.getByRole("status")).toContainText(`${movedRole} moved down in your role set.`);
+  await page.getByRole("button", { name: `Move ${movedRole} up` }).click();
+  expect(await namedRoleSetLabels(page, "Current role set")).toEqual(before);
+
   const chosenPrimary = before[2];
   await page.getByRole("button", { name: `Make ${chosenPrimary} primary` }).click();
   const primaryOrder = [chosenPrimary, ...before.slice(0, 2), ...before.slice(3)];
-  await expect(page.getByRole("status")).toContainText(`${chosenPrimary} is now primary in your role set.`);
+  await expect(page.getByRole("status")).toContainText(`${chosenPrimary} is now your primary. KinkAtlas’s suggested primary is unchanged.`);
   expect(await namedRoleSetLabels(page, "Current role set")).toEqual(primaryOrder);
   expect(await namedRoleSetLabels(page, "Suggested roles")).toEqual(suggested);
+  await expect(page.locator(".profile-role-list > li").first()).toContainText("Your primary");
+  await expect(page.locator(".profile-recommendation-summary > ol > li").first()).toContainText("Suggested primary");
 
   await page.getByRole("button", { name: "Create my role cards" }).click();
   let dialog = page.getByRole("dialog", { name: "Export & Share" });
@@ -72,7 +83,7 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   await dialog.getByRole("button", { name: "Close export and sharing dialog" }).click();
 
   await page.getByRole("button", { name: "Restore suggested set" }).click();
-  await expect(page.getByRole("status")).toContainText("Suggested role set restored.");
+  await expect(page.getByRole("status")).toContainText("Your role set was restored to the assessment suggestion.");
   expect(await namedRoleSetLabels(page, "Current role set")).toEqual(suggested);
   expect(await namedRoleSetLabels(page, "Suggested roles")).toEqual(suggested);
 
@@ -92,13 +103,13 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   const manualResult = page.getByRole("button", { name: "Add Soft Dom", exact: true }).locator("..");
   await manualResult.getByText("About this role").click();
   await expect(manualResult).toContainText("Available for self-exploration");
-  await expect(manualResult).toContainText("How KinkAtlas handles this role");
+  await expect(manualResult).toContainText("How this relates to your results");
 
   const replacedRole = suggested[1];
 
   await page.getByRole("button", { name: `Replace ${replacedRole}` }).click();
   await page.getByRole("button", { name: "Replace with Soft Dom", exact: true }).click();
-  await expect(page.getByText("Soft Dom selected as a replacement. You can reorder it or make it primary.")).toBeVisible();
+  await expect(page.getByText(`${replacedRole} was replaced with Soft Dom. The assessment suggestion is unchanged.`)).toBeVisible();
   await expect(manualResult).toContainText("Added by you");
   await expect(manualResult).not.toContainText(/Strong alignment|High confidence|Medium confidence|evidence breadth/i);
   await page.getByRole("button", { name: "Make Soft Dom primary" }).click();
@@ -148,19 +159,37 @@ test("Persona smoke: Refine evidence reaches Suggested Role Set without fabricat
   await openPersonaResults(page, "refined-puppy-pattern");
   await openRoleSetBuilder(page);
 
-  const suggested = await roleSetLabels(page, ".profile-recommendation-summary > ol > li strong");
+  const suggested = await roleSetLabels(page, ".profile-recommendation-summary > ol > li .profile-suggestion-heading > strong");
 
   expect(suggested).toContain("Puppy");
 
   const puppyRole = page.locator(".profile-role-list > li").filter({ hasText: "Puppy" });
 
-  await expect(puppyRole).toContainText("Suggested");
+  await expect(puppyRole).toContainText("Assessment suggestion");
 
-  await puppyRole.getByText("Why suggested").click();
+  await puppyRole.getByText("About this role").click();
 
   await expect(puppyRole).toContainText("Assessment evidence plus your confirmation");
 
   await expect(puppyRole).not.toContainText(/Strong alignment|High confidence|Medium confidence|evidence breadth/i);
+
+  await expectRenderedSanity(page);
+  await guards.assertClean();
+});
+
+test("Persona smoke: Results and role editing remain usable at mobile width", async ({ page }) => {
+  const guards = await installBrowserGuards(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openPersonaResults(page, "balanced-authority-pattern");
+  await openRoleSetBuilder(page);
+
+  await expect(page.getByRole("heading", { name: "Suggested role set" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your role set", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /make .* primary/i }).first()).toBeVisible();
+  await expect(page.getByText("Why this result appeared").first()).toBeVisible();
+
+  const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+  expect(hasHorizontalOverflow).toBe(false);
 
   await expectRenderedSanity(page);
   await guards.assertClean();
