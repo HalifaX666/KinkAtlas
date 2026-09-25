@@ -1214,17 +1214,33 @@ p {
 .role-card {
   display: flex;
   flex-direction: column;
-  min-height: 430px;
+  min-height: 0;
   gap: 1rem;
 }
 .role-card-head {
   min-height: 5.2rem;
 }
 .role-meaning {
-  min-height: 7.5rem;
-}
-.role-card .why-block {
   flex: 1;
+}
+.role-card-evidence {
+  border-block: 1px solid var(--line);
+  padding-block: 0.75rem;
+}
+.role-card-evidence summary {
+  cursor: pointer;
+  color: var(--gold-soft);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+.role-card-evidence .why-block {
+  margin-top: 0.85rem;
+}
+.role-card-evidence .why-block > p {
+  margin: 0 0 0.85rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
 }
 .role-card > p {
   font-size: 0.88rem;
@@ -1253,7 +1269,7 @@ p {
   color: var(--dim);
   font-size: 0.68rem;
   padding: 0.8rem 0;
-  border-block: 1px solid var(--line);
+  border-top: 1px solid var(--line);
 }
 .evidence-row strong {
   color: #c9bfbd;
@@ -2138,6 +2154,7 @@ p {
 }
 .profile-builder-section {
   border-top: 1px solid var(--line);
+  padding-top: 3rem;
   padding-bottom: 3rem;
 }
 .profile-builder-disclosure > summary {
@@ -2224,20 +2241,6 @@ p {
   font-weight: 450;
   line-height: 1.5;
 }
-.profile-role-set-outcome {
-  max-width: 760px;
-  margin: 1.5rem 0;
-}
-.profile-role-set-outcome h3 {
-  margin: 0.35rem 0 0.55rem;
-  font-family: var(--serif);
-  font-size: clamp(1.8rem, 4vw, 2.5rem);
-}
-.profile-role-set-outcome p {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.6;
-}
 .profile-builder-grid {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
@@ -2312,18 +2315,12 @@ p {
   color: var(--muted);
   font-size: 0.68rem;
 }
-.profile-role-reason {
-  margin-top: 0.35rem;
-}
-.profile-role-reason summary {
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 0.68rem;
-}
-.profile-role-reason p,
 .profile-replacement-note {
   margin: 0.35rem 0 0;
   font-size: 0.72rem;
+}
+.profile-role-limit {
+  color: var(--gold-soft);
 }
 .profile-replacement-note {
   display: flex;
@@ -3135,7 +3132,7 @@ summary:focus-visible {
   color: var(--muted);
   font-size: 0.72rem;
 }
-.related-role-results li > span {
+.related-role-results .profile-search-copy {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -3171,7 +3168,7 @@ summary:focus-visible {
   border: 1px solid var(--line);
   border-radius: 10px;
 }
-.profile-recommendation-summary li > div {
+.profile-suggestion-heading {
   display: flex;
   justify-content: space-between;
   gap: 0.7rem;
@@ -3184,6 +3181,25 @@ summary:focus-visible {
 }
 .profile-recommendation-summary li p {
   margin: 0.5rem 0 0;
+}
+.profile-recommendation-summary li > small {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+.profile-suggestion-method {
+  margin-top: 0.8rem;
+}
+.profile-suggestion-method summary {
+  cursor: pointer;
+  color: var(--gold-soft);
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+.profile-suggested-primary-note {
+  padding-left: 0.8rem;
+  border-left: 2px solid var(--gold);
 }
 .profile-search-copy {
   min-width: 0;
@@ -3203,14 +3219,12 @@ summary:focus-visible {
   font-size: 0.72rem;
   line-height: 1.45;
 }
-.profile-role-assessment,
-.profile-role-handling {
+.profile-role-assessment {
   margin-top: 0.65rem;
   padding-top: 0.65rem;
   border-top: 1px solid var(--line);
 }
-.profile-role-assessment > strong,
-.profile-role-handling > strong {
+.profile-role-assessment > strong {
   color: var(--text);
   font-size: 0.68rem;
 }
@@ -3288,6 +3302,21 @@ summary:focus-visible {
   max-width: 70ch;
   margin: 0;
   color: var(--muted);
+  line-height: 1.55;
+}
+.role-set-export-loading {
+  display: block;
+  margin-top: 0.6rem;
+  color: var(--dim);
+  font-size: 0.72rem;
+}
+.results-metrics-guide {
+  max-width: 760px;
+  margin-top: 1rem;
+}
+.result-panel-empty {
+  color: var(--muted);
+  font-size: 0.82rem;
   line-height: 1.55;
 }
 .role-set-export-section .button {

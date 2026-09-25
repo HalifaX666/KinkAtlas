@@ -50,7 +50,7 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
   const restoreSuggestedSet = () => {
     setSelectedRoles(initialRoles.map((role) => ({ ...role })));
     setReplacementRoleId(undefined);
-    setStatus("Suggested role set restored.");
+    setStatus("Your role set was restored to the assessment suggestion.");
   };
 
   const cancelReplacement = () => {
@@ -60,9 +60,10 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
 
   const addRole = (roleId: string, label: string, definition?: string) => {
     if (replacementRoleId) {
+      const replacedLabel = selectedRoles.find((role) => role.roleId === replacementRoleId)?.label;
       setSelectedRoles((current) => replaceRoleProfileEntry(current, replacementRoleId, { roleId, label, source: "user-selected", definition }));
       setReplacementRoleId(undefined);
-      setStatus(`${label} selected as a replacement. You can reorder it or make it primary.`);
+      setStatus(`${replacedLabel ?? "Role"} was replaced with ${label}. The assessment suggestion is unchanged.`);
       return;
     }
     if (selectedRoles.length >= 5) {
@@ -70,7 +71,11 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
       return;
     }
     setSelectedRoles((current) => addRoleProfileEntry(current, { roleId, label, source: "user-selected", definition }));
-    setStatus(`${label} added by you.`);
+    setStatus(`${label} was added by you. The assessment suggestion is unchanged.`);
+  };
+  const moveRole = (role: EditableRoleProfileEntry, from: number, to: number) => {
+    setSelectedRoles((current) => reorderRoleProfileEntry(current, from, to));
+    setStatus(`${role.label} moved ${to < from ? "up" : "down"} in your role set. The assessment suggestion is unchanged.`);
   };
   const copyRoles = async () => {
     const text = buildRoleLabelList(selectedRoles);
@@ -88,29 +93,30 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
 
   const content = (
     <>
-      <div className="profile-role-set-outcome">
-        <span className="eyebrow">From your assessment</span>
-        <h3>Your role set is ready</h3>
-        <p>KinkAtlas built a suggested starting set from roles that represent different parts of your results. Keep it as-is or make it yours before sharing; suggestions are not assignments.</p>
-      </div>
       <section className="profile-recommendation-summary" aria-labelledby="role-recommendations-heading">
         <h3 id="role-recommendations-heading">Suggested role set</h3>
-        <p>KinkAtlas suggested these roles from your assessment evidence. You can keep fewer or none; manually adding a role is separate from receiving an assessment suggestion.</p>
-        <p className="profile-suggestion-explanation"><strong>Why these roles?</strong> KinkAtlas favors meaningful evidence while avoiding a set of near-duplicates, and may include a role that represents a distinct part of your results. Directly chosen vocabulary can shape the suggested primary. Five is a maximum, not a target; suggestions are not assignments.</p>
-        {optimization.primaryExplanation && (
-          <p>
-            <strong>Why this suggested primary:</strong> {optimization.primaryExplanation}
+        <p>This is KinkAtlas’s original suggestion from your answers. Your editable role set starts here; changes below affect only what you keep and share, not this assessment output.</p>
+        <details className="profile-suggestion-method">
+          <summary>How KinkAtlas chose this set</summary>
+          <p>KinkAtlas favors meaningful evidence while avoiding a set of near-duplicates. Five is a maximum, not a target, and every suggestion remains vocabulary for reflection—not an assignment.</p>
+        </details>
+        {optimization.primary && (
+          <p className="profile-suggested-primary-note">
+            <strong>Suggested primary:</strong> {optimization.primary.candidate.label} best represents this assessment-generated set. Choosing a different primary below will not change this original suggestion.
           </p>
         )}
         {optimization.recommendations.length ? (
           <ol aria-label="Suggested roles">
             {optimization.recommendations.map((recommendation) => (
               <li key={recommendation.candidate.roleId}>
-                <div>
+                <div className="profile-suggestion-heading">
                   <strong>{recommendation.candidate.label}</strong>
                   {optimization.primary?.candidate.roleId === recommendation.candidate.roleId && <span>Suggested primary</span>}
                 </div>
-                <p>{recommendation.explanation}</p>
+                <small>{recommendationTrustLabel(recommendation.candidate.evidenceType, recommendation.candidate.confidence)}</small>
+                <Suspense fallback={<small>Loading role details…</small>}>
+                  <LazyRoleDefinitionDetails roleId={recommendation.candidate.roleId} assessmentExplanation={assessmentExplanationByRoleId.get(recommendation.candidate.roleId)} />
+                </Suspense>
               </li>
             ))}
           </ol>
@@ -125,8 +131,9 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
           <header className="profile-role-editor-heading">
             <div>
               <h3 id="current-role-set-heading">Your role set</h3>
-              <p>Make it yours: reorder, replace, remove, or add roles. Shareable cards always use this current set.</p>
-              <p>{selectedRoles.length} of 5 roles in your set; fewer or none is valid. The first role is primary within this role set.</p>
+              <p>Reorder, replace, remove, or add roles here. Shareable cards always use this current set.</p>
+              <p>{selectedRoles.length} of 5 roles in your set; fewer or none is valid. The first role is your chosen primary.</p>
+              {selectedRoles.length === 5 && <p className="profile-role-limit">Your role set is full. Remove or replace a role before adding another.</p>}
             </div>
             {!roleSetMatchesSuggestion && (
               <button type="button" className="button secondary profile-restore-button" onClick={restoreSuggestedSet}>
@@ -140,17 +147,12 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
               {selectedRoles.map((role, index) => (
                 <li key={role.roleId}>
                   <div>
-                    <span>{index === 0 ? "Primary" : `Role ${index + 1}`}</span>
+                    <span>{index === 0 ? "Your primary" : `Role ${index + 1}`}</span>
                     <strong>{role.label}</strong>
-                    <small>{role.source === "recommended" ? "Suggested" : "Added by you"}</small>
-                    {role.source === "recommended" && recommendationById.get(role.roleId) && (
-                      <details className="profile-role-reason">
-                        <summary>Why suggested</summary>
-                        <p>
-                          {recommendationById.get(role.roleId)?.explanation} <span>{recommendationTrustLabel(recommendationById.get(role.roleId)!.candidate.evidenceType, recommendationById.get(role.roleId)!.candidate.confidence)}.</span>
-                        </p>
-                      </details>
-                    )}
+                    <small>{role.source === "recommended" ? `Assessment suggestion · ${recommendationTrustLabel(recommendationById.get(role.roleId)?.candidate.evidenceType ?? "exploration", recommendationById.get(role.roleId)?.candidate.confidence)}` : "Added by you"}</small>
+                    <Suspense fallback={<small>Loading role details…</small>}>
+                      <LazyRoleDefinitionDetails roleId={role.roleId} assessmentExplanation={assessmentExplanationByRoleId.get(role.roleId)} />
+                    </Suspense>
                   </div>
                   <div className="profile-role-actions">
                     {index > 0 && (
@@ -160,17 +162,17 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
                         aria-label={`Make ${role.label} primary`}
                         onClick={() => {
                           setSelectedRoles((current) => makeRoleProfileEntryPrimary(current, role.roleId));
-                          setStatus(`${role.label} is now primary in your role set.`);
+                          setStatus(`${role.label} is now your primary. KinkAtlas’s suggested primary is unchanged.`);
                         }}
                       >
                         <Crown size={16} />
                         Make primary
                       </button>
                     )}
-                    <button type="button" className="quiet-button" aria-label={`Move ${role.label} up`} disabled={index === 0} onClick={() => setSelectedRoles((current) => reorderRoleProfileEntry(current, index, index - 1))}>
+                    <button type="button" className="quiet-button" aria-label={`Move ${role.label} up`} disabled={index === 0} onClick={() => moveRole(role, index, index - 1)}>
                       <ArrowUp size={17} />
                     </button>
-                    <button type="button" className="quiet-button" aria-label={`Move ${role.label} down`} disabled={index === selectedRoles.length - 1} onClick={() => setSelectedRoles((current) => reorderRoleProfileEntry(current, index, index + 1))}>
+                    <button type="button" className="quiet-button" aria-label={`Move ${role.label} down`} disabled={index === selectedRoles.length - 1} onClick={() => moveRole(role, index, index + 1)}>
                       <ArrowDown size={17} />
                     </button>
                     <button
@@ -192,7 +194,7 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
                       onClick={() => {
                         setSelectedRoles((current) => removeRoleProfileEntry(current, role.roleId));
                         if (replacementRoleId === role.roleId) setReplacementRoleId(undefined);
-                        setStatus(`${role.label} removed.`);
+                        setStatus(`${role.label} was removed from your role set. The assessment suggestion is unchanged.`);
                       }}
                     >
                       <Trash2 size={17} />
@@ -222,10 +224,13 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
               <ul className="profile-search-results related-role-results">
                 {relatedRoles.map((role) => (
                   <li key={role.roleId}>
-                    <span>
+                    <div className="profile-search-copy">
                       <strong>{role.label}</strong>
                       <small>Related · {role.reason}</small>
-                    </span>
+                      <Suspense fallback={<small>Loading role details…</small>}>
+                        <LazyRoleDefinitionDetails roleId={role.roleId} assessmentExplanation={assessmentExplanationByRoleId.get(role.roleId)} />
+                      </Suspense>
+                    </div>
                     <button type="button" className="quiet-button" disabled={selectedIds.has(role.roleId)} aria-label={`Add related role ${role.label}`} onClick={() => addRole(role.roleId, role.label, roleLibraryRoleById.get(role.roleId)?.definition)}>
                       <Plus size={17} />
                       {selectedIds.has(role.roleId) ? "Selected" : "Add"}

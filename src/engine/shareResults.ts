@@ -117,7 +117,7 @@ export function getShareableRoleSet(roleSet: EditableRoleProfileEntry[], roleRes
 
 const roleSummaryLine = (role: ShareableRoleResult, includeAlignment = true, includeConfidence = true) => {
   if (role.source === 'user-selected') return `• ${role.name} — Added by you; no assessment score or confidence.`
-  if (role.alignment === undefined && role.confidence === undefined && role.evidenceBreadth === undefined) return `• ${role.name} — Suggested; no alignment score or confidence.`
+  if (role.alignment === undefined && role.confidence === undefined && role.evidenceBreadth === undefined) return `• ${role.name} — Assessment suggestion; no alignment score or confidence.`
   const details = [
     includeAlignment ? role.alignment : '',
     includeConfidence ? role.confidence : '',

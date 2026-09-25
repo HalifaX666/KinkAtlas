@@ -153,10 +153,11 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
           const details = role.source === 'user-selected'
             ? 'Added by you · No assessment score or confidence'
             : role.alignment === undefined && role.confidence === undefined
-              ? 'Suggested · No alignment score or confidence'
+              ? 'Assessment suggestion · No alignment score or confidence'
               : `${role.alignment} · ${role.confidence}`
           return <label key={role.id}><input type="checkbox" checked={selectedIds.has(role.id)} onChange={(event) => toggleRole(role.id, event.target.checked)} /><span className="role-card-mini" aria-hidden="true"><small>Kink Atlas</small><strong>{role.name}</strong><em>{details}</em></span><span><strong>{role.name}</strong><small>{details}</small></span></label>
         })}</fieldset>
+        {!roleCards.length && <div className="empty-panel"><p>Your current role set is empty. An empty set is valid; add a role in the builder if you want to create role cards.</p></div>}
         <label className="overview-option"><input type="checkbox" checked={overviewConfidence} onChange={(event) => setOverviewConfidence(event.target.checked)} /><span>Include confidence on overview card</span></label>
         <div className="share-actions"><button className="button primary" type="button" onClick={exportCards} disabled={cardCount === 0 || busy}><Download size={17} />{exportLabel}</button><button className="button secondary" type="button" onClick={shareCards} disabled={cardCount === 0 || busy}><Share2 size={17} />{shareLabel}</button><button className="button secondary" type="button" onClick={exportOverview} disabled={busy}><Images size={17} />Export overview card</button></div>
       </section>}

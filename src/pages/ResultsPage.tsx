@@ -35,6 +35,9 @@ export function ResultsPage() {
   const topTraits = Object.entries(traitScores)
     .sort(([, left], [, right]) => (right?.value ?? 0) - (left?.value ?? 0))
     .slice(0, 10);
+  const establishedCompetencies = readiness.competencies.filter((item) => item.band === "strong");
+  const developingCompetencies = readiness.competencies.filter((item) => item.band !== "strong");
+  const conversationStarters = negotiationQuestions.filter((question) => answers.negotiation[question.id]).slice(0, 8);
 
   if (Object.keys(answers.discovery).length === 0)
     return (
@@ -109,6 +112,7 @@ export function ResultsPage() {
           <span className="eyebrow">When you are ready</span>
           <h2 id="role-set-export-heading">Take your role set with you</h2>
           <p>Create shareable cards from your current role set for a profile, a conversation with someone you trust, or a manual post to FetLife. You choose whether and where to share; KinkAtlas never connects to or posts to a FetLife profile.</p>
+          {currentRoleSet === null && <span className="role-set-export-loading" role="status">Preparing your current role set…</span>}
         </div>
         <button className="button primary share-results-button" type="button" disabled={currentRoleSet === null} onClick={() => setSharing(true)}>
           <Share2 size={18} />
@@ -120,9 +124,11 @@ export function ResultsPage() {
         <div className="section-heading">
           <span className="eyebrow">03 · Role discovery</span>
           <h2>Role discovery</h2>
-          <p>
-            <strong>Alignment</strong> describes how closely your answers resemble a role’s themes. <strong>Confidence</strong> describes how much relevant information was available. Confidence is not the sort order: a Medium-confidence role can appear above a High-confidence role when its overall evidence and alignment rank higher.
-          </p>
+          <p>Explore the role vocabulary most closely connected to your answers. This ranking is separate from the curated Suggested Role Set above.</p>
+          <details className="calculation-disclosure results-metrics-guide">
+            <summary>How to read Alignment, Confidence, and Evidence breadth</summary>
+            <div><p><strong>Alignment</strong> describes how closely your answers resemble a role’s themes.</p><p><strong>Confidence</strong> describes how much relevant information was available, not the ranking order.</p><p><strong>Evidence breadth</strong> describes how much of the role’s relevant theme set had usable answer evidence; it is not match strength.</p></div>
+          </details>
         </div>
         <div className="role-grid">
           {roleResults.slice(0, 12).map((result) => (
@@ -150,22 +156,20 @@ export function ResultsPage() {
                 <ShieldCheck />
                 Established foundations
               </h3>
-              {readiness.competencies
-                .filter((item) => item.band === "strong")
-                .map((item) => (
+              {establishedCompetencies.map((item) => (
                   <ResultLine key={item.competency} title={competencyDefinitions[item.competency].label} text={competencyDefinitions[item.competency].description} band={readinessLabels[item.band]} />
                 ))}
+              {!establishedCompetencies.length && <p className="result-panel-empty">No foundations reached the established band from these answers. This is a prompt for reflection, not a safety judgment.</p>}
             </div>
             <div className="result-panel">
               <h3>
                 <BookOpen />
                 Areas to explore
               </h3>
-              {readiness.competencies
-                .filter((item) => item.band !== "strong")
-                .map((item) => (
+              {developingCompetencies.map((item) => (
                   <ResultLine key={item.competency} title={competencyDefinitions[item.competency].label} text={competencyDefinitions[item.competency].description} band={readinessLabels[item.band]} />
                 ))}
+              {!developingCompetencies.length && <p className="result-panel-empty">No additional reflection areas appeared from these answers. This is limited information, not a safety certification.</p>}
             </div>
           </div>
         </div>
@@ -215,7 +219,7 @@ export function ResultsPage() {
           <h2>Independent by design</h2>
           <p>These choices guide activity suggestions but never alter role alignment or ordering.</p>
         </div>
-        <div className="list-panel boundary-results">
+        {activityGuidance.length ? <div className="list-panel boundary-results">
           {activityGuidance.map((guidance) => (
             <article className="boundary-result" key={guidance.item.id}>
               <h3>{guidance.item.label}</h3>
@@ -229,7 +233,7 @@ export function ResultsPage() {
               </small>
             </article>
           ))}
-        </div>
+        </div> : <div className="empty-panel"><p>No activity guidance is available from the current boundary selections.</p></div>}
       </section>
 
       <section className="section page-width conversation-starters">
@@ -238,17 +242,14 @@ export function ResultsPage() {
           <h2>Conversation starters</h2>
           <p>These turn your answers into language you can adapt when talking with a partner. They describe preferences you expressed in the assessment, not rules you are required to follow.</p>
         </div>
-        <div className="list-panel">
-          {negotiationQuestions
-            .filter((question) => answers.negotiation[question.id])
-            .slice(0, 8)
-            .map((question) => (
+        {conversationStarters.length ? <div className="list-panel">
+          {conversationStarters.map((question) => (
               <div key={question.id}>
                 <span>{question.domain}</span>
                 <strong>{getConversationStarter(question.id, answers.negotiation[question.id])}</strong>
               </div>
             ))}
-        </div>
+        </div> : <div className="empty-panel"><p>No conversation starters are available until communication preferences are answered.</p></div>}
       </section>
 
       <section className="section page-width">
@@ -256,7 +257,7 @@ export function ResultsPage() {
           <span className="eyebrow">08 · Learning path</span>
           <h2>Useful next steps</h2>
         </div>
-        <div className="learning-grid">
+        {recommendations.length ? <div className="learning-grid">
           {recommendations.map((item, index) => (
             <article key={item.title}>
               <span>0{index + 1}</span>
@@ -266,7 +267,7 @@ export function ResultsPage() {
               </div>
             </article>
           ))}
-        </div>
+        </div> : <div className="empty-panel"><p>No next-step suggestions are available from the current reflection answers.</p></div>}
       </section>
 
       <section className="final-cta">
