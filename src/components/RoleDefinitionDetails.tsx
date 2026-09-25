@@ -17,6 +17,7 @@ export function RoleDefinitionDetails({ roleId, assessmentExplanation = explainR
     <div className="profile-role-assessment" data-explanation-kind={assessmentExplanation.kind}>
       <strong>How this relates to your results</strong>
       {assessmentExplanation.manualSelection && <p><b>{assessmentExplanation.manualSelection.heading}.</b> {assessmentExplanation.manualSelection.message}</p>}
+      {assessmentExplanation.vocabulary && <p><b>{assessmentExplanation.vocabulary.heading}.</b> {assessmentExplanation.vocabulary.message}</p>}
       <p><b>{assessmentExplanation.heading}.</b> {assessmentExplanation.message}</p>
     </div>
     {relatedRoles.length > 0 && <p><strong>Related roles:</strong> {relatedRoles.map((related) => related.label).join(', ')}</p>}

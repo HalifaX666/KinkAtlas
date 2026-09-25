@@ -177,6 +177,25 @@ test("Persona smoke: Refine evidence reaches Suggested Role Set without fabricat
   await guards.assertClean();
 });
 
+test("Persona smoke: confirmed core vocabulary preserves scored evidence and reaches the suggested primary", async ({ page }) => {
+  const guards = await installBrowserGuards(page);
+
+  await openPersonaResults(page, "confirmed-dominant-vocabulary");
+  await openRoleSetBuilder(page);
+
+  const dominantSuggestion = page.locator(".profile-recommendation-summary > ol > li").filter({ hasText: "Dominant" }).first();
+  await expect(dominantSuggestion).toBeVisible();
+  await expect(dominantSuggestion).toContainText("Suggested primary");
+  await expect(dominantSuggestion).toContainText(/Strong assessment evidence|Assessment evidence/);
+  await dominantSuggestion.getByText("About this role").click();
+  await expect(dominantSuggestion).toContainText("Exact vocabulary confirmed");
+  await expect(dominantSuggestion).toContainText("alignment and confidence still come only from your Discovery evidence");
+  await expect(dominantSuggestion).not.toContainText("Label confirmed by you");
+
+  await expectRenderedSanity(page);
+  await guards.assertClean();
+});
+
 test("Persona smoke: Results and role editing remain usable at mobile width", async ({ page }) => {
   const guards = await installBrowserGuards(page);
   await page.setViewportSize({ width: 390, height: 844 });

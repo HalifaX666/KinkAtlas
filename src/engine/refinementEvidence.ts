@@ -11,6 +11,36 @@ export interface RefinementTargetDefinition {
 
 export const refinementTargets: RefinementTargetDefinition[] = [
   {
+    id: "dominant",
+    roleId: "role:dominant-4cfaa6ab",
+    label: "Dominant",
+  },
+  {
+    id: "submissive",
+    roleId: "role:submissive-70cf87f8",
+    label: "submissive",
+  },
+  {
+    id: "switch",
+    roleId: "role:switch-39921a74",
+    label: "Switch",
+  },
+  {
+    id: "top",
+    roleId: "role:top-d5cdfcf7",
+    label: "Top",
+  },
+  {
+    id: "bottom",
+    roleId: "role:bottom-479ad21a",
+    label: "Bottom",
+  },
+  {
+    id: "vers",
+    roleId: "role:vers-1a60a8ce",
+    label: "Vers",
+  },
+  {
     id: "daddy",
     roleId: "role:daddy-e585737a",
     label: "Daddy",
@@ -170,6 +200,12 @@ export const refinementTargets: RefinementTargetDefinition[] = [
 export const refinementTargetById = new Map(refinementTargets.map((target) => [target.id, target]));
 
 export const refinementTargetByRoleId = new Map(refinementTargets.map((target) => [target.roleId, target]));
+
+export function refinementQuestionIdsForTarget(targetId: RefinementTargetId): string[] {
+  return refinementQuestions
+    .filter((question) => question.answers.some((answer) => answer.supports?.includes(targetId) || answer.weakSupports?.includes(targetId) || answer.rejects?.includes(targetId)))
+    .map((question) => question.id);
+}
 
 interface SelectedPrimaryPreference {
   preference: RefinementPrimaryPreference;

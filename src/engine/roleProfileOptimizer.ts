@@ -2,11 +2,12 @@ import { roleById } from "../data/roles";
 import { traitById } from "../data/traits";
 import { relationshipsForLibraryRole, roleLibrary, roleLibraryRoleById, type RoleLibraryDecisionPathway, type RoleLibraryRole } from "../taxonomy/roleLibrary";
 import type { ConfidenceLevel, RoleResult, AssessmentAnswers } from "../types";
-import { evaluateRefinementEvidence, refinementFallbackIsSuperseded, refinementTargetByRoleId } from "./refinementEvidence";
+import { evaluateRefinementEvidence, refinementFallbackIsSuperseded, refinementQuestionIdsForTarget, refinementTargetByRoleId } from "./refinementEvidence";
 import { calculateTraitScores } from "./discoveryScoring";
 import { selectEligibleRefinementQuestions } from "./refinementRouting";
 
 export type ProfileEvidenceType = "inferred" | "direct" | "hybrid" | "explicit" | "exact-label" | "exploration";
+export type VocabularyConfirmationStatus = "confirmed" | "unconfirmed" | "declined";
 
 export interface RoleProfileCandidate {
   roleId: string;
@@ -29,6 +30,7 @@ export interface RoleProfileCandidate {
   evidenceThemes?: string[];
   notImplied?: string;
   evidenceExplanation: string;
+  vocabularyConfirmation?: VocabularyConfirmationStatus;
 }
 
 export interface RoleProfileRecommendation {
@@ -190,7 +192,15 @@ export function optimizeRoleProfile(candidates: RoleProfileCandidate[], maximum 
 
 const positiveAlignment = new Set(["strong", "explore"]);
 
-function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], refinementAnswers: AssessmentAnswers["refinement"] = {}, eligibleRefinementQuestionIds: ReadonlySet<string> = new Set()) {
+interface CandidateEvidence {
+  evidenceType: ProfileEvidenceType;
+  eligible: boolean;
+  confidence?: ConfidenceLevel;
+  explanation: string;
+  vocabularyConfirmation?: VocabularyConfirmationStatus;
+}
+
+function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], refinementAnswers: AssessmentAnswers["refinement"] = {}, eligibleRefinementQuestionIds: ReadonlySet<string> = new Set()): CandidateEvidence {
   const mappedResult = (role.canonicalRoleId ? roleResults.find((result) => result.role.id === role.canonicalRoleId) : undefined) ?? roleResults.find((result) => role.nearestRoleIds.includes(result.role.id));
 
   const broadEvidenceQualifies = Boolean(mappedResult && positiveAlignment.has(mappedResult.alignment) && mappedResult.confidence !== "low" && !mappedResult.unmetEvidenceRequirements?.length);
@@ -200,6 +210,18 @@ function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], ref
   const refinementEvidence = refinementTarget ? evaluateRefinementEvidence(refinementAnswers).find((evidence) => evidence.targetId === refinementTarget.id) : undefined;
 
   const refinementSupported = refinementEvidence?.status === "supported";
+  const eligibleSupportingQuestion = refinementEvidence?.supportingQuestionIds.some((questionId) => eligibleRefinementQuestionIds.has(questionId)) ?? false;
+  const eligibleRejectingQuestion = refinementEvidence?.rejectingQuestionIds.some((questionId) => eligibleRefinementQuestionIds.has(questionId)) ?? false;
+  const eligibleVocabularyQuestionAnswered = refinementTarget
+    ? refinementQuestionIdsForTarget(refinementTarget.id).some((questionId) => eligibleRefinementQuestionIds.has(questionId) && refinementAnswers[questionId] !== undefined)
+    : false;
+  const vocabularyConfirmation: VocabularyConfirmationStatus | undefined = eligibleSupportingQuestion
+    ? "confirmed"
+    : eligibleRejectingQuestion
+      ? "declined"
+      : eligibleVocabularyQuestionAnswered
+        ? "unconfirmed"
+        : undefined;
 
   if (role.id === "role:little-180ca01b" && refinementFallbackIsSuperseded("little", refinementAnswers, eligibleRefinementQuestionIds)) {
     return {
@@ -213,9 +235,18 @@ function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], ref
   if (role.decisionPathway === "inferred") {
     return {
       evidenceType: "inferred" as const,
-      eligible: broadEvidenceQualifies,
+      eligible: broadEvidenceQualifies && vocabularyConfirmation !== "declined",
       confidence: mappedResult?.confidence,
-      explanation: broadEvidenceQualifies ? "Existing scored-role evidence meets the alignment and confidence threshold." : "The mapped scored role does not yet have enough aligned evidence for automatic recommendation.",
+      vocabularyConfirmation,
+      explanation: vocabularyConfirmation === "declined"
+        ? "The underlying scored pattern remains available, but the user indicated that this exact label does not fit."
+        : vocabularyConfirmation === "confirmed"
+          ? broadEvidenceQualifies
+            ? "Existing scored-role evidence qualifies, and the user directly confirmed that this exact vocabulary feels useful."
+            : "The user directly confirmed this vocabulary, but the mapped scored role does not yet qualify for automatic recommendation."
+          : broadEvidenceQualifies
+            ? "Existing scored-role evidence meets the alignment and confidence threshold."
+            : "The mapped scored role does not yet have enough aligned evidence for automatic recommendation.",
     };
   }
 
@@ -305,6 +336,7 @@ export function buildRoleProfileCandidates(roleResults: RoleResult[], refinement
       evidenceThemes: mappedResult?.supportingTraits.slice(0, 3).map((signal) => traitById[signal.id].label),
       notImplied: mappedRole?.notImplied ?? (role.decisionPathway === "explicit-confirmation" ? "that adjacent identities, activities, dynamics, or consent choices also fit." : undefined),
       evidenceExplanation: evidence.explanation,
+      vocabularyConfirmation: evidence.vocabularyConfirmation,
     };
   });
 }

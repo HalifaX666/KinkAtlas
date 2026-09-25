@@ -20,6 +20,10 @@ export interface RoleAssessmentExplanation {
     heading: "Added by you";
     message: string;
   };
+  vocabulary?: {
+    heading: string;
+    message: string;
+  };
 }
 
 export interface RoleAssessmentExplanationInput {
@@ -94,6 +98,24 @@ function assessmentOutcome({ recommendation, alternate, isSuggestedPrimary }: Ro
 
 export function explainRoleAssessment(input: RoleAssessmentExplanationInput): RoleAssessmentExplanation {
   const explanation: RoleAssessmentExplanation = assessmentOutcome(input);
+  const vocabularyConfirmation = input.recommendation?.candidate.vocabularyConfirmation ?? input.alternate?.candidate.vocabularyConfirmation;
+
+  if (vocabularyConfirmation === "confirmed") {
+    explanation.vocabulary = {
+      heading: "Exact vocabulary confirmed",
+      message: "You directly selected this label in Refine. Its alignment and confidence still come only from your Discovery evidence.",
+    };
+  } else if (vocabularyConfirmation === "declined") {
+    explanation.vocabulary = {
+      heading: "Label not selected",
+      message: "Your Discovery answers can still show the underlying pattern, but you indicated that this exact label does not fit.",
+    };
+  } else if (vocabularyConfirmation === "unconfirmed") {
+    explanation.vocabulary = {
+      heading: "Underlying pattern only",
+      message: "Your Discovery evidence supports this pattern, but you did not directly confirm this exact label.",
+    };
+  }
 
   if (input.selectedRole?.source === "user-selected") {
     explanation.manualSelection = {

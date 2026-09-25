@@ -58,6 +58,41 @@ function dominanceSupported(answers: AssessmentAnswers, traitScores: TraitScores
   return traitSupported(traitScores, "dominance") && explicitDominanceEvidence(answers.discovery);
 }
 
+function answerIs(answers: AssessmentAnswers, questionId: string, ...answerIds: string[]): boolean {
+  return answerIds.includes(answers.discovery[questionId]);
+}
+
+function powerSwitchingSupported(answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  return traitSupported(traitScores, "switching", 0.55, 2)
+    && answerIs(answers, "d-flexibility", "strong", "some")
+    && answerIs(answers, "r-both-power", "strong", "some");
+}
+
+function activePositionSupported(answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  const explicitPositionEvidence = answerIs(answers, "d-position-give", "strong", "some")
+    || answerIs(answers, "r-top", "strong", "some");
+
+  return explicitPositionEvidence
+    && traitSupported(traitScores, "leadership", 0.5, 2)
+    && traitSupported(traitScores, "pleasureGiving", 0.5, 2);
+}
+
+function receivingPositionSupported(answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  const explicitPositionEvidence = answerIs(answers, "d-position-receive", "strong", "some")
+    || answerIs(answers, "r-bottom", "strong", "some");
+
+  return explicitPositionEvidence
+    && traitSupported(traitScores, "pleasureReceiving", 0.5, 2)
+    && traitSupported(traitScores, "sensorySeeking", 0.5, 2);
+}
+
+function versatilePositionSupported(answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  return answerIs(answers, "r-positions", "strong", "some")
+    && traitSupported(traitScores, "switching", 0.55, 1)
+    && activePositionSupported(answers, traitScores)
+    && receivingPositionSupported(answers, traitScores);
+}
+
 function serviceSupported(traitScores: TraitScores): boolean {
   return traitSupported(traitScores, "serviceGiving") || traitSupported(traitScores, "serviceReceiving");
 }
@@ -109,8 +144,30 @@ function littlePositionSelected(answers: AssessmentAnswers): boolean {
 function routeCandidates(answers: AssessmentAnswers, traitScores: TraitScores): RefinementRouteCandidate[] {
   const submission = submissionSupported(answers, traitScores);
   const dominance = dominanceSupported(answers, traitScores);
+  const powerSwitching = powerSwitchingSupported(answers, traitScores);
+  const activePosition = activePositionSupported(answers, traitScores);
+  const receivingPosition = receivingPositionSupported(answers, traitScores);
+  const versatilePosition = versatilePositionSupported(answers, traitScores);
 
   return [
+    {
+      questionId: "ref-power-exchange-vocabulary",
+      eligible: dominance || submission || powerSwitching,
+      strength: Math.max(
+        dominance ? traitStrength(traitScores, "dominance", "givingControl") : 0,
+        submission ? traitStrength(traitScores, "submission", "receivingControl", "surrender") : 0,
+        powerSwitching ? traitStrength(traitScores, "switching", "dominance", "submission") : 0,
+      ),
+    },
+    {
+      questionId: "ref-play-position-vocabulary",
+      eligible: activePosition || receivingPosition || versatilePosition,
+      strength: Math.max(
+        activePosition ? traitStrength(traitScores, "leadership", "pleasureGiving") : 0,
+        receivingPosition ? traitStrength(traitScores, "pleasureReceiving", "sensorySeeking") : 0,
+        versatilePosition ? traitStrength(traitScores, "switching", "exploration", "spontaneity") : 0,
+      ),
+    },
     {
       questionId: "ref-sub-top",
       eligible: submission && traitSupported(traitScores, "leadership", 0.5, 2) && traitSupported(traitScores, "pleasureGiving", 0.5, 2),
@@ -252,6 +309,14 @@ export function eligibleRefinementFamilies(answers: AssessmentAnswers, traitScor
 
   if (shouldAskAdultAgeRoleplayGate(answers) || adultAgeRoleplayInterest(answers)) {
     families.push("caregiver-little");
+  }
+
+  if (dominanceSupported(answers, traitScores) || submissionSupported(answers, traitScores) || powerSwitchingSupported(answers, traitScores)) {
+    families.push("power-exchange-vocabulary");
+  }
+
+  if (activePositionSupported(answers, traitScores) || receivingPositionSupported(answers, traitScores) || versatilePositionSupported(answers, traitScores)) {
+    families.push("play-position-vocabulary");
   }
 
   return families;

@@ -37,11 +37,22 @@ export const refinementFamilies: RefinementFamilyDefinition[] = [
     label: "Caregiver / age-roleplay style",
     description: "Looks at non-sexual adult caregiving and age-inspired roleplay language.",
   },
+  {
+    id: "power-exchange-vocabulary",
+    label: "Power-exchange vocabulary",
+    description: "Checks whether a core power-exchange label feels useful without changing the underlying pattern.",
+  },
+  {
+    id: "play-position-vocabulary",
+    label: "Play-position vocabulary",
+    description: "Checks whether a core activity-position label feels useful without changing the underlying pattern.",
+  },
 ];
 
 const intersectionContext = "This asks whether two patterns already supported by your answers feel connected. It does not change your Discovery alignment, assign an identity, or imply consent.";
 const adultAgeRoleplayContext = "KinkAtlas uses this language only for non-sexual roleplay or caregiving between consenting adults. It never describes someone’s real age, development, dependency, or agency.";
 const petPersonaContext = "This asks about an adult animal-inspired roleplay persona. It does not assume submission, ownership, dependency, identity outside the roleplay, or consent to any activity.";
+const vocabularyContext = "Choosing a label is optional. It adds context to the patterns in your Discovery answers without changing their alignment or confidence.";
 function connectionAnswers(targetId: NonNullable<RefinementAnswerOption["supports"]>[number]): RefinementAnswerOption[] {
   return [
     {
@@ -73,6 +84,90 @@ function connectionAnswers(targetId: NonNullable<RefinementAnswerOption["support
 }
 
 export const refinementQuestions: RefinementQuestion[] = [
+  {
+    id: "ref-power-exchange-vocabulary",
+    kind: "refinement",
+    family: "power-exchange-vocabulary",
+    prompt: "If you use role vocabulary for power exchange, which label feels closest?",
+    context: vocabularyContext,
+    answers: [
+      {
+        id: "dominant",
+        label: "Dominant",
+        supports: ["dominant"],
+        primaryPreference: { kind: "direct", targetId: "dominant" },
+      },
+      {
+        id: "submissive",
+        label: "submissive",
+        supports: ["submissive"],
+        primaryPreference: { kind: "direct", targetId: "submissive" },
+      },
+      {
+        id: "switch",
+        label: "Switch",
+        supports: ["switch"],
+        primaryPreference: { kind: "direct", targetId: "switch" },
+      },
+      {
+        id: "none",
+        label: "None of these — a broader description fits better",
+        rejects: ["dominant", "submissive", "switch"],
+      },
+      {
+        id: "unknown",
+        label: "I’m not sure yet",
+        noScore: true,
+      },
+      {
+        id: "prefer-not",
+        label: "Prefer not to answer",
+        noScore: true,
+      },
+    ],
+  },
+  {
+    id: "ref-play-position-vocabulary",
+    kind: "refinement",
+    family: "play-position-vocabulary",
+    prompt: "If you use role vocabulary for activity positions, which label feels closest?",
+    context: vocabularyContext,
+    answers: [
+      {
+        id: "top",
+        label: "Top",
+        supports: ["top"],
+        primaryPreference: { kind: "direct", targetId: "top" },
+      },
+      {
+        id: "bottom",
+        label: "Bottom",
+        supports: ["bottom"],
+        primaryPreference: { kind: "direct", targetId: "bottom" },
+      },
+      {
+        id: "vers",
+        label: "Vers",
+        supports: ["vers"],
+        primaryPreference: { kind: "direct", targetId: "vers" },
+      },
+      {
+        id: "none",
+        label: "None of these — activity-by-activity language fits better",
+        rejects: ["top", "bottom", "vers"],
+      },
+      {
+        id: "unknown",
+        label: "I’m not sure yet",
+        noScore: true,
+      },
+      {
+        id: "prefer-not",
+        label: "Prefer not to answer",
+        noScore: true,
+      },
+    ],
+  },
   {
     id: "ref-sub-top",
     kind: "refinement",

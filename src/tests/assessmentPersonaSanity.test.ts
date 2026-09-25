@@ -35,8 +35,8 @@ function expectFinite(value: number, context: string) {
 }
 
 describe("assessment persona fixture validation", () => {
-  it("contains 19 completed, uniquely identified personas", () => {
-    expect(assessmentPersonas).toHaveLength(19);
+  it("contains 29 completed, uniquely identified personas", () => {
+    expect(assessmentPersonas).toHaveLength(29);
     expect(() => validateAssessmentPersonas(assessmentPersonas)).not.toThrow();
   });
 
@@ -319,6 +319,53 @@ describe("role-set and export constitution", () => {
     expect(manualExport.alignment).toBeUndefined();
     expect(manualExport.confidence).toBeUndefined();
     expect(evaluation.roleResults.map((result) => result.role.id)).toEqual(discoveryBefore);
+  });
+});
+
+describe("core vocabulary personas", () => {
+  it.each([
+    ["confirmed-dominant-vocabulary", "Dominant"],
+    ["confirmed-submissive-vocabulary", "submissive"],
+    ["confirmed-switch-vocabulary", "Switch"],
+    ["confirmed-top-vocabulary", "Top"],
+    ["confirmed-bottom-vocabulary", "Bottom"],
+    ["confirmed-vers-vocabulary", "Vers"],
+  ])("keeps %s as scored inferred evidence with direct vocabulary context", (personaId, label) => {
+    const evaluation = evaluateAssessmentPersona(assessmentPersonas.find((persona) => persona.id === personaId)!);
+    const candidate = [...evaluation.roleProfile.recommendations.map((item) => item.candidate), ...evaluation.roleProfile.alternates.map((item) => item.candidate)]
+      .find((item) => item.label === label)!;
+
+    expect(candidate).toMatchObject({ evidenceType: "inferred", vocabularyConfirmation: "confirmed" });
+    expect(candidate.rawAlignment).toBeTypeOf("number");
+    expect(candidate.confidence).toBeDefined();
+  });
+
+  it.each([
+    ["confirmed-dominant-top-vocabulary", ["Dominant", "Top"]],
+    ["confirmed-submissive-bottom-vocabulary", ["submissive", "Bottom"]],
+    ["confirmed-switch-vers-vocabulary", ["Switch", "Vers"]],
+  ] as const)("keeps both independently confirmed families for %s", (personaId, labels) => {
+    const evaluation = evaluateAssessmentPersona(assessmentPersonas.find((persona) => persona.id === personaId)!);
+    const candidates = [...evaluation.roleProfile.recommendations.map((item) => item.candidate), ...evaluation.roleProfile.alternates.map((item) => item.candidate)];
+
+    labels.forEach((label) => expect(candidates.find((item) => item.label === label)?.vocabularyConfirmation).toBe("confirmed"));
+  });
+
+  it("preserves strong authority evidence while excluding declined Dominant vocabulary", () => {
+    const evaluation = evaluateAssessmentPersona(assessmentPersonas.find((persona) => persona.id === "declined-dominant-vocabulary")!);
+    const dominantResult = evaluation.roleResults.find((item) => item.role.id === "dominant")!;
+    const dominantCandidate = evaluation.roleProfile.alternates.find((item) => item.candidate.label === "Dominant")!.candidate;
+
+    expect(dominantResult.alignment).toMatch(/strong|explore/);
+    expect(dominantCandidate).toMatchObject({ eligible: false, vocabularyConfirmation: "declined", rawAlignment: dominantResult.rawScore });
+    expect(evaluation.roleProfile.recommendations.map((item) => item.candidate.label)).not.toContain("Dominant");
+  });
+
+  it("includes directly confirmed Dominant vocabulary in its focused suggested set", () => {
+    const evaluation = evaluateAssessmentPersona(assessmentPersonas.find((persona) => persona.id === "confirmed-dominant-vocabulary")!);
+
+    expect(evaluation.roleProfile.recommendations.map((item) => item.candidate.label)).toContain("Dominant");
+    expect(evaluation.roleProfile.primary?.candidate.vocabularyConfirmation).toBe("confirmed");
   });
 });
 

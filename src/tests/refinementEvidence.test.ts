@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { calculateTraitScores } from "../engine/discoveryScoring";
 import { evaluateRefinementEvidence, preferredPrimaryRoleIdsFromRefinement, supportedRefinementTargets } from "../engine/refinementEvidence";
+import { refinementQuestions } from "../data/refinement";
 import { applyRefinementAnswer, eligibleRefinementFamilies, MAX_REFINEMENT_QUESTIONS, selectEligibleRefinementQuestions, selectRefinementQuestions } from "../engine/refinementRouting";
-import { buildEditableRoleProfileEntries, buildRoleProfileCandidates, optimizeRoleProfile } from "../engine/roleProfileOptimizer";
+import { buildEditableRoleProfileEntries, buildRoleProfileCandidates, optimizeRoleProfile, selectPrimaryRoleProfile, type RoleProfileCandidate, type RoleProfileRecommendation } from "../engine/roleProfileOptimizer";
 import { matchRoles } from "../engine/roleMatching";
 import type { AssessmentAnswers } from "../types";
 
@@ -956,5 +957,206 @@ describe("Refine evidence architecture", () => {
     expect(selectedPreference.recommendations.some((item) => item.candidate.roleId === puppyId)).toBe(false);
     expect(missingPreference.primary?.candidate.roleId).toBe(baseline.primary?.candidate.roleId);
     expect(missingPreference.primaryExplanation).toMatch(/strongest combined evidence and overall-profile suitability/i);
+  });
+});
+
+describe("core role vocabulary refinement", () => {
+  const dominantDiscovery = { "d-power-give": "strong", "r-authority-style": "strong", "r-lead": "strong" };
+  const submissiveDiscovery = { "d-power-receive": "strong", "r-surrender": "strong", "r-yielding-motivation": "strong" };
+  const switchDiscovery = { "d-power-give": "strong", "d-power-receive": "strong", "d-flexibility": "strong", "r-both-power": "strong" };
+  const topDiscovery = { "d-position-give": "strong", "r-top": "strong", "r-lead": "strong", "d-flexibility": "no", "r-authority-style": "some", "r-praise-direction": "strong", "r-praise-context": "some" };
+  const bottomDiscovery = { "d-position-receive": "strong", "r-bottom": "strong", "r-receiving-focus": "some", "d-intensity": "some", "r-pain-receive": "strong" };
+  const versDiscovery = { ...topDiscovery, ...bottomDiscovery, "r-positions": "strong" };
+
+  const questionIds = (discovery: Record<string, string>) => {
+    const assessment = answers(discovery);
+    return selectEligibleRefinementQuestions(assessment, calculateTraitScores(discovery)).map((question) => question.id);
+  };
+
+  const candidate = (discovery: Record<string, string>, refinement: Record<string, string>, label: string) => {
+    const roleResults = matchRoles(calculateTraitScores(discovery), discovery);
+    return buildRoleProfileCandidates(roleResults, refinement, discovery).find((item) => item.label === label)!;
+  };
+
+  it("routes power-exchange vocabulary from explicit dominance rather than activity leadership", () => {
+    expect(questionIds(dominantDiscovery)).toContain("ref-power-exchange-vocabulary");
+    expect(questionIds({ "d-power-give": "some", "d-position-give": "strong", "r-top": "strong", "r-lead": "strong" })).not.toContain("ref-power-exchange-vocabulary");
+  });
+
+  it("routes power-exchange vocabulary from explicit submission rather than activity receiving", () => {
+    expect(questionIds(submissiveDiscovery)).toContain("ref-power-exchange-vocabulary");
+    expect(questionIds(bottomDiscovery)).not.toContain("ref-power-exchange-vocabulary");
+  });
+
+  it("requires meaningful power switching evidence", () => {
+    expect(questionIds(switchDiscovery)).toContain("ref-power-exchange-vocabulary");
+    expect(questionIds({ "d-flexibility": "curious", "r-both-power": "curious" })).not.toContain("ref-power-exchange-vocabulary");
+  });
+
+  it("routes play-position vocabulary from active-position evidence rather than dominance", () => {
+    expect(questionIds(topDiscovery)).toContain("ref-play-position-vocabulary");
+    expect(questionIds(dominantDiscovery)).not.toContain("ref-play-position-vocabulary");
+  });
+
+  it("routes play-position vocabulary from receiving-position evidence rather than submission", () => {
+    expect(questionIds(bottomDiscovery)).toContain("ref-play-position-vocabulary");
+    expect(questionIds(submissiveDiscovery)).not.toContain("ref-play-position-vocabulary");
+  });
+
+  it("requires explicit activity-position flexibility for Vers and keeps Switch distinct", () => {
+    expect(questionIds(versDiscovery)).toContain("ref-play-position-vocabulary");
+    expect(questionIds(switchDiscovery)).not.toContain("ref-play-position-vocabulary");
+  });
+
+  it.each([
+    ["Dominant", dominantDiscovery, "ref-power-exchange-vocabulary", "dominant", "dominant", "role:dominant-4cfaa6ab"],
+    ["submissive", submissiveDiscovery, "ref-power-exchange-vocabulary", "submissive", "submissive", "role:submissive-70cf87f8"],
+    ["Switch", switchDiscovery, "ref-power-exchange-vocabulary", "switch", "switch", "role:switch-39921a74"],
+    ["Top", topDiscovery, "ref-play-position-vocabulary", "top", "top", "role:top-d5cdfcf7"],
+    ["Bottom", bottomDiscovery, "ref-play-position-vocabulary", "bottom", "bottom", "role:bottom-479ad21a"],
+    ["Vers", versDiscovery, "ref-play-position-vocabulary", "vers", "vers", "role:vers-1a60a8ce"],
+  ] as const)("supports directly confirmed %s vocabulary without replacing scored evidence", (label, discovery, questionId, answerId, targetId, roleId) => {
+    const refinement = { [questionId]: answerId };
+    const result = candidate(discovery, refinement, label);
+    const evidence = evaluateRefinementEvidence(refinement).find((item) => item.targetId === targetId);
+
+    expect(evidence).toMatchObject({ status: "supported", supportingQuestionIds: [questionId] });
+    expect(result).toMatchObject({ roleId, evidenceType: "inferred", eligible: true, vocabularyConfirmation: "confirmed" });
+    expect(result.rawAlignment).toBeTypeOf("number");
+    expect(result.confidence).toBeDefined();
+    expect(preferredPrimaryRoleIdsFromRefinement(refinement, discovery)).toContain(roleId);
+  });
+
+  it("does not let injected core vocabulary bypass Discovery routing or primary selection", () => {
+    const discovery = { "d-power-give": "no", "d-position-give": "no" };
+    const refinement = { "ref-power-exchange-vocabulary": "dominant" };
+    const result = candidate(discovery, refinement, "Dominant");
+
+    expect(result.vocabularyConfirmation).toBeUndefined();
+    expect(result.eligible).toBe(false);
+    expect(preferredPrimaryRoleIdsFromRefinement(refinement, discovery)).toEqual([]);
+  });
+
+  it("does not make an unsupported label primary merely because another label routed the family question", () => {
+    const refinement = { "ref-power-exchange-vocabulary": "switch" };
+    const roleResults = matchRoles(calculateTraitScores(dominantDiscovery), dominantDiscovery);
+    const preferred = preferredPrimaryRoleIdsFromRefinement(refinement, dominantDiscovery);
+    const optimization = optimizeRoleProfile(buildRoleProfileCandidates(roleResults, refinement, dominantDiscovery), 5, { preferredPrimaryRoleIds: preferred });
+
+    expect(preferred).toEqual(["role:switch-39921a74"]);
+    expect(candidate(dominantDiscovery, refinement, "Switch")).toMatchObject({ eligible: false, vocabularyConfirmation: "confirmed" });
+    expect(optimization.primary?.candidate.label).not.toBe("Switch");
+  });
+
+  it.each(["unknown", "prefer-not"])("treats %s as unconfirmed rather than positive vocabulary evidence", (answerId) => {
+    const refinement = { "ref-power-exchange-vocabulary": answerId };
+    const result = candidate(dominantDiscovery, refinement, "Dominant");
+
+    expect(evaluateRefinementEvidence(refinement).find((item) => item.targetId === "dominant")?.status).toBe("unanswered");
+    expect(result.vocabularyConfirmation).toBe("unconfirmed");
+    expect(preferredPrimaryRoleIdsFromRefinement(refinement, dominantDiscovery)).toEqual([]);
+  });
+
+  it("keeps a declined exact label separate from the underlying Discovery pattern", () => {
+    const refinement = { "ref-power-exchange-vocabulary": "none" };
+    const result = candidate(dominantDiscovery, refinement, "Dominant");
+    const baseline = candidate(dominantDiscovery, {}, "Dominant");
+
+    expect(evaluateRefinementEvidence(refinement).find((item) => item.targetId === "dominant")?.status).toBe("rejected");
+    expect(result).toMatchObject({ eligible: false, vocabularyConfirmation: "declined" });
+    expect(result.rawAlignment).toBe(baseline.rawAlignment);
+    expect(result.confidence).toBe(baseline.confidence);
+    expect(calculateTraitScores(dominantDiscovery).dominance?.value ?? 0).toBeGreaterThan(0.7);
+    expect(preferredPrimaryRoleIdsFromRefinement(refinement, dominantDiscovery)).toEqual([]);
+  });
+
+  it("neutralizes a stale vocabulary answer when its route is no longer eligible", () => {
+    const refinement = { "ref-power-exchange-vocabulary": "none" };
+    const stale = candidate({ "d-power-give": "no" }, refinement, "Dominant");
+    const baseline = candidate({ "d-power-give": "no" }, {}, "Dominant");
+
+    expect(stale.vocabularyConfirmation).toBeUndefined();
+    expect(stale.eligible).toBe(baseline.eligible);
+    expect(preferredPrimaryRoleIdsFromRefinement(refinement, { "d-power-give": "no" })).toEqual([]);
+  });
+
+  it("lets eligible direct core vocabulary enter primary consideration without question-order priority", () => {
+    const discovery = { ...dominantDiscovery, ...topDiscovery };
+    const firstOrder = { "ref-power-exchange-vocabulary": "dominant", "ref-play-position-vocabulary": "top" };
+    const secondOrder = { "ref-play-position-vocabulary": "top", "ref-power-exchange-vocabulary": "dominant" };
+    const evaluate = (refinement: Record<string, string>) => {
+      const roleResults = matchRoles(calculateTraitScores(discovery), discovery);
+      const preferred = preferredPrimaryRoleIdsFromRefinement(refinement, discovery);
+      const optimization = optimizeRoleProfile(buildRoleProfileCandidates(roleResults, refinement, discovery), 5, { preferredPrimaryRoleIds: preferred });
+      return { preferred, primary: optimization.primary?.candidate.roleId };
+    };
+
+    const first = evaluate(firstOrder);
+    const second = evaluate(secondOrder);
+    expect(first.preferred).toEqual(["role:dominant-4cfaa6ab", "role:top-d5cdfcf7"]);
+    expect(second.preferred).toEqual(first.preferred);
+    expect(second.primary).toBe(first.primary);
+    expect(first.preferred).toContain(first.primary);
+  });
+
+  it("keeps Switch and Vers primary consideration deterministic without a global family ordering", () => {
+    const discovery = { ...switchDiscovery, ...versDiscovery };
+    const powerFirst = { "ref-power-exchange-vocabulary": "switch", "ref-play-position-vocabulary": "vers" };
+    const playFirst = { "ref-play-position-vocabulary": "vers", "ref-power-exchange-vocabulary": "switch" };
+    const evaluate = (refinement: Record<string, string>) => {
+      const roleResults = matchRoles(calculateTraitScores(discovery), discovery);
+      const preferred = preferredPrimaryRoleIdsFromRefinement(refinement, discovery);
+      const optimization = optimizeRoleProfile(buildRoleProfileCandidates(roleResults, refinement, discovery), 5, { preferredPrimaryRoleIds: preferred });
+      return { preferred, primary: optimization.primary?.candidate.roleId };
+    };
+
+    expect(evaluate(powerFirst)).toEqual(evaluate(playFirst));
+    expect(evaluate(powerFirst).preferred).toEqual(["role:switch-39921a74", "role:vers-1a60a8ce"]);
+  });
+
+  it.each([
+    ["Dominant", "Top", "role:dominant-4cfaa6ab", "role:top-d5cdfcf7"],
+    ["Switch", "Vers", "role:switch-39921a74", "role:vers-1a60a8ce"],
+  ] as const)("uses primary quality rather than a hardcoded %s/%s ordering", (leftLabel, rightLabel, leftId, rightId) => {
+    const recommendation = (roleId: string, label: string, quality: number): RoleProfileRecommendation => ({
+      candidate: {
+        roleId,
+        label,
+        evidenceType: "inferred",
+        decisionPathway: "inferred",
+        eligible: true,
+        rawAlignment: quality,
+        confidence: "high",
+        evidenceQuality: quality,
+        specificity: quality,
+        distinctiveness: quality,
+        representationValue: quality,
+        profileUsefulness: quality,
+        primarySuitability: quality,
+        families: [],
+        evidenceExplanation: "",
+        vocabularyConfirmation: "confirmed",
+      } satisfies RoleProfileCandidate,
+      optimizerScore: quality,
+      explanation: "",
+    });
+    const preferred = [leftId, rightId];
+    const leftStrong = [recommendation(leftId, leftLabel, 0.95), recommendation(rightId, rightLabel, 0.7)];
+    const rightStrong = [recommendation(leftId, leftLabel, 0.7), recommendation(rightId, rightLabel, 0.95)];
+
+    expect(selectPrimaryRoleProfile(leftStrong, preferred)?.candidate.roleId).toBe(leftId);
+    expect(selectPrimaryRoleProfile(rightStrong, preferred)?.candidate.roleId).toBe(rightId);
+  });
+
+  it("derives preferred primary IDs from answer metadata even if question definitions are reordered", () => {
+    const discovery = { ...dominantDiscovery, ...topDiscovery };
+    const refinement = { "ref-power-exchange-vocabulary": "dominant", "ref-play-position-vocabulary": "top" };
+    const before = preferredPrimaryRoleIdsFromRefinement(refinement, discovery);
+    refinementQuestions.reverse();
+    try {
+      expect(preferredPrimaryRoleIdsFromRefinement(refinement, discovery)).toEqual(before);
+    } finally {
+      refinementQuestions.reverse();
+    }
   });
 });

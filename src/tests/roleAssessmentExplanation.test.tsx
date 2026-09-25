@@ -78,6 +78,19 @@ describe("role assessment explanation language", () => {
     expect(selectedAlternate.message).toMatch(/remained supported/i);
   });
 
+  it.each([
+    ["confirmed", "Exact vocabulary confirmed", /alignment and confidence still come only from your Discovery evidence/i],
+    ["unconfirmed", "Underlying pattern only", /did not directly confirm this exact label/i],
+    ["declined", "Label not selected", /underlying pattern.*exact label does not fit/i],
+  ] as const)("translates %s core vocabulary context without changing the assessment outcome", (status, heading, message) => {
+    const explained = explainRoleAssessment({
+      recommendation: { ...recommendation(), candidate: { ...candidate(), vocabularyConfirmation: status } },
+    });
+
+    expect(explained).toMatchObject({ kind: "suggested", vocabulary: { heading } });
+    expect(explained.vocabulary?.message).toMatch(message);
+  });
+
   it("uses safe fallback language for a role absent from recommendation output", () => {
     const explanation = explainRoleAssessment({});
     expect(explanation).toMatchObject({ kind: "unrepresented", heading: "Not suggested automatically" });
@@ -114,5 +127,17 @@ describe("role assessment explanation language", () => {
     expect(screen.getByText(/doesn.t currently have a description/i)).toBeInTheDocument();
     expect(screen.getByText("How this relates to your results")).toBeInTheDocument();
     expect(screen.queryByText("How KinkAtlas handles this role")).not.toBeInTheDocument();
+  });
+
+  it("renders direct vocabulary context inside centralized role details", () => {
+    const role = roleLibrary.roles.find((item) => item.label === "Dominant")!;
+    const assessmentExplanation = explainRoleAssessment({
+      recommendation: { ...recommendation(), candidate: { ...candidate(role.id, role.label), vocabularyConfirmation: "confirmed" } },
+    });
+    render(<RoleDefinitionDetails roleId={role.id} assessmentExplanation={assessmentExplanation} />);
+    fireEvent.click(screen.getByText("About this role"));
+
+    expect(screen.getByText(/Exact vocabulary confirmed/i)).toBeInTheDocument();
+    expect(screen.getByText(/alignment and confidence still come only from your Discovery evidence/i)).toBeInTheDocument();
   });
 });
