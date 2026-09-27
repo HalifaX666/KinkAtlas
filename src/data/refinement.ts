@@ -47,12 +47,36 @@ export const refinementFamilies: RefinementFamilyDefinition[] = [
     label: "Play-position vocabulary",
     description: "Checks whether a core activity-position label feels useful without changing the underlying pattern.",
   },
+  {
+    id: "primal-vocabulary",
+    label: "Primal vocabulary",
+    description: "Checks whether Primal feels useful as an umbrella label for supported instinctive-play interests.",
+  },
+  {
+    id: "rope-vocabulary",
+    label: "Rope vocabulary",
+    description: "Checks which rope-position label feels useful without inferring one direction from another.",
+  },
+  {
+    id: "brat-vocabulary",
+    label: "Brat vocabulary",
+    description: "Checks whether Brat, Brat Tamer, or both feel useful without assuming submission or dominance.",
+  },
+  {
+    id: "owner-vocabulary",
+    label: "Owner vocabulary",
+    description: "Checks whether Owner feels useful only after supported adult ownership-dynamic evidence.",
+  },
 ];
 
 const intersectionContext = "This asks whether two patterns already supported by your answers feel connected. It does not change your Discovery alignment, assign an identity, or imply consent.";
 const adultAgeRoleplayContext = "KinkAtlas uses this language only for non-sexual roleplay or caregiving between consenting adults. It never describes someone’s real age, development, dependency, or agency.";
 const petPersonaContext = "This asks about an adult animal-inspired roleplay persona. It does not assume submission, ownership, dependency, identity outside the roleplay, or consent to any activity.";
 const vocabularyContext = "Choosing a label is optional. It adds context to the patterns in your Discovery answers without changing their alignment or confidence.";
+const primalVocabularyContext = "Primal is optional vocabulary for consensual, explicitly bounded instinctive play. The label never removes responsibility or the need for ongoing consent.";
+const ropeVocabularyContext = "These labels describe positions in consensual adult rope play. Rope interest never implies consent to restraint or any particular activity.";
+const bratVocabularyContext = "These labels describe negotiated playful provocation or responses to it. A genuine refusal always remains a refusal.";
+const ownerVocabularyContext = "Owner is optional vocabulary for a symbolic, negotiated dynamic between consenting adults. It never implies real-world ownership or authority outside agreed limits.";
 function connectionAnswers(targetId: NonNullable<RefinementAnswerOption["supports"]>[number]): RefinementAnswerOption[] {
   return [
     {
@@ -155,6 +179,148 @@ export const refinementQuestions: RefinementQuestion[] = [
         id: "none",
         label: "None of these — activity-by-activity language fits better",
         rejects: ["top", "bottom", "vers"],
+      },
+      {
+        id: "unknown",
+        label: "I’m not sure yet",
+        noScore: true,
+      },
+      {
+        id: "prefer-not",
+        label: "Prefer not to answer",
+        noScore: true,
+      },
+    ],
+  },
+  {
+    id: "ref-primal-vocabulary",
+    kind: "refinement",
+    family: "primal-vocabulary",
+    prompt: "Does Primal feel useful as a label for this part of your interests?",
+    context: primalVocabularyContext,
+    answers: [
+      {
+        id: "yes",
+        label: "Yes — Primal feels useful to me",
+        supports: ["primal"],
+      },
+      {
+        id: "no",
+        label: "No — the interests may fit, but I wouldn’t use that label",
+        rejects: ["primal"],
+      },
+      {
+        id: "unknown",
+        label: "I’m not sure yet",
+        noScore: true,
+      },
+      {
+        id: "prefer-not",
+        label: "Prefer not to answer",
+        noScore: true,
+      },
+    ],
+  },
+  {
+    id: "ref-rope-vocabulary",
+    kind: "refinement",
+    family: "rope-vocabulary",
+    prompt: "If you use role vocabulary for rope, which label feels closest?",
+    context: ropeVocabularyContext,
+    answers: [
+      {
+        id: "rigger",
+        label: "Rigger — tying or creating the rope experience",
+        supports: ["rigger"],
+        primaryPreference: { kind: "direct", targetId: "rigger" },
+      },
+      {
+        id: "rope-bottom",
+        label: "Rope Bottom — receiving rope or being tied",
+        supports: ["rope-bottom"],
+        primaryPreference: { kind: "direct", targetId: "rope-bottom" },
+      },
+      {
+        id: "bondage-switch",
+        label: "Bondage Switch — both tying and receiving positions",
+        supports: ["bondage-switch"],
+        primaryPreference: { kind: "direct", targetId: "bondage-switch" },
+      },
+      {
+        id: "none",
+        label: "None of these — broader rope language fits better",
+        rejects: ["rigger", "rope-bottom", "bondage-switch"],
+      },
+      {
+        id: "unknown",
+        label: "I’m not sure yet",
+        noScore: true,
+      },
+      {
+        id: "prefer-not",
+        label: "Prefer not to answer",
+        noScore: true,
+      },
+    ],
+  },
+  {
+    id: "ref-brat-vocabulary",
+    kind: "refinement",
+    family: "brat-vocabulary",
+    prompt: "If you use vocabulary for playful resistance, which label feels closest?",
+    context: bratVocabularyContext,
+    answers: [
+      {
+        id: "brat",
+        label: "Brat — playfully provoking or resisting",
+        supports: ["brat"],
+        primaryPreference: { kind: "direct", targetId: "brat" },
+      },
+      {
+        id: "brat-tamer",
+        label: "Brat Tamer — responding with direction, wit, or structure",
+        supports: ["brat-tamer"],
+        primaryPreference: { kind: "direct", targetId: "brat-tamer" },
+      },
+      {
+        id: "both",
+        label: "Both can fit, depending on the interaction",
+        supports: ["brat", "brat-tamer"],
+      },
+      {
+        id: "none",
+        label: "Neither label feels useful to me",
+        rejects: ["brat", "brat-tamer"],
+      },
+      {
+        id: "unknown",
+        label: "I’m not sure yet",
+        noScore: true,
+      },
+      {
+        id: "prefer-not",
+        label: "Prefer not to answer",
+        noScore: true,
+      },
+    ],
+  },
+  {
+    id: "ref-owner-vocabulary",
+    kind: "refinement",
+    family: "owner-vocabulary",
+    prompt: "Does Owner feel useful as a label for this adult negotiated dynamic?",
+    context: ownerVocabularyContext,
+    answers: [
+      {
+        id: "yes",
+        label: "Yes — Owner feels useful to me",
+        supports: ["owner"],
+        primaryPreference: { kind: "direct", targetId: "owner" },
+      },
+      {
+        id: "no",
+        label: "No — the dynamic may fit, but I wouldn’t use that label",
+        rejects: ["owner"],
       },
       {
         id: "unknown",
@@ -313,6 +479,12 @@ export const refinementQuestions: RefinementQuestion[] = [
     prompt: "If you picture yourself in an adult animal-inspired role, which persona feels closest?",
     context: petPersonaContext,
     answers: [
+      {
+        id: "pet",
+        label: "Pet — a broader adult animal-inspired role",
+        supports: ["pet"],
+        primaryPreference: { kind: "direct", targetId: "pet" },
+      },
       {
         id: "canine",
         label: "A canine-inspired persona, such as puppy or pup",

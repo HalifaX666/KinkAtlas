@@ -91,6 +91,27 @@ describe("role assessment explanation language", () => {
     expect(explained.vocabulary?.message).toMatch(message);
   });
 
+  it("explains confirmed scoreless exact-label evidence without fabricating alignment or confidence", () => {
+    const exactLabel = candidate("role:primal-eb3c2e1e", "Primal");
+    const explained = explainRoleAssessment({
+      recommendation: {
+        ...recommendation(),
+        candidate: {
+          ...exactLabel,
+          evidenceType: "exact-label",
+          decisionPathway: "explicit-confirmation",
+          rawAlignment: undefined,
+          confidence: undefined,
+          vocabularyConfirmation: "confirmed",
+        },
+      },
+    });
+
+    expect(explained.vocabulary).toMatchObject({ heading: "Exact vocabulary confirmed" });
+    expect(explained.vocabulary?.message).toMatch(/does not assign this label an alignment percentage or confidence/i);
+    expect(explained.vocabulary?.message).not.toMatch(/alignment and confidence still come only from/i);
+  });
+
   it("uses safe fallback language for a role absent from recommendation output", () => {
     const explanation = explainRoleAssessment({});
     expect(explanation).toMatchObject({ kind: "unrepresented", heading: "Not suggested automatically" });

@@ -1,6 +1,6 @@
 import { discoveryQuestionById } from "../data/questions";
 import { refinementQuestions } from "../data/refinement";
-import type { AssessmentAnswers, RefinementFamilyId, RefinementQuestion, TraitId, TraitScores } from "../types";
+import type { AssessmentAnswers, RefinementFamilyId, RefinementQuestion, RefinementTargetId, TraitId, TraitScores } from "../types";
 
 export const MAX_REFINEMENT_QUESTIONS = 6;
 
@@ -47,6 +47,14 @@ function explicitDominanceEvidence(discoveryAnswers: AssessmentAnswers["discover
     const answer = discoveryQuestionById[questionId]?.answers.find((candidate) => candidate.id === answerId);
 
     return answer?.authorityEvidence === "explicit-authority";
+  });
+}
+
+function explicitOwnershipEvidence(discoveryAnswers: AssessmentAnswers["discovery"]): boolean {
+  return Object.entries(discoveryAnswers).some(([questionId, answerId]) => {
+    const answer = discoveryQuestionById[questionId]?.answers.find((candidate) => candidate.id === answerId);
+
+    return answer?.qualificationEvidence?.includes("explicit-ownership") ?? false;
   });
 }
 
@@ -105,6 +113,66 @@ function pleasureGivingSupported(traitScores: TraitScores): boolean {
   return traitSupported(traitScores, "pleasureGiving", 0.55, 2);
 }
 
+function primalVocabularySupported(answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  return traitSupported(traitScores, "primality", 0.55, 2)
+    && (answerIs(answers, "d-primal", "strong", "some")
+      || answerIs(answers, "r-primal-give", "strong", "some")
+      || answerIs(answers, "r-primal-receive", "strong", "some"));
+}
+
+function riggerVocabularySupported(answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  return traitSupported(traitScores, "ropeGiving", 0.55, 2)
+    && traitSupported(traitScores, "technicalInterest", 0.5, 2)
+    && (answerIs(answers, "r-rope-give", "strong", "some")
+      || answerIs(answers, "r-rope-motivation", "strong"));
+}
+
+function ropeBottomVocabularySupported(answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  return traitSupported(traitScores, "ropeReceiving", 0.55, 2)
+    && traitSupported(traitScores, "restraint", 0.5, 2)
+    && answerIs(answers, "r-rope-receive", "strong", "some");
+}
+
+function bondageSwitchVocabularySupported(answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  return traitSupported(traitScores, "ropeGiving", 0.55, 2)
+    && traitSupported(traitScores, "ropeReceiving", 0.55, 2)
+    && traitSupported(traitScores, "switching", 0.55, 1)
+    && answerIs(answers, "r-rope-both", "strong", "some");
+}
+
+function bratVocabularySupported(answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  return traitSupported(traitScores, "brattiness", 0.55, 2)
+    && (answerIs(answers, "d-brat", "strong", "curious") || answerIs(answers, "r-brat", "strong", "some"));
+}
+
+function bratTamerVocabularySupported(answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  return traitSupported(traitScores, "bratHandling", 0.55, 2)
+    && (answerIs(answers, "d-brat", "some", "curious") || answerIs(answers, "r-tamer", "strong", "some"));
+}
+
+function ownerVocabularySupported(answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  return explicitDominanceEvidence(answers.discovery)
+    && explicitOwnershipEvidence(answers.discovery)
+    && traitSupported(traitScores, "givingControl", 0.55, 2)
+    && traitSupported(traitScores, "responsibility", 0.55, 2)
+    && traitSupported(traitScores, "caregiving", 0.55, 1);
+}
+
+const targetEligibilityPredicates: Partial<Record<RefinementTargetId, (answers: AssessmentAnswers, traitScores: TraitScores) => boolean>> = {
+  primal: primalVocabularySupported,
+  rigger: riggerVocabularySupported,
+  "rope-bottom": ropeBottomVocabularySupported,
+  "bondage-switch": bondageSwitchVocabularySupported,
+  brat: bratVocabularySupported,
+  "brat-tamer": bratTamerVocabularySupported,
+  pet: petPersonaInterest,
+  owner: ownerVocabularySupported,
+};
+
+export function refinementTargetIsSemanticallyEligible(targetId: RefinementTargetId, answers: AssessmentAnswers, traitScores: TraitScores): boolean {
+  return targetEligibilityPredicates[targetId]?.(answers, traitScores) ?? true;
+}
+
 interface RefinementRouteCandidate {
   questionId: string;
   eligible: boolean;
@@ -148,6 +216,13 @@ function routeCandidates(answers: AssessmentAnswers, traitScores: TraitScores): 
   const activePosition = activePositionSupported(answers, traitScores);
   const receivingPosition = receivingPositionSupported(answers, traitScores);
   const versatilePosition = versatilePositionSupported(answers, traitScores);
+  const primalVocabulary = primalVocabularySupported(answers, traitScores);
+  const riggerVocabulary = riggerVocabularySupported(answers, traitScores);
+  const ropeBottomVocabulary = ropeBottomVocabularySupported(answers, traitScores);
+  const bondageSwitchVocabulary = bondageSwitchVocabularySupported(answers, traitScores);
+  const bratVocabulary = bratVocabularySupported(answers, traitScores);
+  const bratTamerVocabulary = bratTamerVocabularySupported(answers, traitScores);
+  const ownerVocabulary = ownerVocabularySupported(answers, traitScores);
 
   return [
     {
@@ -167,6 +242,33 @@ function routeCandidates(answers: AssessmentAnswers, traitScores: TraitScores): 
         receivingPosition ? traitStrength(traitScores, "pleasureReceiving", "sensorySeeking") : 0,
         versatilePosition ? traitStrength(traitScores, "switching", "exploration", "spontaneity") : 0,
       ),
+    },
+    {
+      questionId: "ref-primal-vocabulary",
+      eligible: primalVocabulary,
+      strength: traitStrength(traitScores, "primality", "physicalIntensity", "spontaneity"),
+    },
+    {
+      questionId: "ref-rope-vocabulary",
+      eligible: riggerVocabulary || ropeBottomVocabulary || bondageSwitchVocabulary,
+      strength: Math.max(
+        riggerVocabulary ? traitStrength(traitScores, "ropeGiving", "technicalInterest") : 0,
+        ropeBottomVocabulary ? traitStrength(traitScores, "ropeReceiving", "restraint") : 0,
+        bondageSwitchVocabulary ? traitStrength(traitScores, "ropeGiving", "ropeReceiving", "switching") : 0,
+      ),
+    },
+    {
+      questionId: "ref-brat-vocabulary",
+      eligible: bratVocabulary || bratTamerVocabulary,
+      strength: Math.max(
+        bratVocabulary ? traitStrength(traitScores, "brattiness", "playfulness", "challenge") : 0,
+        bratTamerVocabulary ? traitStrength(traitScores, "bratHandling", "leadership", "responsibility") : 0,
+      ),
+    },
+    {
+      questionId: "ref-owner-vocabulary",
+      eligible: ownerVocabulary,
+      strength: traitStrength(traitScores, "givingControl", "caregiving", "structure", "responsibility"),
     },
     {
       questionId: "ref-sub-top",
@@ -317,6 +419,22 @@ export function eligibleRefinementFamilies(answers: AssessmentAnswers, traitScor
 
   if (activePositionSupported(answers, traitScores) || receivingPositionSupported(answers, traitScores) || versatilePositionSupported(answers, traitScores)) {
     families.push("play-position-vocabulary");
+  }
+
+  if (primalVocabularySupported(answers, traitScores)) {
+    families.push("primal-vocabulary");
+  }
+
+  if (riggerVocabularySupported(answers, traitScores) || ropeBottomVocabularySupported(answers, traitScores) || bondageSwitchVocabularySupported(answers, traitScores)) {
+    families.push("rope-vocabulary");
+  }
+
+  if (bratVocabularySupported(answers, traitScores) || bratTamerVocabularySupported(answers, traitScores)) {
+    families.push("brat-vocabulary");
+  }
+
+  if (ownerVocabularySupported(answers, traitScores)) {
+    families.push("owner-vocabulary");
   }
 
   return families;

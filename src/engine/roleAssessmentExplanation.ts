@@ -98,12 +98,15 @@ function assessmentOutcome({ recommendation, alternate, isSuggestedPrimary }: Ro
 
 export function explainRoleAssessment(input: RoleAssessmentExplanationInput): RoleAssessmentExplanation {
   const explanation: RoleAssessmentExplanation = assessmentOutcome(input);
-  const vocabularyConfirmation = input.recommendation?.candidate.vocabularyConfirmation ?? input.alternate?.candidate.vocabularyConfirmation;
+  const candidate = input.recommendation?.candidate ?? input.alternate?.candidate;
+  const vocabularyConfirmation = candidate?.vocabularyConfirmation;
 
   if (vocabularyConfirmation === "confirmed") {
     explanation.vocabulary = {
       heading: "Exact vocabulary confirmed",
-      message: "You directly selected this label in Refine. Its alignment and confidence still come only from your Discovery evidence.",
+      message: candidate?.evidenceType === "exact-label"
+        ? "You directly selected this exact label after qualifying Discovery evidence opened the question. KinkAtlas does not assign this label an alignment percentage or confidence."
+        : "You directly selected this label in Refine. Its alignment and confidence still come only from your Discovery evidence.",
     };
   } else if (vocabularyConfirmation === "declined") {
     explanation.vocabulary = {

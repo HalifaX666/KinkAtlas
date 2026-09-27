@@ -4,7 +4,7 @@ import { relationshipsForLibraryRole, roleLibrary, roleLibraryRoleById, type Rol
 import type { ConfidenceLevel, RoleResult, AssessmentAnswers } from "../types";
 import { evaluateRefinementEvidence, refinementFallbackIsSuperseded, refinementQuestionIdsForTarget, refinementTargetByRoleId } from "./refinementEvidence";
 import { calculateTraitScores } from "./discoveryScoring";
-import { selectEligibleRefinementQuestions } from "./refinementRouting";
+import { refinementTargetIsSemanticallyEligible, selectEligibleRefinementQuestions } from "./refinementRouting";
 
 export type ProfileEvidenceType = "inferred" | "direct" | "hybrid" | "explicit" | "exact-label" | "exploration";
 export type VocabularyConfirmationStatus = "confirmed" | "unconfirmed" | "declined";
@@ -170,7 +170,7 @@ export function optimizeRoleProfile(candidates: RoleProfileCandidate[], maximum 
       const score = baseScore(candidate);
       const redundancyPenalty = redundancy(candidate, selected);
       const overlappingRecommendation = redundancyPenalty > 0.12 ? strongestOverlap(candidate, selected) : undefined;
-      const reason: RoleProfileAlternate["reason"] = excludedRoleIds.has(candidate.roleId) ? "user-excluded" : candidate.decisionPathway === "explicit-confirmation" ? "confirmation-required" : candidate.decisionPathway === "manual-only" ? "manual-only" : !candidate.eligible ? "insufficient-evidence" : score < minimumBaseScore ? "below-threshold" : redundancyPenalty > 0.12 ? "redundant" : "slot-limit";
+      const reason: RoleProfileAlternate["reason"] = excludedRoleIds.has(candidate.roleId) ? "user-excluded" : candidate.decisionPathway === "manual-only" ? "manual-only" : !candidate.eligible ? candidate.decisionPathway === "explicit-confirmation" ? "confirmation-required" : "insufficient-evidence" : score < minimumBaseScore ? "below-threshold" : redundancyPenalty > 0.12 ? "redundant" : "slot-limit";
       return {
         candidate,
         optimizerScore: score - redundancyPenalty,
@@ -200,7 +200,8 @@ interface CandidateEvidence {
   vocabularyConfirmation?: VocabularyConfirmationStatus;
 }
 
-function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], refinementAnswers: AssessmentAnswers["refinement"] = {}, eligibleRefinementQuestionIds: ReadonlySet<string> = new Set()): CandidateEvidence {
+function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], assessmentAnswers: AssessmentAnswers, traitScores: ReturnType<typeof calculateTraitScores>, eligibleRefinementQuestionIds: ReadonlySet<string> = new Set()): CandidateEvidence {
+  const refinementAnswers = assessmentAnswers.refinement;
   const mappedResult = (role.canonicalRoleId ? roleResults.find((result) => result.role.id === role.canonicalRoleId) : undefined) ?? roleResults.find((result) => role.nearestRoleIds.includes(result.role.id));
 
   const broadEvidenceQualifies = Boolean(mappedResult && positiveAlignment.has(mappedResult.alignment) && mappedResult.confidence !== "low" && !mappedResult.unmetEvidenceRequirements?.length);
@@ -211,6 +212,9 @@ function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], ref
 
   const refinementSupported = refinementEvidence?.status === "supported";
   const eligibleSupportingQuestion = refinementEvidence?.supportingQuestionIds.some((questionId) => eligibleRefinementQuestionIds.has(questionId)) ?? false;
+  const eligibleTargetSupport = refinementTarget
+    ? eligibleSupportingQuestion && refinementTargetIsSemanticallyEligible(refinementTarget.id, assessmentAnswers, traitScores)
+    : eligibleSupportingQuestion;
   const eligibleRejectingQuestion = refinementEvidence?.rejectingQuestionIds.some((questionId) => eligibleRefinementQuestionIds.has(questionId)) ?? false;
   const eligibleVocabularyQuestionAnswered = refinementTarget
     ? refinementQuestionIdsForTarget(refinementTarget.id).some((questionId) => eligibleRefinementQuestionIds.has(questionId) && refinementAnswers[questionId] !== undefined)
@@ -235,15 +239,15 @@ function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], ref
   if (role.decisionPathway === "inferred") {
     return {
       evidenceType: "inferred" as const,
-      eligible: broadEvidenceQualifies && vocabularyConfirmation !== "declined",
+      eligible: broadEvidenceQualifies && vocabularyConfirmation !== "declined" && (vocabularyConfirmation !== "confirmed" || eligibleTargetSupport),
       confidence: mappedResult?.confidence,
       vocabularyConfirmation,
       explanation: vocabularyConfirmation === "declined"
         ? "The underlying scored pattern remains available, but the user indicated that this exact label does not fit."
         : vocabularyConfirmation === "confirmed"
-          ? broadEvidenceQualifies
+          ? broadEvidenceQualifies && eligibleTargetSupport
             ? "Existing scored-role evidence qualifies, and the user directly confirmed that this exact vocabulary feels useful."
-            : "The user directly confirmed this vocabulary, but the mapped scored role does not yet qualify for automatic recommendation."
+            : "The user directly confirmed this vocabulary, but the target-specific Discovery evidence does not yet qualify it for automatic recommendation."
           : broadEvidenceQualifies
             ? "Existing scored-role evidence meets the alignment and confidence threshold."
             : "The mapped scored role does not yet have enough aligned evidence for automatic recommendation.",
@@ -260,13 +264,12 @@ function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], ref
   }
 
   if (role.decisionPathway === "hybrid") {
-    const eligibleRefinementSupport = refinementEvidence?.supportingQuestionIds.some((questionId) => eligibleRefinementQuestionIds.has(questionId)) ?? false;
     if (refinementTarget) {
       return {
         evidenceType: "hybrid" as const,
-        eligible: refinementSupported && eligibleRefinementSupport,
+        eligible: refinementSupported && eligibleTargetSupport,
         confidence: undefined,
-        explanation: refinementSupported && eligibleRefinementSupport ? "Independent Discovery evidence established the relevant broader patterns, and Refine confirmed that the intersection feels meaningfully connected." : refinementSupported && !eligibleRefinementSupport ? "Refine contains a positive response, but the current Discovery evidence does not qualify this intersection for recommendation." : refinementEvidence?.status === "rejected" ? "The broader patterns may be present, but the user indicated that they prefer to keep this intersection separate." : refinementEvidence?.status === "possible" ? "The broader patterns may be present, but the user has not directly confirmed that this intersection fits." : "This intersection requires both qualifying broader evidence and a direct Refine confirmation.",
+        explanation: refinementSupported && eligibleTargetSupport ? "Independent Discovery evidence established the relevant broader patterns, and Refine confirmed that the intersection feels meaningfully connected." : refinementSupported && !eligibleTargetSupport ? "Refine contains a positive response, but the current Discovery evidence does not qualify this intersection for recommendation." : refinementEvidence?.status === "rejected" ? "The broader patterns may be present, but the user indicated that they prefer to keep this intersection separate." : refinementEvidence?.status === "possible" ? "The broader patterns may be present, but the user has not directly confirmed that this intersection fits." : "This intersection requires both qualifying broader evidence and a direct Refine confirmation.",
       };
     }
 
@@ -281,9 +284,16 @@ function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], ref
   if (role.decisionPathway === "explicit-confirmation") {
     return {
       evidenceType: "exact-label" as const,
-      eligible: false,
+      eligible: refinementSupported && eligibleTargetSupport,
       confidence: undefined,
-      explanation: "This exact self-identification requires a confirmed response; unsure and unanswered states provide no positive evidence.",
+      vocabularyConfirmation,
+      explanation: refinementSupported && eligibleTargetSupport
+        ? "Qualifying Discovery evidence opened this exact-label question, and the user directly confirmed that the vocabulary feels useful."
+        : refinementSupported
+          ? "Refine contains a positive response, but the current Discovery evidence did not qualify this exact label for recommendation."
+          : refinementEvidence?.status === "rejected"
+            ? "The underlying interests may be present, but the user indicated that this exact label does not fit."
+            : "This exact self-identification requires qualifying Discovery evidence and a confirmed response; unsure and unanswered states provide no positive evidence.",
     };
   }
 
@@ -296,21 +306,22 @@ function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], ref
 }
 export function buildRoleProfileCandidates(roleResults: RoleResult[], refinementAnswers: AssessmentAnswers["refinement"] = {}, discoveryAnswers: AssessmentAnswers["discovery"] = {}): RoleProfileCandidate[] {
   const traitScores = calculateTraitScores(discoveryAnswers);
+  const assessmentAnswers: AssessmentAnswers = {
+    discovery: discoveryAnswers,
+    refinement: refinementAnswers,
+    readiness: {},
+    boundaries: {},
+    negotiation: {},
+  };
 
   const eligibleRefinementQuestionIds = new Set(
     selectEligibleRefinementQuestions(
-      {
-        discovery: discoveryAnswers,
-        refinement: refinementAnswers,
-        readiness: {},
-        boundaries: {},
-        negotiation: {},
-      },
+      assessmentAnswers,
       traitScores,
     ).map((question) => question.id),
   );
   return roleLibrary.roles.map((role) => {
-    const evidence = candidateEvidence(role, roleResults, refinementAnswers, eligibleRefinementQuestionIds);
+    const evidence = candidateEvidence(role, roleResults, assessmentAnswers, traitScores, eligibleRefinementQuestionIds);
     const mappedResult = (role.canonicalRoleId ? roleResults.find((result) => result.role.id === role.canonicalRoleId) : undefined) ?? roleResults.find((result) => role.nearestRoleIds.includes(result.role.id));
     const mappedRole = role.canonicalRoleId ? roleById[role.canonicalRoleId] : undefined;
     const familyCandidates = [mappedRole?.primaryCategory, ...(mappedRole?.facets ?? []), role.evidenceCluster, ...role.familyIds];

@@ -196,6 +196,47 @@ test("Persona smoke: confirmed core vocabulary preserves scored evidence and rea
   await guards.assertClean();
 });
 
+test("Persona smoke: confirmed Primal remains visible in Results without fabricated metrics", async ({ page }) => {
+  const guards = await installBrowserGuards(page);
+
+  await openPersonaResults(page, "confirmed-primal-vocabulary");
+  await openRoleSetBuilder(page);
+
+  await page.getByRole("searchbox", { name: "Search roles" }).fill("Primal");
+  const primalResult = page.getByRole("button", { name: "Add Primal", exact: true }).locator("..");
+  await expect(primalResult).toBeVisible();
+  await primalResult.getByText("About this role").click();
+  await expect(primalResult).toContainText("Exact vocabulary confirmed");
+  await expect(primalResult).toContainText("does not assign this label an alignment percentage or confidence");
+  await expect(primalResult).not.toContainText(/Strong alignment|High confidence|Medium confidence|evidence breadth/i);
+
+  await expectRenderedSanity(page);
+  await guards.assertClean();
+});
+
+test("Persona smoke: confirmed Rigger retains scored assessment evidence", async ({ page }) => {
+  const guards = await installBrowserGuards(page);
+
+  await openPersonaResults(page, "confirmed-rigger-vocabulary");
+  await openRoleSetBuilder(page);
+
+  const riggerDiscovery = page.locator(".role-card").filter({ has: page.getByRole("heading", { name: "Rigger", exact: true }) }).first();
+  await expect(riggerDiscovery).toBeVisible();
+  await expect(riggerDiscovery).toContainText(/Strong alignment|Worth exploring/);
+  await expect(riggerDiscovery).toContainText(/High confidence|Medium confidence/);
+
+  await page.getByRole("searchbox", { name: "Search roles" }).fill("Rigger");
+  const riggerResult = page.getByRole("button", { name: "Add Rigger", exact: true }).locator("..");
+  await expect(riggerResult).toBeVisible();
+  await riggerResult.getByText("About this role").click();
+  await expect(riggerResult).toContainText("Exact vocabulary confirmed");
+  await expect(riggerResult).toContainText("alignment and confidence still come only from your Discovery evidence");
+  await expect(riggerResult).not.toContainText("Label confirmed by you");
+
+  await expectRenderedSanity(page);
+  await guards.assertClean();
+});
+
 test("Persona smoke: Results and role editing remain usable at mobile width", async ({ page }) => {
   const guards = await installBrowserGuards(page);
   await page.setViewportSize({ width: 390, height: 844 });

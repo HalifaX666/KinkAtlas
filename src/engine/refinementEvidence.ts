@@ -1,7 +1,7 @@
 import { refinementQuestionById, refinementQuestions } from "../data/refinement";
 import type { AssessmentAnswers, RefinementEvidence, RefinementPrimaryPreference, RefinementTargetId } from "../types";
 import { calculateTraitScores } from "./discoveryScoring";
-import { selectEligibleRefinementQuestions } from "./refinementRouting";
+import { refinementTargetIsSemanticallyEligible, selectEligibleRefinementQuestions } from "./refinementRouting";
 
 export interface RefinementTargetDefinition {
   id: RefinementTargetId;
@@ -39,6 +39,46 @@ export const refinementTargets: RefinementTargetDefinition[] = [
     id: "vers",
     roleId: "role:vers-1a60a8ce",
     label: "Vers",
+  },
+  {
+    id: "primal",
+    roleId: "role:primal-eb3c2e1e",
+    label: "Primal",
+  },
+  {
+    id: "rigger",
+    roleId: "role:rigger-5d2f2d93",
+    label: "Rigger",
+  },
+  {
+    id: "rope-bottom",
+    roleId: "role:rope-bottom-f8a5d024",
+    label: "Rope Bottom",
+  },
+  {
+    id: "bondage-switch",
+    roleId: "role:bondage-switch-0bda5094",
+    label: "Bondage Switch",
+  },
+  {
+    id: "brat",
+    roleId: "role:brat-19c33c26",
+    label: "Brat",
+  },
+  {
+    id: "brat-tamer",
+    roleId: "role:brat-tamer-e2e114dd",
+    label: "Brat Tamer",
+  },
+  {
+    id: "pet",
+    roleId: "role:pet-8f0d1b30",
+    label: "Pet",
+  },
+  {
+    id: "owner",
+    roleId: "role:owner-4b1b8aa3",
+    label: "Owner",
   },
   {
     id: "daddy",
@@ -201,10 +241,20 @@ export const refinementTargetById = new Map(refinementTargets.map((target) => [t
 
 export const refinementTargetByRoleId = new Map(refinementTargets.map((target) => [target.roleId, target]));
 
+const refinementQuestionIdsByTarget = new Map<RefinementTargetId, string[]>();
+
+refinementQuestions.forEach((question) => {
+  question.answers.forEach((answer) => {
+    [...(answer.supports ?? []), ...(answer.weakSupports ?? []), ...(answer.rejects ?? [])].forEach((targetId) => {
+      const questionIds = refinementQuestionIdsByTarget.get(targetId) ?? [];
+      if (!questionIds.includes(question.id)) questionIds.push(question.id);
+      refinementQuestionIdsByTarget.set(targetId, questionIds);
+    });
+  });
+});
+
 export function refinementQuestionIdsForTarget(targetId: RefinementTargetId): string[] {
-  return refinementQuestions
-    .filter((question) => question.answers.some((answer) => answer.supports?.includes(targetId) || answer.weakSupports?.includes(targetId) || answer.rejects?.includes(targetId)))
-    .map((question) => question.id);
+  return [...(refinementQuestionIdsByTarget.get(targetId) ?? [])];
 }
 
 interface SelectedPrimaryPreference {
@@ -234,7 +284,8 @@ export function preferredPrimaryRoleIdsFromRefinement(refinementAnswers: Assessm
     boundaries: {},
     negotiation: {},
   };
-  const eligibleQuestionIds = new Set(selectEligibleRefinementQuestions(assessment, calculateTraitScores(discoveryAnswers)).map((question) => question.id));
+  const traitScores = calculateTraitScores(discoveryAnswers);
+  const eligibleQuestionIds = new Set(selectEligibleRefinementQuestions(assessment, traitScores).map((question) => question.id));
   const selected = selectedPrimaryPreferences(refinementAnswers, eligibleQuestionIds);
   const blockedFallbackGroups = new Set(
     selected.flatMap(({ preference }) => (preference.kind === "direct" && preference.fallbackGroup ? [preference.fallbackGroup] : preference.kind === "suppress-fallback" ? [preference.fallbackGroup] : [])),
@@ -242,6 +293,7 @@ export function preferredPrimaryRoleIdsFromRefinement(refinementAnswers: Assessm
   const roleIds = selected.flatMap(({ preference }) => {
     if (preference.kind === "suppress-fallback") return [];
     if (preference.kind === "fallback" && blockedFallbackGroups.has(preference.fallbackGroup)) return [];
+    if (!refinementTargetIsSemanticallyEligible(preference.targetId, assessment, traitScores)) return [];
 
     const roleId = roleIdForTarget(preference.targetId);
     return roleId ? [roleId] : [];

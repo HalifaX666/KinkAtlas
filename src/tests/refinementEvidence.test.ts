@@ -1160,3 +1160,216 @@ describe("core role vocabulary refinement", () => {
     }
   });
 });
+
+describe("Phase 5 role vocabulary refinement", () => {
+  const primalDiscovery = { "d-primal": "strong", "r-primal-give": "strong" };
+  const riggerDiscovery = { "d-rope": "strong", "r-rope-give": "strong", "r-rope-motivation": "strong", "r-lead": "strong" };
+  const ropeBottomDiscovery = { "d-rope": "some", "r-rope-receive": "strong", "d-position-receive": "strong", "r-bottom": "strong" };
+  const bondageSwitchDiscovery = { "d-rope": "curious", "r-rope-give": "strong", "r-rope-receive": "strong", "r-rope-both": "strong", "d-flexibility": "strong" };
+  const bratDiscovery = { "d-brat": "strong", "r-brat": "strong", "d-roleplay": "strong", "r-exploration-context": "curious", "d-power-receive": "some" };
+  const bratTamerDiscovery = { "d-brat": "some", "r-tamer": "strong", "r-lead": "strong", "d-roleplay": "strong", "r-exploration-context": "curious" };
+  const petDiscovery = { "d-pet": "some", "r-pet": "strong", "d-roleplay": "strong", "d-care": "some", "r-care-receive": "strong" };
+  const ownerDiscovery = { "d-power-give": "strong", "r-authority-style": "strong", "d-pet": "strong", "r-owner": "strong", "r-care-give": "strong" };
+
+  const questionIds = (discovery: Record<string, string>) => {
+    const assessment = answers(discovery);
+    return selectEligibleRefinementQuestions(assessment, calculateTraitScores(discovery)).map((question) => question.id);
+  };
+
+  const candidate = (discovery: Record<string, string>, refinement: Record<string, string>, label: string) => {
+    const roleResults = matchRoles(calculateTraitScores(discovery), discovery);
+    return buildRoleProfileCandidates(roleResults, refinement, discovery).find((item) => item.label === label)!;
+  };
+
+  it.each([
+    ["ref-primal-vocabulary", primalDiscovery],
+    ["ref-rope-vocabulary", riggerDiscovery],
+    ["ref-rope-vocabulary", ropeBottomDiscovery],
+    ["ref-rope-vocabulary", bondageSwitchDiscovery],
+    ["ref-brat-vocabulary", bratDiscovery],
+    ["ref-brat-vocabulary", bratTamerDiscovery],
+    ["ref-pet-persona", petDiscovery],
+    ["ref-owner-vocabulary", ownerDiscovery],
+  ] as const)("routes %s only after its underlying pattern is supported", (questionId, discovery) => {
+    expect(questionIds(discovery)).toContain(questionId);
+  });
+
+  it("keeps nearby non-target evidence from opening Phase 5 vocabulary routes", () => {
+    expect(questionIds({ "d-position-give": "strong", "r-top": "strong", "r-lead": "strong" })).not.toContain("ref-rope-vocabulary");
+    expect(questionIds({ "d-position-receive": "strong", "r-bottom": "strong", "r-receiving-focus": "strong" })).not.toContain("ref-rope-vocabulary");
+    expect(questionIds({ "d-power-receive": "strong", "r-surrender": "strong" })).not.toContain("ref-brat-vocabulary");
+    expect(questionIds({ "d-power-give": "strong", "r-authority-style": "strong" })).not.toContain("ref-brat-vocabulary");
+    expect(questionIds(petDiscovery)).not.toContain("ref-owner-vocabulary");
+    expect(questionIds(ownerDiscovery)).not.toContain("ref-pet-persona");
+  });
+
+  it.each([
+    ["Rigger", riggerDiscovery, "ref-rope-vocabulary", "rigger", "role:rigger-5d2f2d93"],
+    ["Rope Bottom", ropeBottomDiscovery, "ref-rope-vocabulary", "rope-bottom", "role:rope-bottom-f8a5d024"],
+    ["Bondage Switch", bondageSwitchDiscovery, "ref-rope-vocabulary", "bondage-switch", "role:bondage-switch-0bda5094"],
+    ["Brat", bratDiscovery, "ref-brat-vocabulary", "brat", "role:brat-19c33c26"],
+    ["Brat Tamer", bratTamerDiscovery, "ref-brat-vocabulary", "brat-tamer", "role:brat-tamer-e2e114dd"],
+    ["Pet", petDiscovery, "ref-pet-persona", "pet", "role:pet-8f0d1b30"],
+    ["Owner", ownerDiscovery, "ref-owner-vocabulary", "yes", "role:owner-4b1b8aa3"],
+  ] as const)("adds confirmed vocabulary to scored %s without replacing alignment or confidence", (label, discovery, questionId, answerId, roleId) => {
+    const baseline = candidate(discovery, {}, label);
+    const refinement = { [questionId]: answerId };
+    const confirmed = candidate(discovery, refinement, label);
+
+    expect(confirmed).toMatchObject({ roleId, evidenceType: "inferred", eligible: true, vocabularyConfirmation: "confirmed" });
+    expect(confirmed.rawAlignment).toBe(baseline.rawAlignment);
+    expect(confirmed.confidence).toBe(baseline.confidence);
+    expect(confirmed.rawAlignment).toBeTypeOf("number");
+    expect(confirmed.confidence).toBeDefined();
+    expect(preferredPrimaryRoleIdsFromRefinement(refinement, discovery)).toContain(roleId);
+  });
+
+  it("makes directly confirmed Primal eligible as scoreless exact-label evidence", () => {
+    const refinement = { "ref-primal-vocabulary": "yes" };
+    const result = candidate(primalDiscovery, refinement, "Primal");
+
+    expect(result).toMatchObject({
+      roleId: "role:primal-eb3c2e1e",
+      decisionPathway: "explicit-confirmation",
+      evidenceType: "exact-label",
+      eligible: true,
+      vocabularyConfirmation: "confirmed",
+      rawAlignment: undefined,
+      confidence: undefined,
+    });
+    expect(preferredPrimaryRoleIdsFromRefinement(refinement, primalDiscovery)).toEqual([]);
+  });
+
+  it("keeps generic Primal confirmation separate from hunter, prey, and switch direction", () => {
+    const result = candidate(primalDiscovery, { "ref-primal-vocabulary": "yes" }, "Primal");
+    const directionalLabels = ["Primal Hunter", "Primal Prey", "Primal Switch"];
+    const roleResults = matchRoles(calculateTraitScores(primalDiscovery), primalDiscovery);
+    const candidates = buildRoleProfileCandidates(roleResults, { "ref-primal-vocabulary": "yes" }, primalDiscovery);
+
+    expect(result.eligible).toBe(true);
+    directionalLabels.forEach((label) => {
+      expect(candidates.find((item) => item.label === label)?.vocabularyConfirmation).toBeUndefined();
+    });
+  });
+
+  it.each([
+    ["ref-primal-vocabulary", "Primal", primalDiscovery],
+    ["ref-rope-vocabulary", "Rigger", riggerDiscovery],
+    ["ref-brat-vocabulary", "Brat", bratDiscovery],
+    ["ref-pet-persona", "Pet", petDiscovery],
+    ["ref-owner-vocabulary", "Owner", ownerDiscovery],
+  ] as const)("treats neutral answers to %s as non-positive evidence", (questionId, label, discovery) => {
+    ["unknown", "prefer-not"].forEach((answerId) => {
+      const refinement = { [questionId]: answerId };
+      expect(candidate(discovery, refinement, label).vocabularyConfirmation).toBe("unconfirmed");
+      expect(preferredPrimaryRoleIdsFromRefinement(refinement, discovery)).toEqual([]);
+    });
+  });
+
+  it.each([
+    ["Primal", primalDiscovery, "ref-primal-vocabulary", "no"],
+    ["Rigger", riggerDiscovery, "ref-rope-vocabulary", "none"],
+    ["Brat", bratDiscovery, "ref-brat-vocabulary", "none"],
+    ["Owner", ownerDiscovery, "ref-owner-vocabulary", "no"],
+  ] as const)("keeps the underlying %s evidence when exact vocabulary is declined", (label, discovery, questionId, answerId) => {
+    const baseline = candidate(discovery, {}, label);
+    const declined = candidate(discovery, { [questionId]: answerId }, label);
+
+    expect(declined).toMatchObject({ eligible: false, vocabularyConfirmation: "declined" });
+    expect(declined.rawAlignment).toBe(baseline.rawAlignment);
+    expect(declined.confidence).toBe(baseline.confidence);
+  });
+
+  it("rejects stale or injected Phase 5 answers when their semantic route is unavailable", () => {
+    const injected = [
+      candidate({}, { "ref-primal-vocabulary": "yes" }, "Primal"),
+      candidate({}, { "ref-rope-vocabulary": "rigger" }, "Rigger"),
+      candidate({}, { "ref-brat-vocabulary": "brat" }, "Brat"),
+      candidate({}, { "ref-pet-persona": "pet" }, "Pet"),
+      candidate({}, { "ref-owner-vocabulary": "yes" }, "Owner"),
+    ];
+
+    injected.forEach((result) => {
+      expect(result.eligible).toBe(false);
+      expect(result.vocabularyConfirmation).toBeUndefined();
+    });
+  });
+
+  it("records a selected label but does not qualify the wrong target inside a routed family question", () => {
+    const selectedRopeBottom = candidate(riggerDiscovery, { "ref-rope-vocabulary": "rope-bottom" }, "Rope Bottom");
+    const selectedBratTamer = candidate(bratDiscovery, { "ref-brat-vocabulary": "brat-tamer" }, "Brat Tamer");
+
+    expect(selectedRopeBottom).toMatchObject({ eligible: false, vocabularyConfirmation: "confirmed" });
+    expect(selectedBratTamer).toMatchObject({ eligible: false, vocabularyConfirmation: "confirmed" });
+    expect(preferredPrimaryRoleIdsFromRefinement({ "ref-rope-vocabulary": "rope-bottom" }, riggerDiscovery)).toEqual([]);
+    expect(preferredPrimaryRoleIdsFromRefinement({ "ref-brat-vocabulary": "brat-tamer" }, bratDiscovery)).toEqual([]);
+  });
+
+  it("keeps target-specific routing authoritative even if an adversarial mapped score would otherwise qualify", () => {
+    const scores = calculateTraitScores(riggerDiscovery);
+    const roleResults = matchRoles(scores, riggerDiscovery).map((result) => result.role.id === "rope-bottom"
+      ? { ...result, alignment: "strong" as const, confidence: "high" as const, unmetEvidenceRequirements: [] }
+      : result);
+    const selectedRopeBottom = buildRoleProfileCandidates(roleResults, { "ref-rope-vocabulary": "rope-bottom" }, riggerDiscovery)
+      .find((item) => item.label === "Rope Bottom")!;
+
+    expect(selectedRopeBottom).toMatchObject({ vocabularyConfirmation: "confirmed", eligible: false });
+  });
+
+  it("does not create competing direct targets for rope aliases", () => {
+    expect(supportedRefinementTargets({ "ref-rope-vocabulary": "rigger" }).map(({ target }) => target.label)).toEqual(["Rigger"]);
+    expect(supportedRefinementTargets({ "ref-rope-vocabulary": "rope-bottom" }).map(({ target }) => target.label)).toEqual(["Rope Bottom"]);
+  });
+
+  it("does not make the ambiguous both-brat answer a direct primary preference", () => {
+    const discovery = { ...bratDiscovery, ...bratTamerDiscovery };
+    const refinement = { "ref-brat-vocabulary": "both" };
+
+    expect(supportedRefinementTargets(refinement).map(({ target }) => target.label)).toEqual(["Brat", "Brat Tamer"]);
+    expect(preferredPrimaryRoleIdsFromRefinement(refinement, discovery)).toEqual([]);
+  });
+
+  it("keeps multiple Phase 5 direct preferences deterministic across answer and question ordering", () => {
+    const discovery = { ...riggerDiscovery, ...bratDiscovery, ...petDiscovery };
+    const ropeFirst = { "ref-rope-vocabulary": "rigger", "ref-brat-vocabulary": "brat", "ref-pet-persona": "pet" };
+    const petFirst = { "ref-pet-persona": "pet", "ref-brat-vocabulary": "brat", "ref-rope-vocabulary": "rigger" };
+    const expected = ["role:brat-19c33c26", "role:pet-8f0d1b30", "role:rigger-5d2f2d93"];
+
+    expect(preferredPrimaryRoleIdsFromRefinement(ropeFirst, discovery)).toEqual(expected);
+    expect(preferredPrimaryRoleIdsFromRefinement(petFirst, discovery)).toEqual(expected);
+    refinementQuestions.reverse();
+    try {
+      expect(preferredPrimaryRoleIdsFromRefinement(ropeFirst, discovery)).toEqual(expected);
+    } finally {
+      refinementQuestions.reverse();
+    }
+  });
+
+  it("keeps Phase 5 Refine presentation deterministic, duplicate-free, and capped at six", () => {
+    const discovery = {
+      ...primalDiscovery,
+      ...riggerDiscovery,
+      ...bondageSwitchDiscovery,
+      ...bratDiscovery,
+      ...bratTamerDiscovery,
+      ...ownerDiscovery,
+      ...petDiscovery,
+      "d-power-receive": "strong",
+      "r-surrender": "strong",
+      "r-yielding-motivation": "strong",
+      "d-position-give": "strong",
+      "r-top": "strong",
+      "d-intensity": "strong",
+      "r-pain-give": "strong",
+    };
+    const assessment = answers(discovery);
+    const scores = calculateTraitScores(discovery);
+    const first = selectRefinementQuestions(assessment, scores).map((question) => question.id);
+    const second = selectRefinementQuestions(assessment, scores).map((question) => question.id);
+
+    expect(first).toEqual(second);
+    expect(first).toHaveLength(MAX_REFINEMENT_QUESTIONS);
+    expect(new Set(first).size).toBe(first.length);
+    expect(selectEligibleRefinementQuestions(assessment, scores).length).toBeGreaterThan(first.length);
+  });
+});

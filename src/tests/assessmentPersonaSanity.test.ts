@@ -3,6 +3,7 @@ import { boundaryItems } from "../data/boundaries";
 import { roles } from "../data/roles";
 import { calculateTraitScores } from "../engine/discoveryScoring";
 import { matchRoles } from "../engine/roleMatching";
+import { MAX_REFINEMENT_QUESTIONS, selectRefinementQuestions } from "../engine/refinementRouting";
 import { addRoleProfileEntry, makeRoleProfileEntryPrimary, removeRoleProfileEntry, reorderRoleProfileEntry, replaceRoleProfileEntry, roleProfileEntriesEqual, selectDisplayableRoleProfileAlternates, type EditableRoleProfileEntry } from "../engine/roleProfileOptimizer";
 import { getShareableRoleSet } from "../engine/shareResults";
 import { roleLibrary } from "../taxonomy/roleLibrary";
@@ -35,8 +36,8 @@ function expectFinite(value: number, context: string) {
 }
 
 describe("assessment persona fixture validation", () => {
-  it("contains 29 completed, uniquely identified personas", () => {
-    expect(assessmentPersonas).toHaveLength(29);
+  it("contains 37 completed, uniquely identified personas", () => {
+    expect(assessmentPersonas).toHaveLength(37);
     expect(() => validateAssessmentPersonas(assessmentPersonas)).not.toThrow();
   });
 
@@ -366,6 +367,62 @@ describe("core vocabulary personas", () => {
 
     expect(evaluation.roleProfile.recommendations.map((item) => item.candidate.label)).toContain("Dominant");
     expect(evaluation.roleProfile.primary?.candidate.vocabularyConfirmation).toBe("confirmed");
+  });
+});
+
+describe("Phase 5 vocabulary personas", () => {
+  it("keeps representative Refine routing below the global cap on average", () => {
+    const counts = assessmentPersonas.map((persona) => selectRefinementQuestions(persona.answers, calculateTraitScores(persona.answers.discovery)).length);
+    const average = counts.reduce((sum, count) => sum + count, 0) / counts.length;
+
+    expect(Math.max(...counts)).toBe(MAX_REFINEMENT_QUESTIONS);
+    expect(average).toBeLessThan(MAX_REFINEMENT_QUESTIONS);
+    expect(counts.filter((count) => count === MAX_REFINEMENT_QUESTIONS).length).toBeLessThan(assessmentPersonas.length);
+  });
+
+  it.each([
+    ["confirmed-rigger-vocabulary", "Rigger"],
+    ["confirmed-rope-bottom-vocabulary", "Rope Bottom"],
+    ["confirmed-brat-vocabulary", "Brat"],
+    ["confirmed-brat-tamer-vocabulary", "Brat Tamer"],
+    ["confirmed-pet-vocabulary", "Pet"],
+    ["confirmed-owner-vocabulary", "Owner"],
+  ])("keeps %s as scored evidence with confirmed exact vocabulary", (personaId, label) => {
+    const evaluation = evaluateAssessmentPersona(assessmentPersonas.find((persona) => persona.id === personaId)!);
+    const candidate = [...evaluation.roleProfile.recommendations.map((item) => item.candidate), ...evaluation.roleProfile.alternates.map((item) => item.candidate)]
+      .find((item) => item.label === label)!;
+
+    expect(candidate).toMatchObject({ evidenceType: "inferred", vocabularyConfirmation: "confirmed" });
+    expect(candidate.rawAlignment).toBeTypeOf("number");
+    expect(candidate.confidence).toBeDefined();
+  });
+
+  it("keeps confirmed Primal eligible and scoreless without overriding a more representative suggested role", () => {
+    const evaluation = evaluateAssessmentPersona(assessmentPersonas.find((persona) => persona.id === "confirmed-primal-vocabulary")!);
+    const primal = [...evaluation.roleProfile.recommendations, ...evaluation.roleProfile.alternates].find((item) => item.candidate.label === "Primal")?.candidate;
+
+    expect(primal).toMatchObject({ evidenceType: "exact-label", eligible: true, vocabularyConfirmation: "confirmed", rawAlignment: undefined, confidence: undefined });
+  });
+
+  it("preserves scored rope evidence while excluding declined Rigger vocabulary", () => {
+    const evaluation = evaluateAssessmentPersona(assessmentPersonas.find((persona) => persona.id === "declined-rigger-vocabulary")!);
+    const riggerResult = evaluation.roleResults.find((item) => item.role.id === "rigger")!;
+    const riggerCandidate = evaluation.roleProfile.alternates.find((item) => item.candidate.label === "Rigger")!.candidate;
+
+    expect(riggerResult.alignment).toMatch(/strong|explore/);
+    expect(riggerCandidate).toMatchObject({ eligible: false, vocabularyConfirmation: "declined", rawAlignment: riggerResult.rawScore });
+    expect(evaluation.roleProfile.recommendations.map((item) => item.candidate.label)).not.toContain("Rigger");
+  });
+
+  it("keeps Pet-side and Owner-side confirmation independent", () => {
+    const pet = evaluateAssessmentPersona(assessmentPersonas.find((persona) => persona.id === "confirmed-pet-vocabulary")!);
+    const owner = evaluateAssessmentPersona(assessmentPersonas.find((persona) => persona.id === "confirmed-owner-vocabulary")!);
+    const allCandidates = (evaluation: typeof pet) => [...evaluation.roleProfile.recommendations, ...evaluation.roleProfile.alternates].map((item) => item.candidate);
+
+    expect(allCandidates(pet).find((item) => item.label === "Pet")?.vocabularyConfirmation).toBe("confirmed");
+    expect(allCandidates(pet).find((item) => item.label === "Owner")?.vocabularyConfirmation).toBeUndefined();
+    expect(allCandidates(owner).find((item) => item.label === "Owner")?.vocabularyConfirmation).toBe("confirmed");
+    expect(allCandidates(owner).find((item) => item.label === "Pet")?.vocabularyConfirmation).toBeUndefined();
   });
 });
 
