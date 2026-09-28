@@ -1,6 +1,6 @@
 import { roleById } from "../data/roles";
 import { traitById } from "../data/traits";
-import { relationshipsForLibraryRole, roleLibrary, roleLibraryRoleById, type RoleLibraryDecisionPathway, type RoleLibraryRole } from "../taxonomy/roleLibrary";
+import { relationshipsForLibraryRole, roleLibrary, roleLibraryRoleById, type RoleLibraryDecisionPathway, type RoleLibraryPrimaryPolicy, type RoleLibraryRole } from "../taxonomy/roleLibrary";
 import type { ConfidenceLevel, RoleResult, AssessmentAnswers } from "../types";
 import { evaluateRefinementEvidence, refinementFallbackIsSuperseded, refinementQuestionIdsForTarget, refinementTargetByRoleId } from "./refinementEvidence";
 import { calculateTraitScores } from "./discoveryScoring";
@@ -17,6 +17,7 @@ export interface RoleProfileCandidate {
   assessmentRoleId?: string;
   evidenceType: ProfileEvidenceType;
   decisionPathway: RoleLibraryDecisionPathway;
+  primaryPolicy: RoleLibraryPrimaryPolicy;
   eligible: boolean;
   rawAlignment?: number;
   confidence?: ConfidenceLevel;
@@ -25,7 +26,6 @@ export interface RoleProfileCandidate {
   distinctiveness: number;
   representationValue: number;
   profileUsefulness: number;
-  primarySuitability: number;
   families: string[];
   evidenceThemes?: string[];
   notImplied?: string;
@@ -91,7 +91,7 @@ function marginalRepresentationBonus(candidate: RoleProfileCandidate, selected: 
 }
 
 function compareCandidateQuality(left: RoleProfileCandidate, right: RoleProfileCandidate): number {
-  return right.evidenceQuality - left.evidenceQuality || (right.confidence ? confidenceValue[right.confidence] : 0) - (left.confidence ? confidenceValue[left.confidence] : 0) || right.representationValue - left.representationValue || right.distinctiveness - left.distinctiveness || right.primarySuitability - left.primarySuitability || (roleOrder.get(left.roleId) ?? Number.MAX_SAFE_INTEGER) - (roleOrder.get(right.roleId) ?? Number.MAX_SAFE_INTEGER);
+  return right.evidenceQuality - left.evidenceQuality || (right.confidence ? confidenceValue[right.confidence] : 0) - (left.confidence ? confidenceValue[left.confidence] : 0) || right.representationValue - left.representationValue || right.distinctiveness - left.distinctiveness || (roleOrder.get(left.roleId) ?? Number.MAX_SAFE_INTEGER) - (roleOrder.get(right.roleId) ?? Number.MAX_SAFE_INTEGER);
 }
 
 function recommendationEvidenceExplanation(candidate: RoleProfileCandidate): string {
@@ -116,15 +116,21 @@ function primaryCentrality(candidate: RoleProfileCandidate, selected: RoleProfil
 }
 
 function comparePrimaryQuality(left: RoleProfileRecommendation, right: RoleProfileRecommendation, selected: RoleProfileRecommendation[]): number {
-  const leftScore = baseScore(left.candidate) * 0.55 + left.candidate.primarySuitability * 0.3 + primaryCentrality(left.candidate, selected) * 0.1 + left.candidate.representationValue * 0.05;
-  const rightScore = baseScore(right.candidate) * 0.55 + right.candidate.primarySuitability * 0.3 + primaryCentrality(right.candidate, selected) * 0.1 + right.candidate.representationValue * 0.05;
-  return rightScore - leftScore || compareCandidateQuality(left.candidate, right.candidate);
+  const leftScore = baseScore(left.candidate) * 0.75 + primaryCentrality(left.candidate, selected) * 0.15 + left.candidate.representationValue * 0.1;
+  const rightScore = baseScore(right.candidate) * 0.75 + primaryCentrality(right.candidate, selected) * 0.15 + right.candidate.representationValue * 0.1;
+  return rightScore - leftScore
+    || right.candidate.evidenceQuality - left.candidate.evidenceQuality
+    || (right.candidate.confidence ? confidenceValue[right.candidate.confidence] : 0) - (left.candidate.confidence ? confidenceValue[left.candidate.confidence] : 0)
+    || right.candidate.representationValue - left.candidate.representationValue
+    || right.candidate.distinctiveness - left.candidate.distinctiveness
+    || left.candidate.roleId.localeCompare(right.candidate.roleId);
 }
 
 export function selectPrimaryRoleProfile(selected: RoleProfileRecommendation[], preferredPrimaryRoleIds?: Iterable<string> | string): RoleProfileRecommendation | undefined {
   const preferredIds = new Set(typeof preferredPrimaryRoleIds === "string" ? [preferredPrimaryRoleIds] : preferredPrimaryRoleIds ?? []);
-  const preferred = selected.filter((item) => preferredIds.has(item.candidate.roleId));
-  const candidates = preferred.length ? preferred : selected;
+  const primaryCapable = selected.filter((item) => item.candidate.primaryPolicy === "direct-primary" || item.candidate.primaryPolicy === "competitive");
+  const preferred = primaryCapable.filter((item) => item.candidate.primaryPolicy === "direct-primary" && preferredIds.has(item.candidate.roleId));
+  const candidates = preferred.length ? preferred : primaryCapable;
 
   return [...candidates].sort((left, right) => comparePrimaryQuality(left, right, selected))[0];
 }
@@ -184,8 +190,8 @@ export function optimizeRoleProfile(candidates: RoleProfileCandidate[], maximum 
   const preferredPrimaryRoleIds = new Set(options.preferredPrimaryRoleIds ?? []);
   if (options.preferredPrimaryRoleId) preferredPrimaryRoleIds.add(options.preferredPrimaryRoleId);
   const primary = selectPrimaryRoleProfile(selected, preferredPrimaryRoleIds);
-  const primaryWasDirectlyPreferred = Boolean(primary && preferredPrimaryRoleIds.has(primary.candidate.roleId));
-  const primaryExplanation = primary ? (primaryWasDirectlyPreferred ? `${primary.candidate.label} is the suggested primary because it is directly selected role vocabulary and is the strongest fit among your eligible directly selected role labels.` : `${primary.candidate.label} is the suggested primary because it has the strongest combined evidence and overall-profile suitability among the recommended roles—not merely the highest raw percentage.`) : undefined;
+  const primaryWasDirectlyPreferred = Boolean(primary && primary.candidate.primaryPolicy === "direct-primary" && preferredPrimaryRoleIds.has(primary.candidate.roleId));
+  const primaryExplanation = primary ? (primaryWasDirectlyPreferred ? `${primary.candidate.label} is KinkAtlas's suggested primary because you directly selected this vocabulary and it was also supported strongly enough to be recommended.` : `${primary.candidate.label} is KinkAtlas's suggested primary because it best represents the overall supported role set.`) : undefined;
   const recommendations = primary ? [primary, ...selected.filter((item) => item.candidate.roleId !== primary.candidate.roleId)] : selected;
   return { recommendations, primary, primaryExplanation, alternates };
 }
@@ -334,6 +340,7 @@ export function buildRoleProfileCandidates(roleResults: RoleResult[], refinement
       assessmentRoleId: mappedResult?.role.id,
       evidenceType: evidence.evidenceType,
       decisionPathway: role.decisionPathway,
+      primaryPolicy: role.primaryPolicy,
       eligible: evidence.eligible,
       rawAlignment: evidence.evidenceType === "exact-label" || (evidence.evidenceType === "hybrid" && refinementTargetByRoleId.has(role.id)) ? undefined : mappedResult?.rawScore,
       confidence: evidence.confidence,
@@ -342,7 +349,6 @@ export function buildRoleProfileCandidates(roleResults: RoleResult[], refinement
       distinctiveness: role.nearestRoleIds.length ? 0.68 : 0.76,
       representationValue: evidence.evidenceType === "inferred" ? 0.82 : 0.72,
       profileUsefulness: role.canonicalRoleId ? 0.86 : 0.7,
-      primarySuitability: evidence.evidenceType === "inferred" ? 0.86 : evidence.evidenceType === "hybrid" ? 0.65 : evidence.evidenceType === "exact-label" ? 0.58 : 0.42,
       families,
       evidenceThemes: mappedResult?.supportingTraits.slice(0, 3).map((signal) => traitById[signal.id].label),
       notImplied: mappedRole?.notImplied ?? (role.decisionPathway === "explicit-confirmation" ? "that adjacent identities, activities, dynamics, or consent choices also fit." : undefined),

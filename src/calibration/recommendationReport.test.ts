@@ -16,6 +16,13 @@ describe("recommendation quality report", () => {
     expect(report.coverage).toEqual({
       roles: 812,
       decisionPolicies: 812,
+      primaryPolicies: 812,
+      primaryPolicyDistribution: {
+        "direct-primary": 27,
+        competitive: 22,
+        contextual: 181,
+        "manual-only": 582,
+      },
       definitionStates: 812,
       usableDefinitions: 708,
       unavailableDefinitions: 104,
@@ -29,7 +36,11 @@ describe("recommendation quality report", () => {
     expect(report.questions).toMatchObject({ broad: 20, refinements: 52, mandatoryMaximum: 26, optionalPool: 325 });
     expect(report.questions.maximumRecommendationClarifications).toBeLessThanOrEqual(6);
     expect(report.roleSets.deterministicRepeat).toBe(true);
+    expect(report.primaryOutcomes).toMatchObject({ directlyPreferredPrimaries: 1 });
+    expect(report.primaryOutcomes.personasWithPrimary + report.primaryOutcomes.personasWithoutPrimary).toBe(50);
+    expect(report.primaryOutcomes.contextualRecommendationsExcludedFromPrimary).toBeGreaterThan(0);
     expect(renderRecommendationReport(report)).toContain("recommendations 50/50");
+    expect(renderRecommendationReport(report)).toContain("PRIMARY POLICY: direct-primary 27; competitive 22; contextual 181; manual-only 582");
   });
 
   it("retains all five reviewed diagnostic warnings with explicit reasons", () => {

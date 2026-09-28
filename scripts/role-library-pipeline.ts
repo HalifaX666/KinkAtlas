@@ -28,6 +28,12 @@ const decisionPathways = new Set([
   'explicit-confirmation',
   'manual-only',
 ])
+const primaryPolicies = new Set([
+  'direct-primary',
+  'competitive',
+  'contextual',
+  'manual-only',
+])
 const relationshipTypes = new Set([
   'broader-than',
   'narrower-than',
@@ -48,6 +54,7 @@ const requiredRoleKeys = new Set([
   'facets',
   'assessmentMode',
   'recommendationEligibility',
+  'primaryPolicy',
   'nearestRoleIds',
   'decisionPathway',
   'familyIds',
@@ -131,6 +138,7 @@ function validateRole(roleValue: unknown, index: number): JsonObject {
   requireStringArray(role.facets, `${location}.facets`)
   requireEnum(role.assessmentMode, assessmentModes, `${location}.assessmentMode`)
   requireEnum(role.recommendationEligibility, recommendationModes, `${location}.recommendationEligibility`)
+  requireEnum(role.primaryPolicy, primaryPolicies, `${location}.primaryPolicy`)
   requireStringArray(role.nearestRoleIds, `${location}.nearestRoleIds`)
   requireEnum(role.decisionPathway, decisionPathways, `${location}.decisionPathway`)
   requireStringArray(role.familyIds, `${location}.familyIds`)
@@ -146,7 +154,7 @@ export function validateRoleLibraryDataset(value: unknown): JsonObject {
   const datasetKeys = new Set(['schemaVersion', 'roles', 'relationships', 'families'])
   requireKeys(dataset, datasetKeys, 'dataset')
   requireOnlyKeys(dataset, datasetKeys, 'dataset')
-  if (dataset.schemaVersion !== 1) fail('schemaVersion must be 1.')
+  if (dataset.schemaVersion !== 2) fail('schemaVersion must be 2.')
   if (!Array.isArray(dataset.roles)) fail('roles must be an array.')
   if (!Array.isArray(dataset.relationships)) fail('relationships must be an array.')
 
@@ -170,6 +178,12 @@ export function validateRoleLibraryDataset(value: unknown): JsonObject {
       if (!Object.hasOwn(families, familyId)) {
         fail(`roles[${roleIndex}].familyIds references missing family ${JSON.stringify(familyId)}.`)
       }
+    }
+    if (role.recommendationEligibility === 'exploration-only' && role.primaryPolicy !== 'manual-only') {
+      fail(`roles[${roleIndex}] cannot use automatic primary policy when recommendation eligibility is exploration-only.`)
+    }
+    if (role.decisionPathway === 'manual-only' && role.primaryPolicy !== 'manual-only') {
+      fail(`roles[${roleIndex}] cannot use automatic primary policy when its decision pathway is manual-only.`)
     }
   })
 

@@ -13,6 +13,7 @@ const candidate = (roleId = "role:test", label = "Test role"): RoleProfileCandid
   label,
   evidenceType: "inferred",
   decisionPathway: "inferred",
+  primaryPolicy: "competitive",
   eligible: true,
   rawAlignment: 0.8,
   confidence: "high",
@@ -21,7 +22,6 @@ const candidate = (roleId = "role:test", label = "Test role"): RoleProfileCandid
   distinctiveness: 0.7,
   representationValue: 0.7,
   profileUsefulness: 0.7,
-  primarySuitability: 0.7,
   families: [],
   evidenceExplanation: "",
 });

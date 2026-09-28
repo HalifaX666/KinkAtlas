@@ -9,16 +9,17 @@ export interface RecommendationOptimizerScenarioResult {
 }
 
 const idFor = (label: string) => roleLibrary.roles.find((role) => role.label === label)?.id ?? label
+const primaryPolicyFor = (label: string) => roleLibrary.roles.find((role) => role.label === label)?.primaryPolicy ?? 'manual-only'
 const candidate = (label: string, overrides: Partial<RoleProfileCandidate> = {}): RoleProfileCandidate => ({
-  roleId: idFor(label), label, evidenceType: 'inferred', decisionPathway: 'inferred', eligible: true, rawAlignment: .88, confidence: 'high',
+  roleId: idFor(label), label, evidenceType: 'inferred', decisionPathway: 'inferred', primaryPolicy: primaryPolicyFor(label), eligible: true, rawAlignment: .88, confidence: 'high',
   evidenceQuality: .88, specificity: .72, distinctiveness: .75, representationValue: .8,
-  profileUsefulness: .8, primarySuitability: .78, families: [label.toLocaleLowerCase('en-US')],
+  profileUsefulness: .8, families: [label.toLocaleLowerCase('en-US')],
   evidenceExplanation: 'multiple independent responses support this vocabulary', ...overrides,
 })
 
 export function evaluateRecommendationOptimizerScenarios(): RecommendationOptimizerScenarioResult[] {
   const dominanceVariants = [
-    candidate('Dominant', { rawAlignment: .95, families: ['dominance', 'power-exchange'], primarySuitability: .98 }),
+    candidate('Dominant', { rawAlignment: .95, families: ['dominance', 'power-exchange']}),
     candidate('Gentle Dom', { rawAlignment: .94, families: ['dominance', 'power-exchange'] }),
     candidate('Pleasure Dom', { rawAlignment: .93, families: ['dominance', 'power-exchange'] }),
     candidate('Service Dom', { rawAlignment: .92, families: ['dominance', 'power-exchange', 'service'] }),
@@ -30,8 +31,8 @@ export function evaluateRecommendationOptimizerScenarios(): RecommendationOptimi
   const twoSupported = optimizeRoleProfile([candidate('Dominant'), candidate('Rigger'), candidate('Femboy', { eligible: false, evidenceType: 'explicit' })])
   const excluded = optimizeRoleProfile([candidate('Dominant', { rawAlignment: .96 }), candidate('Rigger', { rawAlignment: .84 })], 5, { excludedRoleIds: [idFor('Dominant')] })
   const preferred = optimizeRoleProfile([
-    candidate('Primal Sadist', { rawAlignment: .96, primarySuitability: .25 }),
-    candidate('Primal', { rawAlignment: .88, primarySuitability: 1 }),
+    candidate('Primal Sadist', { rawAlignment: .96}),
+    candidate('Primal', { rawAlignment: .88}),
   ])
   const manual = addRoleProfileEntry([], { roleId: idFor('Femboy'), label: 'Femboy', source: 'user-selected' })
   const ropeOnly = optimizeRoleProfile([
@@ -40,8 +41,8 @@ export function evaluateRecommendationOptimizerScenarios(): RecommendationOptimi
     candidate('Dominant', { families: ['power-exchange'], eligible: false, rawAlignment: .4, confidence: 'low' }),
   ])
   const broadAndNiche = optimizeRoleProfile([
-    candidate('Dominant', { families: ['dominance'], primarySuitability: 1 }),
-    candidate('Service Dom', { families: ['dominance', 'service'], specificity: .95, primarySuitability: .55 }),
+    candidate('Dominant', { families: ['dominance']}),
+    candidate('Service Dom', { families: ['dominance', 'service'], specificity: .95}),
   ])
   const direct = optimizeRoleProfile([candidate('Latex Fetishist', { evidenceType: 'direct', decisionPathway: 'direct-interest', rawAlignment: undefined, confidence: 'moderate', families: ['material-fetish'] })])
   const unconfirmedHybrid = optimizeRoleProfile([candidate('Service Rigger', { evidenceType: 'hybrid', decisionPathway: 'hybrid', eligible: false, families: ['rope-bondage', 'service'] })])
@@ -69,7 +70,7 @@ export function evaluateRecommendationOptimizerScenarios(): RecommendationOptimi
     { id: 'G-direct-confirmation', description: 'Direct confirmation can support a focused role without raw broad alignment.', passed: direct.recommendations[0]?.candidate.evidenceType === 'direct' && direct.recommendations[0]?.candidate.rawAlignment === undefined },
     { id: 'H-hybrid-unconfirmed', description: 'Broad context without direct confirmation cannot recommend a hybrid role.', passed: unconfirmedHybrid.recommendations.length === 0 },
     { id: 'I-semantic-redundancy', description: 'Several labels from one semantic family receive redundancy pressure.', passed: semanticFamily.recommendations.length < 5 && semanticFamily.recommendations.some((item) => item.candidate.label === 'Rigger') },
-    { id: 'J-primary-representation', description: 'Primary suitability can outweigh a slightly higher niche alignment.', passed: preferred.primary?.candidate.label === 'Primal' },
+    { id: 'J-primary-representation', description: 'A competitive headline role can represent a set over a contextual intersection.', passed: preferred.primary?.candidate.label === 'Primal' },
     { id: 'K-reviewed-alias', description: 'A reviewed alias pair does not consume two profile slots when another supported family is available.', passed: reviewedAlias.recommendations.filter((item) => ['Rope Switch', 'Bondage Switch'].includes(item.candidate.label)).length === 1 && reviewedAlias.recommendations.some((item) => item.candidate.label === 'Sadist'), observedLabels: reviewedAlias.recommendations.map((item) => item.candidate.label) },
     { id: 'L-ambiguous-unpromoted', description: 'Reviewed-but-unpromoted vocabulary remains ineligible without exact-label evidence.', passed: ambiguousVocabulary.recommendations.some((item) => item.candidate.label === 'Dominant') && ambiguousVocabulary.recommendations.every((item) => item.candidate.label !== 'Domme') },
   ]

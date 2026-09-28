@@ -9,13 +9,14 @@ const role = {
   facets: [],
   assessmentMode: "exploration",
   recommendationEligibility: "exploration-only",
+  primaryPolicy: "manual-only",
   nearestRoleIds: [],
   decisionPathway: "manual-only",
   familyIds: ["example-family"],
 };
 
 const dataset = () => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   roles: [{ ...role }],
   relationships: [],
   families: { "example-family": "Example family" },
@@ -42,6 +43,21 @@ describe("neutral role-library pipeline", () => {
     const malformed = dataset();
     malformed.roles[0].assessmentMode = "guessed";
     expect(() => validateRoleLibraryDataset(malformed)).toThrow(/unsupported value/);
+
+    const unknownPrimaryPolicy = dataset();
+    unknownPrimaryPolicy.roles[0].primaryPolicy = "incidental";
+    expect(() => validateRoleLibraryDataset(unknownPrimaryPolicy)).toThrow(/unsupported value/);
+  });
+
+  it("rejects automatic primary policy for exploration-only and manual-pathway roles", () => {
+    const explorationPrimary = dataset();
+    explorationPrimary.roles[0].primaryPolicy = "competitive";
+    expect(() => validateRoleLibraryDataset(explorationPrimary)).toThrow(/exploration-only/);
+
+    const manualPathwayPrimary = dataset();
+    manualPathwayPrimary.roles[0].recommendationEligibility = "eligible-with-direct-evidence";
+    manualPathwayPrimary.roles[0].primaryPolicy = "direct-primary";
+    expect(() => validateRoleLibraryDataset(manualPathwayPrimary)).toThrow(/decision pathway is manual-only/);
   });
 
   it("rejects missing family and relationship references", () => {

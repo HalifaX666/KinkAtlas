@@ -3,6 +3,7 @@ import libraryJson from '../data/role-library/role-library.json'
 export type RoleLibraryAssessmentMode = 'inferred' | 'direct-interest' | 'hybrid' | 'explicit-selection' | 'exploration'
 export type RoleLibraryRecommendationEligibility = 'eligible-high-confidence' | 'eligible-with-direct-evidence' | 'eligible-with-medium-confidence' | 'exploration-only' | 'insufficient-evidence'
 export type RoleLibraryDecisionPathway = 'inferred' | 'direct-interest' | 'hybrid' | 'explicit-confirmation' | 'manual-only'
+export type RoleLibraryPrimaryPolicy = 'direct-primary' | 'competitive' | 'contextual' | 'manual-only'
 export type RoleLibraryRelationshipType = 'broader-than' | 'narrower-than' | 'sibling' | 'directional-counterpart' | 'switch-counterpart' | 'activity-related' | 'commonly-overlapping' | 'near-synonym' | 'alias' | 'persona-related'
 
 export interface RoleLibraryRole {
@@ -14,6 +15,7 @@ export interface RoleLibraryRole {
   facets: string[]
   assessmentMode: RoleLibraryAssessmentMode
   recommendationEligibility: RoleLibraryRecommendationEligibility
+  primaryPolicy: RoleLibraryPrimaryPolicy
   canonicalRoleId?: string
   nearestRoleIds: string[]
   evidenceCluster?: string
@@ -30,7 +32,7 @@ export interface RoleLibraryRelationship {
 }
 
 export interface RoleLibraryDataset {
-  schemaVersion: 1
+  schemaVersion: 2
   roles: RoleLibraryRole[]
   relationships: RoleLibraryRelationship[]
   families: Record<string, string>

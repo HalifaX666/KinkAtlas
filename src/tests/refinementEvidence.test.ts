@@ -929,7 +929,7 @@ describe("Refine evidence architecture", () => {
     expect(first.optimization.primary).toBeDefined();
     expect(expectedPreferred).toContain(first.optimization.primary!.candidate.roleId);
     expect(first.optimization.recommendations[0]).toBe(first.optimization.primary);
-    expect(first.optimization.primaryExplanation).toMatch(/directly selected role vocabulary.*strongest fit among your eligible directly selected role labels/i);
+    expect(first.optimization.primaryExplanation).toMatch(/directly selected this vocabulary.*supported strongly enough to be recommended/i);
     expect(first.optimization.recommendations.filter((item) => item.candidate.roleId === first.optimization.primary?.candidate.roleId)).toHaveLength(1);
     expectedPreferred.forEach((roleId) => {
       const candidate = first.optimization.recommendations.find((item) => item.candidate.roleId === roleId)?.candidate;
@@ -956,7 +956,7 @@ describe("Refine evidence architecture", () => {
     expect(selectedPreference.primary?.candidate.roleId).toBe(littlePrincessId);
     expect(selectedPreference.recommendations.some((item) => item.candidate.roleId === puppyId)).toBe(false);
     expect(missingPreference.primary?.candidate.roleId).toBe(baseline.primary?.candidate.roleId);
-    expect(missingPreference.primaryExplanation).toMatch(/strongest combined evidence and overall-profile suitability/i);
+    expect(missingPreference.primaryExplanation).toMatch(/best represents the overall supported role set/i);
   });
 });
 
@@ -1124,6 +1124,7 @@ describe("core role vocabulary refinement", () => {
         label,
         evidenceType: "inferred",
         decisionPathway: "inferred",
+        primaryPolicy: "direct-primary",
         eligible: true,
         rawAlignment: quality,
         confidence: "high",
@@ -1132,7 +1133,6 @@ describe("core role vocabulary refinement", () => {
         distinctiveness: quality,
         representationValue: quality,
         profileUsefulness: quality,
-        primarySuitability: quality,
         families: [],
         evidenceExplanation: "",
         vocabularyConfirmation: "confirmed",

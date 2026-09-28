@@ -1,4 +1,5 @@
 import { refinementQuestionById, refinementQuestions } from "../data/refinement";
+import { roleLibraryRoleById } from "../taxonomy/roleLibrary";
 import type { AssessmentAnswers, RefinementEvidence, RefinementPrimaryPreference, RefinementTargetId } from "../types";
 import { calculateTraitScores } from "./discoveryScoring";
 import { refinementTargetIsSemanticallyEligible, selectEligibleRefinementQuestions } from "./refinementRouting";
@@ -296,7 +297,7 @@ export function preferredPrimaryRoleIdsFromRefinement(refinementAnswers: Assessm
     if (!refinementTargetIsSemanticallyEligible(preference.targetId, assessment, traitScores)) return [];
 
     const roleId = roleIdForTarget(preference.targetId);
-    return roleId ? [roleId] : [];
+    return roleId && roleLibraryRoleById.get(roleId)?.primaryPolicy === "direct-primary" ? [roleId] : [];
   });
 
   return [...new Set(roleIds)].sort((left, right) => left.localeCompare(right));

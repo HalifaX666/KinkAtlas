@@ -42,6 +42,14 @@ export function buildRecommendationReport() {
   const setSizes = recommendationResults.map((result) => result.optimization.recommendations.length);
   const clarificationCounts = recommendationResults.map((result) => result.clarifications.length);
   const policyDistribution = Object.fromEntries(["inferred", "direct-interest", "hybrid", "explicit-confirmation", "manual-only"].map((pathway) => [pathway, roleLibrary.roles.filter((role) => role.decisionPathway === pathway).length]));
+  const primaryPolicyDistribution = Object.fromEntries(["direct-primary", "competitive", "contextual", "manual-only"].map((policy) => [policy, roleLibrary.roles.filter((role) => role.primaryPolicy === policy).length]));
+  const directlyPreferredPrimaries = recommendationResults.filter((result) => {
+    const preferredIds = new Set(result.persona.options?.preferredPrimaryRoleIds ?? []);
+    if (result.persona.options?.preferredPrimaryRoleId) preferredIds.add(result.persona.options.preferredPrimaryRoleId);
+    return result.optimization.primary?.candidate.primaryPolicy === "direct-primary" && preferredIds.has(result.optimization.primary.candidate.roleId);
+  }).length;
+  const personasWithPrimary = recommendationResults.filter((result) => result.optimization.primary).length;
+  const contextualRecommendationsExcludedFromPrimary = recommendationResults.reduce((count, result) => count + result.optimization.recommendations.filter((item) => item.candidate.primaryPolicy === "contextual").length, 0);
   const availableDefinitions = roleLibrary.roles.filter((role) => role.definition !== undefined).length;
   const unavailableDefinitions = roleLibrary.roles.length - availableDefinitions;
   const familyCoverage = roleLibrary.roles.filter((role) => role.familyIds.length > 0).length;
@@ -85,7 +93,7 @@ export function buildRecommendationReport() {
     },
   };
   const automaticCoverage = Number(policyDistribution.inferred) + Number(policyDistribution["direct-interest"]) + Number(policyDistribution.hybrid);
-  const errors = [...(recommendationResults.length !== 50 ? [`Recommendation persona count is ${recommendationResults.length}, expected 50.`] : []), ...failures.map((failure) => `${failure.personaId} [${failure.kind}]: ${failure.message}`), ...(roleLibrary.roles.length !== 812 || new Set(roleLibrary.roles.map((role) => role.label)).size !== 812 ? ["Role-library label coverage changed."] : []), ...(availableDefinitions !== 708 || unavailableDefinitions !== 104 ? ["Definition availability differs from the approved role-library baseline."] : []), ...(automaticCoverage !== 229 || policyDistribution["explicit-confirmation"] !== 137 || policyDistribution["manual-only"] !== 446 ? ["Recommendation pathway coverage changed."] : []), ...(roleLibrary.relationships.length !== 60 || familyCoverage !== 449 ? ["Reviewed semantic coverage changed."] : []), ...(discoveryQuestions.filter((question) => question.phase === "broad").length !== 20 || discoveryQuestions.filter((question) => question.phase === "refine").length !== 52 ? ["Mandatory question inventory changed."] : []), ...(recommendationClarificationPoolSize !== 325 || Math.max(...clarificationCounts) > 6 ? ["Optional clarification limits changed."] : []), ...(calibration.criticalFailureCount !== 0 ? [`Calibration has ${calibration.criticalFailureCount} critical failures.`] : []), ...(Object.values(performance.after).some((milliseconds) => milliseconds > 25) ? ["A recommendation performance check exceeded 25 ms."] : [])];
+  const errors = [...(recommendationResults.length !== 50 ? [`Recommendation persona count is ${recommendationResults.length}, expected 50.`] : []), ...failures.map((failure) => `${failure.personaId} [${failure.kind}]: ${failure.message}`), ...(roleLibrary.roles.length !== 812 || new Set(roleLibrary.roles.map((role) => role.label)).size !== 812 ? ["Role-library label coverage changed."] : []), ...(availableDefinitions !== 708 || unavailableDefinitions !== 104 ? ["Definition availability differs from the approved role-library baseline."] : []), ...(automaticCoverage !== 229 || policyDistribution["explicit-confirmation"] !== 137 || policyDistribution["manual-only"] !== 446 ? ["Recommendation pathway coverage changed."] : []), ...(primaryPolicyDistribution["direct-primary"] !== 27 || primaryPolicyDistribution.competitive !== 22 || primaryPolicyDistribution.contextual !== 181 || primaryPolicyDistribution["manual-only"] !== 582 ? ["Primary-policy coverage changed."] : []), ...(roleLibrary.relationships.length !== 60 || familyCoverage !== 449 ? ["Reviewed semantic coverage changed."] : []), ...(discoveryQuestions.filter((question) => question.phase === "broad").length !== 20 || discoveryQuestions.filter((question) => question.phase === "refine").length !== 52 ? ["Mandatory question inventory changed."] : []), ...(recommendationClarificationPoolSize !== 325 || Math.max(...clarificationCounts) > 6 ? ["Optional clarification limits changed."] : []), ...(calibration.criticalFailureCount !== 0 ? [`Calibration has ${calibration.criticalFailureCount} critical failures.`] : []), ...(Object.values(performance.after).some((milliseconds) => milliseconds > 25) ? ["A recommendation performance check exceeded 25 ms."] : [])];
   return {
     status: errors.length ? ("ERROR" as const) : ("PASS" as const),
     calibration: {
@@ -112,6 +120,13 @@ export function buildRecommendationReport() {
       fiveRolePersonas: setSizes.filter((size) => size === 5).length,
       deterministicRepeat: failureCounts.determinism === 0,
     },
+    primaryOutcomes: {
+      personasWithPrimary,
+      personasWithoutPrimary: recommendationResults.length - personasWithPrimary,
+      directlyPreferredPrimaries,
+      ordinaryPrimarySelections: personasWithPrimary - directlyPreferredPrimaries,
+      contextualRecommendationsExcludedFromPrimary,
+    },
     questions: {
       broad: discoveryQuestions.filter((question) => question.phase === "broad").length,
       refinements: discoveryQuestions.filter((question) => question.phase === "refine").length,
@@ -123,6 +138,8 @@ export function buildRecommendationReport() {
     coverage: {
       roles: roleLibrary.roles.length,
       decisionPolicies: roleLibrary.roles.length,
+      primaryPolicies: roleLibrary.roles.length,
+      primaryPolicyDistribution,
       definitionStates: roleLibrary.roles.length,
       usableDefinitions: availableDefinitions,
       unavailableDefinitions,
@@ -137,8 +154,8 @@ export function buildRecommendationReport() {
       optimizer: "Removed unearned confidence contribution from scoreless exact confirmations and preserved a bounded evidence-quality score.",
       redundancy: "Uses the strongest pairwise semantic-overlap signal instead of double-counting reviewed relationships and shared families; canonical aliases retain stronger suppression.",
       complementarity: "Rewards the proportion of genuinely new reviewed families rather than a binary diversity flag; aliases and near-synonyms cannot regain selection through that bonus.",
-      primary: "Combines candidate evidence, primary suitability, representational value, and centrality from reviewed relationships; explicit user preference still wins.",
-      tieBreaking: "Uses evidence quality, confidence, representational value, distinctiveness, primary suitability, and exact selector order without a hash fallback.",
+      primary: "Filters the selected set through reviewed role-level primary policy, then compares permitted roles using evidence, representational value, and relationship centrality.",
+      tieBreaking: "Uses evidence quality, confidence, representational value, and distinctiveness, with stable role ID as the final suggested-primary tie-break.",
       exclusions: "Distinguishes user rejection, confirmation required, manual-only, unresolved policy, insufficient evidence, threshold, redundancy, and slot limit.",
     },
     performance,
@@ -161,9 +178,11 @@ export function renderRecommendationReport(report = buildRecommendationReport())
       .join("; ")}`,
     "",
     `ROLE SETS: average ${report.roleSets.averageSize.toFixed(2)}; zero ${report.roleSets.zeroRolePersonas}; one-or-two ${report.roleSets.oneOrTwoRolePersonas}; five ${report.roleSets.fiveRolePersonas}; deterministic repeat ${report.roleSets.deterministicRepeat}`,
+    `PRIMARY OUTCOMES: with primary ${report.primaryOutcomes.personasWithPrimary}; without ${report.primaryOutcomes.personasWithoutPrimary}; direct preference ${report.primaryOutcomes.directlyPreferredPrimaries}; ordinary ${report.primaryOutcomes.ordinaryPrimarySelections}; contextual recommendations excluded ${report.primaryOutcomes.contextualRecommendationsExcludedFromPrimary}`,
     `QUESTIONS: broad ${report.questions.broad}; refinements ${report.questions.refinements}; mandatory maximum ${report.questions.mandatoryMaximum}; optional pool ${report.questions.optionalPool}; recommendation average ${report.questions.averageRecommendationClarifications.toFixed(2)}; maximum ${report.questions.maximumRecommendationClarifications}`,
     "",
-    `COVERAGE: roles ${report.coverage.roles}; policies ${report.coverage.decisionPolicies}; definition states ${report.coverage.definitionStates}; usable definitions ${report.coverage.usableDefinitions}; unavailable ${report.coverage.unavailableDefinitions}`,
+    `COVERAGE: roles ${report.coverage.roles}; decision policies ${report.coverage.decisionPolicies}; primary policies ${report.coverage.primaryPolicies}; definition states ${report.coverage.definitionStates}; usable definitions ${report.coverage.usableDefinitions}; unavailable ${report.coverage.unavailableDefinitions}`,
+    `PRIMARY POLICY: direct-primary ${report.coverage.primaryPolicyDistribution["direct-primary"]}; competitive ${report.coverage.primaryPolicyDistribution.competitive}; contextual ${report.coverage.primaryPolicyDistribution.contextual}; manual-only ${report.coverage.primaryPolicyDistribution["manual-only"]}`,
     `RECOMMENDATION COVERAGE: automatic ${report.coverage.automaticRecommendation}; confirmation ${report.coverage.confirmationBased}; legitimate Top-5 ${report.coverage.legitimateTopFiveReach}; manual-only ${report.coverage.manualOnly}; relationships ${report.coverage.relationships}; family-covered ${report.coverage.familyCoverage}`,
     "",
     "BEHAVIOR CHANGES",
