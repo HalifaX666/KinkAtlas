@@ -81,17 +81,17 @@ function connectionAnswers(targetId: NonNullable<RefinementAnswerOption["support
   return [
     {
       id: "yes",
-      label: "Yes — they feel connected for me",
+      label: "Yes, they feel connected for me",
       supports: [targetId],
     },
     {
       id: "maybe",
-      label: "Maybe — I see the overlap, but I’m not sure",
+      label: "Maybe, I see the overlap, but I’m not sure",
       weakSupports: [targetId],
     },
     {
       id: "no",
-      label: "No — I prefer to keep them separate",
+      label: "No, I prefer to keep them separate",
       rejects: [targetId],
     },
     {
@@ -201,12 +201,12 @@ export const refinementQuestions: RefinementQuestion[] = [
     answers: [
       {
         id: "yes",
-        label: "Yes — Primal feels useful to me",
+        label: "Yes, Primal feels useful to me",
         supports: ["primal"],
       },
       {
         id: "no",
-        label: "No — the interests may fit, but I wouldn’t use that label",
+        label: "No, the interests may fit, but I wouldn’t use that label",
         rejects: ["primal"],
       },
       {
@@ -313,13 +313,13 @@ export const refinementQuestions: RefinementQuestion[] = [
     answers: [
       {
         id: "yes",
-        label: "Yes — Owner feels useful to me",
+        label: "Yes,  Owner feels useful to me",
         supports: ["owner"],
         primaryPreference: { kind: "direct", targetId: "owner" },
       },
       {
         id: "no",
-        label: "No — the dynamic may fit, but I wouldn’t use that label",
+        label: "No,  the dynamic may fit, but I wouldn’t use that label",
         rejects: ["owner"],
       },
       {
@@ -528,17 +528,17 @@ export const refinementQuestions: RefinementQuestion[] = [
     answers: [
       {
         id: "yes",
-        label: "Yes — that kind of adult dynamic feels relevant to me",
+        label: "Yes,  that kind of adult dynamic feels relevant to me",
         noScore: true,
       },
       {
         id: "maybe",
-        label: "Maybe — I’m curious, but not sure yet",
+        label: "Maybe,  I’m curious, but not sure yet",
         noScore: true,
       },
       {
         id: "no",
-        label: "No — this kind of adult dynamic doesn’t feel relevant to me",
+        label: "No,  this kind of adult dynamic doesn’t feel relevant to me",
         noScore: true,
       },
       {

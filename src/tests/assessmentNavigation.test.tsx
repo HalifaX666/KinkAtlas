@@ -100,7 +100,7 @@ describe("assessment navigation", () => {
 
     fireEvent.click(
       screen.getByRole("radio", {
-        name: /Yes — that kind of adult dynamic feels relevant to me/i,
+        name: /Yes, that kind of adult dynamic feels relevant to me/i,
       }),
     );
 
