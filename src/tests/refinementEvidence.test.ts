@@ -1161,7 +1161,7 @@ describe("core role vocabulary refinement", () => {
   });
 });
 
-describe("Phase 5 role vocabulary refinement", () => {
+describe("expanded role vocabulary refinement", () => {
   const primalDiscovery = { "d-primal": "strong", "r-primal-give": "strong" };
   const riggerDiscovery = { "d-rope": "strong", "r-rope-give": "strong", "r-rope-motivation": "strong", "r-lead": "strong" };
   const ropeBottomDiscovery = { "d-rope": "some", "r-rope-receive": "strong", "d-position-receive": "strong", "r-bottom": "strong" };
@@ -1194,7 +1194,7 @@ describe("Phase 5 role vocabulary refinement", () => {
     expect(questionIds(discovery)).toContain(questionId);
   });
 
-  it("keeps nearby non-target evidence from opening Phase 5 vocabulary routes", () => {
+  it("keeps nearby non-target evidence from opening expanded vocabulary routes", () => {
     expect(questionIds({ "d-position-give": "strong", "r-top": "strong", "r-lead": "strong" })).not.toContain("ref-rope-vocabulary");
     expect(questionIds({ "d-position-receive": "strong", "r-bottom": "strong", "r-receiving-focus": "strong" })).not.toContain("ref-rope-vocabulary");
     expect(questionIds({ "d-power-receive": "strong", "r-surrender": "strong" })).not.toContain("ref-brat-vocabulary");
@@ -1280,7 +1280,7 @@ describe("Phase 5 role vocabulary refinement", () => {
     expect(declined.confidence).toBe(baseline.confidence);
   });
 
-  it("rejects stale or injected Phase 5 answers when their semantic route is unavailable", () => {
+  it("rejects stale or injected expanded-vocabulary answers when their semantic route is unavailable", () => {
     const injected = [
       candidate({}, { "ref-primal-vocabulary": "yes" }, "Primal"),
       candidate({}, { "ref-rope-vocabulary": "rigger" }, "Rigger"),
@@ -1329,7 +1329,7 @@ describe("Phase 5 role vocabulary refinement", () => {
     expect(preferredPrimaryRoleIdsFromRefinement(refinement, discovery)).toEqual([]);
   });
 
-  it("keeps multiple Phase 5 direct preferences deterministic across answer and question ordering", () => {
+  it("keeps multiple expanded-vocabulary direct preferences deterministic across answer and question ordering", () => {
     const discovery = { ...riggerDiscovery, ...bratDiscovery, ...petDiscovery };
     const ropeFirst = { "ref-rope-vocabulary": "rigger", "ref-brat-vocabulary": "brat", "ref-pet-persona": "pet" };
     const petFirst = { "ref-pet-persona": "pet", "ref-brat-vocabulary": "brat", "ref-rope-vocabulary": "rigger" };
@@ -1345,7 +1345,7 @@ describe("Phase 5 role vocabulary refinement", () => {
     }
   });
 
-  it("keeps Phase 5 Refine presentation deterministic, duplicate-free, and capped at six", () => {
+  it("keeps expanded-vocabulary Refine presentation deterministic, duplicate-free, and capped at six", () => {
     const discovery = {
       ...primalDiscovery,
       ...riggerDiscovery,

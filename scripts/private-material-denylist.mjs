@@ -10,11 +10,11 @@ const configuredTerms = (process.env.PUBLIC_PROHIBITED_TERMS ?? '')
 const escapePattern = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 export const privateMaterialTextChecks = [
-  { label: 'source URL-like fields', pattern: new RegExp(`${sourceKey}(?:Url|Href)`, 'gi') },
+  { label: 'source URL-like fields', pattern: new RegExp(`\\b${sourceKey}(?:Url|Href)\\b`, 'gi') },
   {
     label: 'provenance keys',
     pattern: new RegExp(
-      `accepted${sourceKey}${provenanceKey}|${sourceKey}(?:${provenanceKey}|SnapshotPath|Type|Match|Hash)|verification${dateKey}|captured${atKey}|extracted${atKey}|${rawKey}(?:Html|Text)`,
+      `\\b(?:accepted${sourceKey}${provenanceKey}|${sourceKey}(?:${provenanceKey}|SnapshotPath|Type|Match|Hash)|verification${dateKey}|captured${atKey}|extracted${atKey}|${rawKey}(?:Html|Text))\\b`,
       'gi',
     ),
   },

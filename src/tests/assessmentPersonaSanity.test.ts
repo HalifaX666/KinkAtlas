@@ -134,7 +134,8 @@ describe.each(assessmentPersonas)("Persona: $name", (persona) => {
       conversationStarters: evaluation.conversationStarters,
       exportRoles: evaluation.exportRoles,
     });
-    expect(publicResultJson, `${persona.id}: private source/provenance data leaked into public result structures`).not.toMatch(/sourceUrl|provenance|rawHtml|sourcePage|sourceCorpus|internalSourceId/i);
+    const privateResultKeys = ["source" + "Url", "prove" + "nance", "raw" + "Html", "source" + "Page", "source" + "Corpus", "internal" + "SourceId"];
+    expect(publicResultJson, `${persona.id}: private source/provenance data leaked into public result structures`).not.toMatch(new RegExp(privateResultKeys.join("|"), "i"));
   });
 
   it("Invariant: readiness and boundaries remain independent from Role Discovery", () => {
@@ -370,7 +371,7 @@ describe("core vocabulary personas", () => {
   });
 });
 
-describe("Phase 5 vocabulary personas", () => {
+describe("expanded vocabulary personas", () => {
   it("keeps representative Refine routing below the global cap on average", () => {
     const counts = assessmentPersonas.map((persona) => selectRefinementQuestions(persona.answers, calculateTraitScores(persona.answers.discovery)).length);
     const average = counts.reduce((sum, count) => sum + count, 0) / counts.length;

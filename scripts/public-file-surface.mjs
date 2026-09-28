@@ -3,7 +3,7 @@ import { dirname, extname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const sourceExtensions = ['', '.ts', '.tsx', '.js', '.jsx', '.mjs', '.json']
+const sourceExtensions = ['', '.ts', '.tsx', '.mts', '.js', '.jsx', '.mjs', '.json']
 const importPattern = /(?:import|export)\s+(?:[^'"()]*?\s+from\s+)?['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)/g
 
 const repositoryManifestPath = resolve(projectRoot, 'config/public-repository-files.json')
@@ -34,6 +34,10 @@ async function resolveImport(importer, specifier) {
   const candidate = resolve(dirname(importer), specifier.split('?')[0])
   for (const extension of sourceExtensions) {
     const path = `${candidate}${extension}`
+    if ((await exists(path)) && !(await stat(path)).isDirectory()) return path
+  }
+  if (extname(candidate).toLocaleLowerCase('en-US') === '.mjs') {
+    const path = `${candidate.slice(0, -4)}.mts`
     if ((await exists(path)) && !(await stat(path)).isDirectory()) return path
   }
   for (const extension of sourceExtensions.slice(1)) {
