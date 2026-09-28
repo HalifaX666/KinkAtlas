@@ -6,6 +6,7 @@ export async function installBrowserGuards(page: Page) {
   const pageErrors: string[] = []
   const consoleErrors: string[] = []
   const unexpectedNetwork: string[] = []
+  const completionWrites: { url: string; body: string | null }[] = []
 
   page.on('pageerror', (error) => pageErrors.push(error.message))
   page.on('console', (message) => {
@@ -14,17 +15,31 @@ export async function installBrowserGuards(page: Page) {
   page.on('request', (request: Request) => {
     const url = new URL(request.url())
     const isLocal = url.hostname === '127.0.0.1' || url.hostname === 'localhost'
-    const isExpectedCompletionRead = url.pathname === completionCountPath && request.method() === 'GET'
+    const isCompletionEndpoint = isLocal && url.pathname === completionCountPath && url.search === ''
+    const isExpectedCompletionRequest = isCompletionEndpoint && (request.method() === 'GET' || request.method() === 'POST')
     const isStaticDevRequest = isLocal && request.method() === 'GET' && request.resourceType() !== 'fetch' && request.resourceType() !== 'xhr'
-    if (!isExpectedCompletionRead && !isStaticDevRequest) unexpectedNetwork.push(`${request.method()} ${request.url()}`)
+    if (!isExpectedCompletionRequest && !isStaticDevRequest) unexpectedNetwork.push(`${request.method()} ${request.url()}`)
   })
 
-  await page.route(`**${completionCountPath}`, async (route) => {
-    if (route.request().method() !== 'GET') {
-      unexpectedNetwork.push(`${route.request().method()} ${route.request().url()}`)
+  await page.route(`**${completionCountPath}*`, async (route) => {
+    const request = route.request()
+    const url = new URL(request.url())
+    const isLocal = url.hostname === '127.0.0.1' || url.hostname === 'localhost'
+    const isExactEndpoint = isLocal && url.pathname === completionCountPath && url.search === ''
+    const method = request.method()
+    const body = request.postData()
+
+    if (!isExactEndpoint || (method !== 'GET' && method !== 'POST')) {
+      unexpectedNetwork.push(`${method} ${request.url()}`)
       await route.abort()
       return
     }
+
+    if (method === 'POST') {
+      completionWrites.push({ url: request.url(), body })
+      if (body !== null && body !== '') unexpectedNetwork.push(`POST ${request.url()} included an unexpected request body`)
+    }
+
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ count: 1000 }) })
   })
 
@@ -34,6 +49,15 @@ export async function installBrowserGuards(page: Page) {
       expect(pageErrors, 'uncaught browser errors').toEqual([])
       expect(consoleErrors, 'console.error output').toEqual([])
       expect(unexpectedNetwork, 'unexpected or data-bearing network requests').toEqual([])
+    },
+    async assertCompletionWrites(expectedCount = 1) {
+      await expect.poll(() => completionWrites.length, 'assessment completion POST count').toBe(expectedCount)
+      for (const write of completionWrites) {
+        const url = new URL(write.url)
+        expect(url.pathname, 'completion POST endpoint').toBe(completionCountPath)
+        expect(url.search, 'completion POST query string').toBe('')
+        expect(write.body, 'completion POST body').toBeNull()
+      }
     },
   }
 }
