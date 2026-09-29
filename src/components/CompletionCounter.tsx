@@ -66,7 +66,7 @@ export function CompletionCounter() {
 
   return (
     <div className="completion-counter" ref={containerRef}>
-      <div id="completion-count-explanation" className="completion-count-card" data-open={isOpen} role="dialog" aria-label="About the assessment completion count" aria-hidden={!isOpen}>
+      <div id="completion-count-explanation" className="completion-count-card" data-open={isOpen} role="region" aria-labelledby="completion-count-explanation-title" aria-hidden={!isOpen}>
         <div className="completion-count-card-header">
           <div className="completion-count-card-heading">
             <span className="completion-count-card-icon" aria-hidden="true">
@@ -76,7 +76,7 @@ export function CompletionCounter() {
             <div>
               <span className="completion-count-card-eyebrow">Privacy by design</span>
 
-              <strong>We count completions, not answers.</strong>
+              <strong id="completion-count-explanation-title">We count completions, not answers.</strong>
             </div>
           </div>
 
@@ -95,7 +95,7 @@ export function CompletionCounter() {
           {numberFormatter.format(count)} {count === 1 ? "assessment" : "assessments"} completed
         </span>
 
-        <button ref={triggerRef} type="button" className="completion-info-button" aria-label="How completion counting works" aria-expanded={isOpen} aria-controls="completion-count-explanation" aria-haspopup="dialog" onClick={() => setIsOpen((open) => !open)}>
+        <button ref={triggerRef} type="button" className="completion-info-button" aria-label="How completion counting works" aria-expanded={isOpen} aria-controls="completion-count-explanation" onClick={() => setIsOpen((open) => !open)}>
           ?
         </button>
       </div>

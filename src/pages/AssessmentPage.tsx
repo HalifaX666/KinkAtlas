@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Check, LockKeyhole, RotateCcw } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PrivacyNote } from "../components/PrivacyNote";
 import { QuestionCard } from "../components/QuestionCard";
@@ -249,7 +249,7 @@ export function AssessmentPage() {
 
       <nav className="stage-nav page-width" aria-label="Assessment stages">
         {phaseLabels.map((item, index) => (
-          <span key={item.id} className={index === activePhase ? "active" : index < activePhase ? "done" : ""}>
+          <span key={item.id} className={index === activePhase ? "active" : index < activePhase ? "done" : ""} aria-current={index === activePhase ? "step" : undefined}>
             <i>{index < activePhase ? "✓" : index + 1}</i>
             {item.label}
           </span>
@@ -510,6 +510,12 @@ export function AssessmentPage() {
 }
 
 function StageComplete({ title, text, button = "Continue", onContinue, onBack }: { title: string; text: string; button?: string; onContinue: () => void; onBack: () => void }) {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    headingRef.current?.focus({ preventScroll: true });
+  }, []);
+
   return (
     <>
       <div className="stage-complete">
@@ -517,7 +523,7 @@ function StageComplete({ title, text, button = "Continue", onContinue, onBack }:
           <Check />
         </span>
 
-        <h2>{title}</h2>
+        <h2 ref={headingRef} tabIndex={-1}>{title}</h2>
         <p>{text}</p>
       </div>
 

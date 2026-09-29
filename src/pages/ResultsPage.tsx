@@ -95,11 +95,11 @@ export function ResultsPage() {
           {topTraits.map(([id, score]) => (
             <div className="trait-bar" key={id}>
               <div>
-                <strong>{traitById[id as keyof typeof traitById].label}</strong>
+                <strong id={`trait-${id}-label`}>{traitById[id as keyof typeof traitById].label}</strong>
                 <span>{score!.evidence} responses</span>
               </div>
-              <div className="bar-track">
-                <span style={{ width: `${Math.round(score!.value * 100)}%` }} />
+              <div className="bar-track" role="meter" aria-labelledby={`trait-${id}-label`} aria-valuemin={0} aria-valuemax={1} aria-valuenow={score!.value} aria-valuetext={`${Math.round(score!.value * 100)}% normalized dimension strength`}>
+                <span aria-hidden="true" style={{ width: `${Math.round(score!.value * 100)}%` }} />
               </div>
             </div>
           ))}

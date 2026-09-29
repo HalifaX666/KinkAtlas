@@ -121,6 +121,17 @@ describe("assessment flow", () => {
       }),
     ).toBeInTheDocument();
 
+    const dimensionMeters = screen.getAllByRole("meter");
+    expect(dimensionMeters.length).toBeGreaterThan(0);
+    dimensionMeters.forEach((meter) => {
+      expect(meter).toHaveAccessibleName();
+      expect(meter).toHaveAttribute("aria-valuemin", "0");
+      expect(meter).toHaveAttribute("aria-valuemax", "1");
+      expect(Number(meter.getAttribute("aria-valuenow"))).toBeGreaterThanOrEqual(0);
+      expect(Number(meter.getAttribute("aria-valuenow"))).toBeLessThanOrEqual(1);
+      expect(meter).toHaveAttribute("aria-valuetext", expect.stringMatching(/normalized dimension strength/i));
+    });
+
     expect(screen.getByText(/Your answers and results were not uploaded or stored/i)).toBeInTheDocument();
 
     const createRoleCards = await screen.findByRole("button", {
@@ -139,6 +150,31 @@ describe("assessment flow", () => {
     expect(incrementRequests).toHaveLength(1);
 
     expect(incrementRequests[0][1]).not.toHaveProperty("body");
+  });
+
+  it("does not intercept standard browser zoom inputs", () => {
+    window.history.replaceState({}, "", "/assessment");
+    render(<App />);
+
+    for (const key of ["+", "=", "-", "0"]) {
+      const event = new KeyboardEvent("keydown", { key, ctrlKey: true, cancelable: true });
+      expect(document.dispatchEvent(event)).toBe(true);
+      expect(event.defaultPrevented).toBe(false);
+    }
+
+    const commandZoom = new KeyboardEvent("keydown", { key: "+", metaKey: true, cancelable: true });
+    expect(document.dispatchEvent(commandZoom)).toBe(true);
+    expect(commandZoom.defaultPrevented).toBe(false);
+
+    const wheelZoom = new WheelEvent("wheel", { ctrlKey: true, cancelable: true });
+    expect(document.dispatchEvent(wheelZoom)).toBe(true);
+    expect(wheelZoom.defaultPrevented).toBe(false);
+
+    for (const type of ["gesturestart", "gesturechange", "gestureend"]) {
+      const event = new Event(type, { cancelable: true });
+      expect(document.dispatchEvent(event)).toBe(true);
+      expect(event.defaultPrevented).toBe(false);
+    }
   });
 });
 

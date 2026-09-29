@@ -323,7 +323,7 @@ export async function createRoleCardImage(role: ShareableRoleResult): Promise<Bl
   context.fillStyle = '#f4efeb'
   context.font = '27px system-ui, sans-serif'
   if (role.source === 'user-selected') context.fillText('• Added by you; KinkAtlas did not score this selection.', 82, summaryEnd + 110)
-  else if (!hasAssessmentMetrics) context.fillText('• Suggested without a psychometric alignment score.', 82, summaryEnd + 110)
+  else if (!hasAssessmentMetrics) context.fillText('• Suggested without an assessment alignment score.', 82, summaryEnd + 110)
   else role.supportingSignals.forEach((signal, index) => context.fillText(`• ${signal}`, 82, summaryEnd + 110 + index * 54))
 
   context.strokeStyle = 'rgba(255,255,255,.14)'
@@ -339,7 +339,7 @@ export async function createRoleCardImage(role: ShareableRoleResult): Promise<Bl
   context.fillStyle = '#d8d0ce'
   context.font = '18px system-ui, sans-serif'
   context.fillText('Vocabulary suggestions—not identity or consent.', 74, 1297)
-  context.fillStyle = '#786e70'
+  context.fillStyle = '#93898b'
   context.font = '16px system-ui, sans-serif'
   context.fillText('Reflection and boundaries are separate. Results do not certify readiness or safety.', 74, 1322)
 
@@ -418,12 +418,12 @@ export async function createOverviewImage(data: ShareResultsData, options: Pick<
     context.fillText(details, 520, y)
   })
 
-  context.fillStyle = '#786e70'
+  context.fillStyle = '#93898b'
   context.font = '15px system-ui, sans-serif'
   context.fillText('Alignment is theme similarity; confidence is information amount, not ranking.', 66, 548)
   context.fillText('Evidence breadth is answer-backed theme coverage, not match strength.', 66, 570)
   context.fillText('Reflection and boundaries are separate. Results do not certify readiness or safety.', 66, 592)
-  context.fillStyle = '#786e70'
+  context.fillStyle = '#93898b'
   context.font = '14px system-ui, sans-serif'
   context.fillText('Generated locally. Nothing was uploaded by KinkAtlas.', 66, 614)
   return canvasToBlob(canvas)

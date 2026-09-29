@@ -8,7 +8,7 @@ import { evaluateReadiness } from '../engine/readinessScoring'
 import { matchRoles } from '../engine/roleMatching'
 import { buildRelatedRoleProfiles } from '../engine/roleProfileExploration'
 import { buildEditableRoleProfileEntries, buildRoleProfileCandidates, optimizeRoleProfile, type EditableRoleProfileEntry } from '../engine/roleProfileOptimizer'
-import { getShareableRoleSet, roleCardFileName, type ShareResultsData } from '../engine/shareResults'
+import { createRoleCardImage, getShareableRoleSet, roleCardFileName, type ShareResultsData } from '../engine/shareResults'
 import { roleLibrary } from '../taxonomy/roleLibrary'
 
 const answers = { 'd-power-give': 'strong', 'd-position-give': 'strong', 'r-lead': 'strong', 'r-responsibility': 'strong' }
@@ -30,11 +30,11 @@ const data: ShareResultsData = {
 const originalCreateObjectURL = URL.createObjectURL
 const originalRevokeObjectURL = URL.revokeObjectURL
 
-function mockImageExport(downloads?: string[]) {
+function mockImageExport(downloads?: string[], drawnText?: string[]) {
   const gradient = { addColorStop: vi.fn() }
   const context = {
     fillStyle: '', strokeStyle: '', lineWidth: 0, font: '',
-    fillRect: vi.fn(), createRadialGradient: vi.fn(() => gradient), beginPath: vi.fn(), arc: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(), stroke: vi.fn(), fillText: vi.fn(),
+    fillRect: vi.fn(), createRadialGradient: vi.fn(() => gradient), beginPath: vi.fn(), arc: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(), stroke: vi.fn(), fillText: vi.fn((text: string) => drawnText?.push(text)),
   }
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context as unknown as CanvasRenderingContext2D)
   vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((callback) => callback(new Blob(['local image'], { type: 'image/png' })))
@@ -81,6 +81,16 @@ async function searchResultFor(label: string) {
 }
 
 describe('Export & Share dialog', () => {
+  it('uses neutral assessment wording on a suggested card without metrics', async () => {
+    const drawnText: string[] = []
+    mockImageExport(undefined, drawnText)
+
+    await createRoleCardImage({ id: 'role:test', name: 'Test role', source: 'recommended', summary: 'A reviewed test definition.', supportingSignals: [] })
+
+    expect(drawnText).toContain('• Suggested without an assessment alignment score.')
+    expect(drawnText.join(' ')).not.toMatch(/psychometric/i)
+  })
+
   it('renders safely when the assessment produced no suggested role set', () => {
     render(<RoleProfileBuilder roleResults={[]} />)
 

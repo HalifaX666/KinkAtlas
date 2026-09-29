@@ -1,62 +1,7 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { BrandLogo } from "./BrandLogo";
-import { useEffect } from "react";
 
 export function Shell() {
-  useEffect(() => {
-    const preventKeyboardZoom = (event: KeyboardEvent) => {
-      const modifier = event.ctrlKey || event.metaKey;
-
-      if (modifier && ["+", "=", "-", "0"].includes(event.key)) {
-        event.preventDefault();
-      }
-    };
-
-    const preventWheelZoom = (event: WheelEvent) => {
-      if (event.ctrlKey || event.metaKey) {
-        event.preventDefault();
-      }
-    };
-
-    const preventGestureZoom = (event: Event) => {
-      event.preventDefault();
-    };
-
-    document.addEventListener("keydown", preventKeyboardZoom, {
-      capture: true,
-    });
-
-    document.addEventListener("wheel", preventWheelZoom, {
-      passive: false,
-      capture: true,
-    });
-
-    document.addEventListener("gesturestart", preventGestureZoom, {
-      passive: false,
-    });
-
-    document.addEventListener("gesturechange", preventGestureZoom, {
-      passive: false,
-    });
-
-    document.addEventListener("gestureend", preventGestureZoom, {
-      passive: false,
-    });
-
-    return () => {
-      document.removeEventListener("keydown", preventKeyboardZoom, {
-        capture: true,
-      });
-
-      document.removeEventListener("wheel", preventWheelZoom, {
-        capture: true,
-      });
-
-      document.removeEventListener("gesturestart", preventGestureZoom);
-      document.removeEventListener("gesturechange", preventGestureZoom);
-      document.removeEventListener("gestureend", preventGestureZoom);
-    };
-  }, []);
   return (
     <div className="site-shell">
       <a className="skip-link" href="#main">

@@ -28,7 +28,7 @@ function continueThroughRefinement() {
     question = screen.queryByRole("group");
   }
 
-  expect(screen.getByText(/Refinement complete|No extra refinement is needed yet/i)).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /Refinement complete|No extra refinement is needed yet/i })).toHaveFocus();
 
   fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
@@ -37,7 +37,7 @@ function continueThroughRefinement() {
 
 function completeDiscovery() {
   for (let index = 0; index < 26; index += 1) fireEvent.click(currentRadios()[0]);
-  expect(screen.getByText("You’ve answered enough for a first discovery map.")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "You’ve answered enough for a first discovery map." })).toHaveFocus();
 }
 
 function reachAgeRoleplayGate() {
@@ -60,7 +60,7 @@ function reachAgeRoleplayGate() {
 
 function completeReadiness() {
   for (let index = 0; index < readinessSet.length; index += 1) fireEvent.click(currentRadios()[0]);
-  expect(screen.getByText("Reflection complete.")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Reflection complete." })).toHaveFocus();
 }
 
 function completeBoundaries() {
@@ -71,10 +71,26 @@ function completeBoundaries() {
 
 function completeNegotiation() {
   for (let index = 0; index < negotiationQuestions.length; index += 1) fireEvent.click(currentRadios()[0]);
-  expect(screen.getByText("Your first map is ready.")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Your first map is ready." })).toHaveFocus();
 }
 
 describe("assessment navigation", () => {
+  it("exposes exactly one current assessment stage and updates it on transition", () => {
+    renderAssessment();
+    const stageNavigation = screen.getByRole("navigation", { name: "Assessment stages" });
+
+    expect(stageNavigation.querySelectorAll('[aria-current="step"]')).toHaveLength(1);
+    expect(within(stageNavigation).getByText("Discover")).toHaveAttribute("aria-current", "step");
+    expect(within(stageNavigation).getByText("Refine")).not.toHaveAttribute("aria-current");
+
+    completeDiscovery();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    expect(stageNavigation.querySelectorAll('[aria-current="step"]')).toHaveLength(1);
+    expect(within(stageNavigation).getByText("Discover")).not.toHaveAttribute("aria-current");
+    expect(within(stageNavigation).getByText("Refine")).toHaveAttribute("aria-current", "step");
+  });
+
   it("advances into a newly opened Refine branch after answering the age-roleplay gate", () => {
     renderAssessment();
 
@@ -121,7 +137,7 @@ describe("assessment navigation", () => {
     renderAssessment();
     reachAgeRoleplayGate();
 
-    fireEvent.click(screen.getByRole("radio", { name: /Yes .* adult dynamic feels relevant to me/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /Yes.*adult dynamic feels relevant to me/i }));
     fireEvent.click(screen.getByRole("radio", { name: /Little .* younger-feeling adult role/i }));
     fireEvent.click(screen.getByRole("radio", { name: "Little princess" }));
 
@@ -134,12 +150,12 @@ describe("assessment navigation", () => {
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(screen.getByRole("radio", { name: /Little .* younger-feeling adult role/i })).toBeChecked();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    expect(screen.getByRole("radio", { name: /Yes .* adult dynamic feels relevant to me/i })).toBeChecked();
+    expect(screen.getByRole("radio", { name: /Yes.*adult dynamic feels relevant to me/i })).toBeChecked();
 
-    fireEvent.click(screen.getByRole("radio", { name: /No .* this kind of adult dynamic doesn’t feel relevant to me/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /No.*this kind of adult dynamic doesn’t feel relevant to me/i }));
     expect(screen.getByText(/Refinement complete/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    fireEvent.click(screen.getByRole("radio", { name: /Yes .* adult dynamic feels relevant to me/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /Yes.*adult dynamic feels relevant to me/i }));
     expect(currentRadios().some((radio) => radio.checked)).toBe(false);
 
     fireEvent.click(screen.getByRole("radio", { name: /Little .* younger-feeling adult role/i }));

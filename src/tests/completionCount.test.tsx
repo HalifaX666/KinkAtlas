@@ -53,14 +53,15 @@ describe("aggregate completion counter", () => {
     expect(button).toHaveAttribute("aria-expanded", "true");
 
     expect(button).toHaveAttribute("aria-controls", "completion-count-explanation");
+    expect(button).not.toHaveAttribute("aria-haspopup");
 
-    const dialog = screen.getByRole("dialog", {
-      name: "About the assessment completion count",
+    const disclosure = screen.getByRole("region", {
+      name: "We count completions, not answers.",
     });
 
-    expect(dialog).toHaveTextContent("We count completions, not answers.");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
-    expect(dialog).toHaveTextContent("not unique people");
+    expect(disclosure).toHaveTextContent("not unique people");
 
     fireEvent.keyDown(document, {
       key: "Escape",
@@ -69,8 +70,8 @@ describe("aggregate completion counter", () => {
     expect(button).toHaveAttribute("aria-expanded", "false");
 
     expect(
-      screen.queryByRole("dialog", {
-        name: "About the assessment completion count",
+      screen.queryByRole("region", {
+        name: "We count completions, not answers.",
       }),
     ).not.toBeInTheDocument();
 
@@ -81,18 +82,24 @@ describe("aggregate completion counter", () => {
     expect(button).toHaveAttribute("aria-expanded", "true");
 
     expect(
-      screen.getByRole("dialog", {
-        name: "About the assessment completion count",
+      screen.getByRole("region", {
+        name: "We count completions, not answers.",
       }),
     ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close completion count information" }));
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    expect(button).toHaveFocus();
+
+    fireEvent.click(button);
 
     fireEvent.mouseDown(document.body);
 
     expect(button).toHaveAttribute("aria-expanded", "false");
 
     expect(
-      screen.queryByRole("dialog", {
-        name: "About the assessment completion count",
+      screen.queryByRole("region", {
+        name: "We count completions, not answers.",
       }),
     ).not.toBeInTheDocument();
   });
