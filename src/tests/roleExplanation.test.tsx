@@ -49,8 +49,8 @@ describe('role result explanations', () => {
 
   it('derives why-it-matched copy from actual role evidence', () => {
     const result = matchRole(roleById.bottom, {
-      pleasureReceiving: { value: .9, evidence: 1, positive: 1, negative: 0 },
-      sensorySeeking: { value: .8, evidence: 1, positive: 1, negative: 0 },
+      pleasureReceiving: { value: .9, evidence: 1 },
+      sensorySeeking: { value: .8, evidence: 1 },
     }, {})
     const explanation = explainRoleResult(result)
 
@@ -62,7 +62,7 @@ describe('role result explanations', () => {
 
   it('uses singular language when one answer-backed theme explains a result', () => {
     const result = matchRole(roleById.bottom, {
-      pleasureReceiving: { value: .9, evidence: 1, positive: 1, negative: 0 },
+      pleasureReceiving: { value: .9, evidence: 1 },
     }, {})
 
     expect(explainRoleResult(result).summary).toMatch(/receiving pleasure\. That theme contributed to this Bottom result\./i)
@@ -70,8 +70,8 @@ describe('role result explanations', () => {
 
   it('does not repeat the same semantic signal in strongest contributing signals', () => {
     const result = matchRole(roleById['protocol-enthusiast'], {
-      protocol: { value: 1, evidence: 1, positive: 1, negative: 0 },
-      ritual: { value: .65, evidence: 1, positive: 1, negative: 0 },
+      protocol: { value: 1, evidence: 1 },
+      ritual: { value: .65, evidence: 1 },
     }, { 'r-protocol': 'strong' })
     const resultBeforePresentation = structuredClone(result)
     const explanation = explainRoleResult(result)
@@ -92,7 +92,7 @@ describe('role result explanations', () => {
 
   it('keeps long labels with punctuation and Unicode inside the role-card structure', () => {
     const result = matchRole(roleById.bottom, {
-      pleasureReceiving: { value: .9, evidence: 1, positive: 1, negative: 0 },
+      pleasureReceiving: { value: .9, evidence: 1 },
     }, {})
     const label = 'Very Long Role Label — Teacher’s Pet / Explorer'
 

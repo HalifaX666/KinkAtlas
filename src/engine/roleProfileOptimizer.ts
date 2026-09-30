@@ -61,9 +61,30 @@ export interface RoleProfileOptimizationOptions {
   preferredPrimaryRoleIds?: Iterable<string>;
 }
 
+export interface RoleProfileLibraryOrderTie {
+  step: number;
+  winnerRoleId: string;
+  winnerLabel: string;
+  competingRoles: Array<{ roleId: string; label: string }>;
+}
+
+export interface RoleProfileLibraryOrderDiagnostic {
+  selectionSteps: number;
+  libraryOrderTies: RoleProfileLibraryOrderTie[];
+  productionRoleIds: string[];
+  stableIdRoleIds: string[];
+  productionPrimaryRoleId?: string;
+  stableIdPrimaryRoleId?: string;
+  libraryOrderReproducesProduction: boolean;
+  suggestedRoleSetDiffers: boolean;
+  suggestedPrimaryDiffers: boolean;
+}
+
 const confidenceValue: Record<ConfidenceLevel, number> = { high: 1, moderate: 0.72, low: 0.35 };
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
 const roleOrder = new Map(roleLibrary.roles.map((role, index) => [role.id, index]));
+const minimumBaseScore = 0.58;
+const minimumAdjustedScore = 0.52;
 
 function baseScore(candidate: RoleProfileCandidate): number {
   const alignmentSignal = candidate.rawAlignment ?? (candidate.evidenceType === "direct" ? 0.78 : 0.7);
@@ -90,8 +111,38 @@ function marginalRepresentationBonus(candidate: RoleProfileCandidate, selected: 
   return novelFamilyRatio * candidate.representationValue * 0.06;
 }
 
-function compareCandidateQuality(left: RoleProfileCandidate, right: RoleProfileCandidate): number {
-  return right.evidenceQuality - left.evidenceQuality || (right.confidence ? confidenceValue[right.confidence] : 0) - (left.confidence ? confidenceValue[left.confidence] : 0) || right.representationValue - left.representationValue || right.distinctiveness - left.distinctiveness || (roleOrder.get(left.roleId) ?? Number.MAX_SAFE_INTEGER) - (roleOrder.get(right.roleId) ?? Number.MAX_SAFE_INTEGER);
+function compareCandidateQualityBeforeFinalOrder(left: RoleProfileCandidate, right: RoleProfileCandidate): number {
+  return right.evidenceQuality - left.evidenceQuality || (right.confidence ? confidenceValue[right.confidence] : 0) - (left.confidence ? confidenceValue[left.confidence] : 0) || right.representationValue - left.representationValue || right.distinctiveness - left.distinctiveness;
+}
+
+function compareByLibraryOrder(left: RoleProfileCandidate, right: RoleProfileCandidate): number {
+  return (roleOrder.get(left.roleId) ?? Number.MAX_SAFE_INTEGER) - (roleOrder.get(right.roleId) ?? Number.MAX_SAFE_INTEGER);
+}
+
+interface RankedRoleProfileCandidate {
+  candidate: RoleProfileCandidate;
+  base: number;
+  redundancyPenalty: number;
+  adjusted: number;
+}
+
+function compareRankedBeforeFinalOrder(left: RankedRoleProfileCandidate, right: RankedRoleProfileCandidate): number {
+  return right.adjusted - left.adjusted || right.base - left.base || compareCandidateQualityBeforeFinalOrder(left.candidate, right.candidate);
+}
+
+function rankRemainingCandidates(
+  remaining: Iterable<RoleProfileCandidate>,
+  selected: RoleProfileRecommendation[],
+  finalOrder: (left: RoleProfileCandidate, right: RoleProfileCandidate) => number = compareByLibraryOrder,
+): RankedRoleProfileCandidate[] {
+  return [...remaining]
+    .map((candidate) => {
+      const base = baseScore(candidate);
+      const redundancyPenalty = redundancy(candidate, selected);
+      const breadthBonus = redundancyPenalty >= 0.3 ? 0 : marginalRepresentationBonus(candidate, selected);
+      return { candidate, base, redundancyPenalty, adjusted: base - redundancyPenalty + breadthBonus };
+    })
+    .sort((left, right) => compareRankedBeforeFinalOrder(left, right) || finalOrder(left.candidate, right.candidate));
 }
 
 function recommendationEvidenceExplanation(candidate: RoleProfileCandidate): string {
@@ -146,18 +197,8 @@ export function optimizeRoleProfile(candidates: RoleProfileCandidate[], maximum 
   const eligible = uniqueCandidates.filter((candidate) => candidate.eligible && !excludedRoleIds.has(candidate.roleId));
   const selected: RoleProfileRecommendation[] = [];
   const remaining = new Map(eligible.map((candidate) => [candidate.roleId, candidate]));
-  const minimumBaseScore = 0.58;
-  const minimumAdjustedScore = 0.52;
-
   while (selected.length < cap && remaining.size) {
-    const ranked = [...remaining.values()]
-      .map((candidate) => {
-        const base = baseScore(candidate);
-        const redundancyPenalty = redundancy(candidate, selected);
-        const breadthBonus = redundancyPenalty >= 0.3 ? 0 : marginalRepresentationBonus(candidate, selected);
-        return { candidate, base, redundancyPenalty, adjusted: base - redundancyPenalty + breadthBonus };
-      })
-      .sort((left, right) => right.adjusted - left.adjusted || right.base - left.base || compareCandidateQuality(left.candidate, right.candidate));
+    const ranked = rankRemainingCandidates(remaining.values(), selected);
     const next = ranked[0];
     if (!next || next.base < minimumBaseScore || next.adjusted < minimumAdjustedScore) break;
     remaining.delete(next.candidate.roleId);
@@ -194,6 +235,70 @@ export function optimizeRoleProfile(candidates: RoleProfileCandidate[], maximum 
   const primaryExplanation = primary ? (primaryWasDirectlyPreferred ? `${primary.candidate.label} is KinkAtlas's suggested primary because you directly selected this vocabulary and it was also supported strongly enough to be recommended.` : `${primary.candidate.label} is KinkAtlas's suggested primary because it best represents the overall supported role set.`) : undefined;
   const recommendations = primary ? [primary, ...selected.filter((item) => item.candidate.roleId !== primary.candidate.roleId)] : selected;
   return { recommendations, primary, primaryExplanation, alternates };
+}
+
+function diagnosticSelection(
+  candidates: RoleProfileCandidate[],
+  maximum: number,
+  options: RoleProfileOptimizationOptions,
+  finalOrder: (left: RoleProfileCandidate, right: RoleProfileCandidate) => number,
+  captureLibraryOrderTies: boolean,
+) {
+  const cap = Math.max(0, Math.min(5, maximum));
+  const excludedRoleIds = new Set(options.excludedRoleIds ?? []);
+  const uniqueCandidates = [...new Map(candidates.map((candidate) => [candidate.roleId, candidate])).values()];
+  const eligible = uniqueCandidates.filter((candidate) => candidate.eligible && !excludedRoleIds.has(candidate.roleId));
+  const selected: RoleProfileRecommendation[] = [];
+  const remaining = new Map(eligible.map((candidate) => [candidate.roleId, candidate]));
+  const ties: RoleProfileLibraryOrderTie[] = [];
+
+  while (selected.length < cap && remaining.size) {
+    const ranked = rankRemainingCandidates(remaining.values(), selected, finalOrder);
+    const next = ranked[0];
+    if (!next || next.base < minimumBaseScore || next.adjusted < minimumAdjustedScore) break;
+
+    if (captureLibraryOrderTies) {
+      const tied = ranked.filter((candidate) => compareRankedBeforeFinalOrder(next, candidate) === 0);
+      if (tied.length > 1) {
+        ties.push({
+          step: selected.length + 1,
+          winnerRoleId: next.candidate.roleId,
+          winnerLabel: next.candidate.label,
+          competingRoles: tied.map(({ candidate }) => ({ roleId: candidate.roleId, label: candidate.label })),
+        });
+      }
+    }
+
+    remaining.delete(next.candidate.roleId);
+    selected.push({ candidate: next.candidate, optimizerScore: next.adjusted, explanation: "" });
+  }
+
+  const preferredPrimaryRoleIds = new Set(options.preferredPrimaryRoleIds ?? []);
+  if (options.preferredPrimaryRoleId) preferredPrimaryRoleIds.add(options.preferredPrimaryRoleId);
+  const primary = selectPrimaryRoleProfile(selected, preferredPrimaryRoleIds);
+  const recommendations = primary ? [primary, ...selected.filter((item) => item.candidate.roleId !== primary.candidate.roleId)] : selected;
+
+  return { selectionSteps: selected.length, ties, roleIds: recommendations.map((item) => item.candidate.roleId), primaryRoleId: primary?.candidate.roleId };
+}
+
+export function diagnoseRoleProfileLibraryOrder(candidates: RoleProfileCandidate[], maximum = 5, options: RoleProfileOptimizationOptions = {}): RoleProfileLibraryOrderDiagnostic {
+  const production = optimizeRoleProfile(candidates, maximum, options);
+  const libraryOrderSelection = diagnosticSelection(candidates, maximum, options, compareByLibraryOrder, true);
+  const stableIdSelection = diagnosticSelection(candidates, maximum, options, (left, right) => left.roleId.localeCompare(right.roleId), false);
+  const productionRoleIds = production.recommendations.map((item) => item.candidate.roleId);
+
+  return {
+    selectionSteps: libraryOrderSelection.selectionSteps,
+    libraryOrderTies: libraryOrderSelection.ties,
+    productionRoleIds,
+    stableIdRoleIds: stableIdSelection.roleIds,
+    productionPrimaryRoleId: production.primary?.candidate.roleId,
+    stableIdPrimaryRoleId: stableIdSelection.primaryRoleId,
+    libraryOrderReproducesProduction: JSON.stringify(productionRoleIds) === JSON.stringify(libraryOrderSelection.roleIds)
+      && production.primary?.candidate.roleId === libraryOrderSelection.primaryRoleId,
+    suggestedRoleSetDiffers: JSON.stringify(productionRoleIds) !== JSON.stringify(stableIdSelection.roleIds),
+    suggestedPrimaryDiffers: production.primary?.candidate.roleId !== stableIdSelection.primaryRoleId,
+  };
 }
 
 const positiveAlignment = new Set(["strong", "explore"]);

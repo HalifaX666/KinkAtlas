@@ -76,8 +76,20 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   await expect(page.locator(".profile-role-list > li").first()).toContainText("Your primary");
   await expect(page.locator(".profile-recommendation-summary > ol > li").first()).toContainText("Suggested primary");
 
+  const discoveryOrder = await roleSetLabels(page, ".role-grid > .role-card h3");
   await page.getByRole("link", { name: /Explore this result/i }).first().click();
+  await expect(page.locator("fieldset.question-card")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Evidence from your answers" })).toBeVisible();
+  await expect(page.getByText("Browsing role pages does not change your results.")).toBeVisible();
+  await page.locator(".related-roles a").first().click();
+  await expect(page.getByRole("heading", { name: "Evidence from your answers" })).toBeVisible();
+  await expect(page.locator("fieldset.question-card")).toHaveCount(0);
+  await page.locator(".related-roles a").first().click();
+  await expect(page.getByRole("heading", { name: "Evidence from your answers" })).toBeVisible();
+  await expect(page.locator("fieldset.question-card")).toHaveCount(0);
   await page.getByRole("link", { name: "Back to your map" }).click();
+  await expect(page.getByRole("heading", { name: "Role discovery" })).toBeVisible();
+  expect(await roleSetLabels(page, ".role-grid > .role-card h3")).toEqual(discoveryOrder);
   await openRoleSetBuilder(page);
   expect(await namedRoleSetLabels(page, "Current role set")).toEqual(primaryOrder);
   expect(await namedRoleSetLabels(page, "Suggested roles")).toEqual(suggested);

@@ -49,7 +49,8 @@ test('Full journey: Dominant vocabulary and a hard limit remain independent', as
   await guards.assertCompletionWrites()
   await guards.assertClean()
 
-  await page.locator('fieldset.question-card input[type="radio"]:checked').locator('..').click()
+  await page.locator('fieldset.question-card input[type="radio"]:not(:checked)').first().locator('..').click()
+  await expect(page.getByRole('button', { name: 'View my results', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'View my results', exact: true }).click()
   await expect(page).toHaveURL(/\/results$/)
   await guards.assertCompletionWrites()

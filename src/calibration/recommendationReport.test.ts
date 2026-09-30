@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildRecommendationReport, renderRecommendationReport } from "./recommendationReport";
+import { buildConfidenceEvidenceDiagnostic, buildOptimizerOrderDiagnostic, renderScoringBoundaryDiagnostics } from "./scoringBoundaryDiagnostics";
 
 describe("recommendation quality report", () => {
   it("passes all adversarial personas and reports actionable failure categories", () => {
@@ -47,5 +48,35 @@ describe("recommendation quality report", () => {
     const report = buildRecommendationReport();
     expect(report.calibration.warningReviews).toHaveLength(5);
     expect(report.calibration.warningReviews.every((warning) => warning.disposition === "retained" && warning.reason.length > 40)).toBe(true);
+  });
+
+  it("reports deterministic optimizer-order and confidence-evidence diagnostics without changing production behavior", () => {
+    const optimizer = buildOptimizerOrderDiagnostic();
+    const confidence = buildConfidenceEvidenceDiagnostic();
+
+    expect(optimizer).toEqual(buildOptimizerOrderDiagnostic());
+    expect(confidence).toEqual(buildConfidenceEvidenceDiagnostic());
+    expect(optimizer.personas).toBe(50);
+    expect(confidence.personas).toBe(40);
+    expect(confidence.observations).toBe(4_040);
+    expect(optimizer).toMatchObject({
+      selectionSteps: 88,
+      productionReproductionMismatches: 0,
+      libraryOrderResolvedTies: 16,
+      suggestedRoleSetDifferenceCount: 5,
+      suggestedPrimaryDifferenceCount: 0,
+    });
+    expect(confidence).toMatchObject({
+      countsEqual: 3_591,
+      questionLevelCountHigher: 430,
+      contributionCountHigher: 19,
+      maximumAbsoluteDelta: 5,
+      hypotheticalThresholdCrossings: 29,
+    });
+    expect(confidence.countsEqual + confidence.questionLevelCountHigher + confidence.contributionCountHigher).toBe(confidence.observations);
+    expect(renderScoringBoundaryDiagnostics(optimizer, confidence)).toContain("Optimizer library-order diagnostic");
+    expect(renderScoringBoundaryDiagnostics(optimizer, confidence)).toContain("Confidence evidence diagnostic");
+
+    console.log(`\n${renderScoringBoundaryDiagnostics(optimizer, confidence)}\n`);
   });
 });

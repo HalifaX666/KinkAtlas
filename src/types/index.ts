@@ -126,8 +126,6 @@ export interface Role {
 export interface TraitScore {
   value: number;
   evidence: number;
-  positive: number;
-  negative: number;
 }
 export type TraitScores = Partial<Record<TraitId, TraitScore>>;
 export type AlignmentBand = "strong" | "explore" | "some" | "insufficient";

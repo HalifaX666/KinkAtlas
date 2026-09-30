@@ -1,7 +1,5 @@
 import { discoveryQuestionById } from '../data/questions'
-import type { AssessmentAnswers, TraitId, TraitScore, TraitScores } from '../types'
-
-const emptyScore = (): TraitScore => ({ value: 0, evidence: 0, positive: 0, negative: 0 })
+import type { AssessmentAnswers, TraitId, TraitScores } from '../types'
 
 export function calculateTraitScores(discoveryAnswers: AssessmentAnswers['discovery']): TraitScores {
   const totals: Partial<Record<TraitId, { sum: number; count: number }>> = {}
@@ -23,7 +21,7 @@ export function calculateTraitScores(discoveryAnswers: AssessmentAnswers['discov
 
   return Object.fromEntries(Object.entries(totals).map(([trait, total]) => {
     const value = total.sum / total.count
-    return [trait, { ...emptyScore(), value, evidence: total.count, positive: value >= .55 ? total.count : 0, negative: value < .3 ? total.count : 0 }]
+    return [trait, { value, evidence: total.count }]
   })) as TraitScores
 }
 
