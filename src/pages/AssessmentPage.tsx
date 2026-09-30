@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Check, LockKeyhole, RotateCcw } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, type SetStateAction } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PrivacyNote } from "../components/PrivacyNote";
 import { QuestionCard } from "../components/QuestionCard";
@@ -7,21 +7,19 @@ import { boundaryItems, boundaryOptions } from "../data/boundaries";
 import { categories } from "../data/categories";
 import { discoveryQuestions } from "../data/questions";
 import { negotiationQuestions } from "../data/negotiation";
-import { readinessQuestions } from "../data/readiness";
+import { requiredReadinessQuestions } from "../data/readiness";
 import { refinementQuestionById } from "../data/refinement";
-import { useAssessment } from "../context/AssessmentContext";
+import { useAssessment, type AssessmentPhase } from "../context/AssessmentContext";
 import { recordAssessmentCompletion } from "../services/completionCount";
 import { discoveryProgress, selectNextDiscoveryQuestion } from "../engine/adaptiveQuestioning";
 import { calculateTraitScores } from "../engine/discoveryScoring";
 import { applyRefinementAnswer, MAX_REFINEMENT_QUESTIONS, selectRefinementQuestions } from "../engine/refinementRouting";
 import type { BoundaryValue } from "../types";
 
-type Phase = "intro" | "discovery" | "refinement" | "readiness" | "boundaries" | "negotiation";
-
-const readinessSet = readinessQuestions.filter((question, index, all) => all.findIndex((item) => item.domain === question.domain) === index);
+const readinessSet = requiredReadinessQuestions;
 
 const phaseLabels: {
-  id: Exclude<Phase, "intro">;
+  id: Exclude<AssessmentPhase, "intro">;
   label: string;
 }[] = [
   { id: "discovery", label: "Discover" },
@@ -32,22 +30,40 @@ const phaseLabels: {
 ];
 
 export function AssessmentPage() {
-  const { answers, answerDiscovery, answerRefinement, answerReadiness, answerBoundary, answerNegotiation, removeDiscoveryAnswer, reset } = useAssessment();
+  const {
+    answers,
+    assessmentNavigation,
+    updateAssessmentNavigation,
+    assessmentCompletion,
+    markCompletionRequested,
+    hasMeaningfulSession,
+    answerDiscovery,
+    answerRefinement,
+    answerReadiness,
+    answerBoundary,
+    answerNegotiation,
+    removeDiscoveryAnswer,
+    reset,
+  } = useAssessment();
+  const { phase, discoveryHistory, discoveryCursor, refinementHistory, refinementCursor, readinessIndex, negotiationIndex } = assessmentNavigation;
+
+  const setPhase = (update: SetStateAction<AssessmentPhase>) => updateAssessmentNavigation((current) => ({ ...current, phase: resolveStateUpdate(current.phase, update) }));
+  const setDiscoveryHistory = (update: SetStateAction<string[]>) => updateAssessmentNavigation((current) => ({ ...current, discoveryHistory: resolveStateUpdate(current.discoveryHistory, update) }));
+  const setDiscoveryCursor = (update: SetStateAction<number | null>) => updateAssessmentNavigation((current) => ({ ...current, discoveryCursor: resolveStateUpdate(current.discoveryCursor, update) }));
+  const setRefinementHistory = (update: SetStateAction<string[]>) => updateAssessmentNavigation((current) => ({ ...current, refinementHistory: resolveStateUpdate(current.refinementHistory, update) }));
+  const setRefinementCursor = (update: SetStateAction<number | null>) => updateAssessmentNavigation((current) => ({ ...current, refinementCursor: resolveStateUpdate(current.refinementCursor, update) }));
+  const setReadinessIndex = (update: SetStateAction<number>) => updateAssessmentNavigation((current) => ({ ...current, readinessIndex: resolveStateUpdate(current.readinessIndex, update) }));
+  const setNegotiationIndex = (update: SetStateAction<number>) => updateAssessmentNavigation((current) => ({ ...current, negotiationIndex: resolveStateUpdate(current.negotiationIndex, update) }));
 
   const location = useLocation();
   const navigate = useNavigate();
-  const assessmentIsComplete = negotiationQuestions.every((question) => answers.negotiation[question.id] !== undefined);
-  const returningToReview = (location.state as { returnTo?: string } | null)?.returnTo === "review" && assessmentIsComplete;
+  const returningToReview = (location.state as { returnTo?: string } | null)?.returnTo === "review" && assessmentCompletion.complete;
 
-  const [phase, setPhase] = useState<Phase>(returningToReview ? "negotiation" : "intro");
-  const [discoveryHistory, setDiscoveryHistory] = useState<string[]>([]);
-  const [discoveryCursor, setDiscoveryCursor] = useState<number | null>(null);
-  const [refinementHistory, setRefinementHistory] = useState<string[]>(() => Object.keys(answers.refinement).slice(0, MAX_REFINEMENT_QUESTIONS));
-  const [refinementCursor, setRefinementCursor] = useState<number | null>(null);
-  const [readinessIndex, setReadinessIndex] = useState(0);
-  const [negotiationIndex, setNegotiationIndex] = useState(returningToReview ? negotiationQuestions.length - 1 : 0);
-
-  const completionRequested = useRef(false);
+  useEffect(() => {
+    if (!returningToReview) return;
+    updateAssessmentNavigation((current) => ({ ...current, phase: "negotiation", negotiationIndex: negotiationQuestions.length - 1 }));
+    navigate("/assessment", { replace: true });
+  }, [navigate, returningToReview, updateAssessmentNavigation]);
 
   const traitScores = useMemo(() => calculateTraitScores(answers.discovery), [answers.discovery]);
   const refinementQuestions = useMemo(() => selectRefinementQuestions(answers, traitScores), [answers, traitScores]);
@@ -63,7 +79,7 @@ export function AssessmentPage() {
 
   const discoveryQuestion = useMemo(() => (discoveryCursor === null ? nextDiscoveryQuestion : discoveryQuestions.find((question) => question.id === discoveryHistory[discoveryCursor])), [discoveryCursor, discoveryHistory, nextDiscoveryQuestion]);
 
-  const allBoundariesAnswered = useMemo(() => boundaryItems.every((item) => answers.boundaries[item.id] !== undefined), [answers.boundaries]);
+  const allBoundariesAnswered = assessmentCompletion.boundariesComplete;
 
   const answerDiscoveryAndAdvance = (answerId: string) => {
     if (!discoveryQuestion) return;
@@ -154,8 +170,9 @@ export function AssessmentPage() {
   };
 
   const viewResults = () => {
-    if (!completionRequested.current) {
-      completionRequested.current = true;
+    if (!assessmentCompletion.complete) return;
+
+    if (markCompletionRequested()) {
       void recordAssessmentCompletion();
     }
 
@@ -232,14 +249,8 @@ export function AssessmentPage() {
         <button
           className="quiet-button"
           onClick={() => {
+            if (hasMeaningfulSession && !window.confirm("Start over? Your answers and current role set will be cleared from this session.")) return;
             reset();
-            setPhase("intro");
-            setDiscoveryHistory([]);
-            setDiscoveryCursor(null);
-            setRefinementHistory([]);
-            setRefinementCursor(null);
-            setReadinessIndex(0);
-            setNegotiationIndex(0);
           }}
         >
           <RotateCcw size={15} />
@@ -540,4 +551,8 @@ function StageComplete({ title, text, button = "Continue", onContinue, onBack }:
       </div>
     </>
   );
+}
+
+function resolveStateUpdate<T>(current: T, update: SetStateAction<T>): T {
+  return typeof update === "function" ? (update as (value: T) => T)(current) : update;
 }

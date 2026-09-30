@@ -48,6 +48,42 @@ test('Full journey: Dominant vocabulary and a hard limit remain independent', as
   await expect(page.locator('fieldset.question-card input[type="radio"]:checked')).toHaveCount(1)
   await guards.assertCompletionWrites()
   await guards.assertClean()
+
+  await page.locator('fieldset.question-card input[type="radio"]:checked').locator('..').click()
+  await page.getByRole('button', { name: 'View my results', exact: true }).click()
+  await expect(page).toHaveURL(/\/results$/)
+  await guards.assertCompletionWrites()
+
+  await page.getByRole('link', { name: 'Go back to assessment' }).click()
+  const dismissedReset = page.waitForEvent('dialog').then(async (dialog) => {
+    expect(dialog.type()).toBe('confirm')
+    await dialog.dismiss()
+  })
+  await page.getByRole('button', { name: 'Start over' }).click()
+  await dismissedReset
+  await expect(page.getByRole('heading', { name: 'Communicate', exact: true })).toBeVisible()
+
+  const confirmedReset = page.waitForEvent('dialog').then(async (dialog) => {
+    expect(dialog.type()).toBe('confirm')
+    await dialog.accept()
+  })
+  await page.getByRole('button', { name: 'Start over' }).click()
+  await confirmedReset
+  await expect(page.getByRole('heading', { name: 'A private reflection for adults.' })).toBeVisible()
+})
+
+test('Memory-only session: reload presents a browser unload warning', async ({ page }) => {
+  await page.goto('/assessment')
+  await page.getByRole('button', { name: /begin/i }).click()
+  await page.locator('fieldset.question-card .answer-option').first().click()
+
+  const unloadWarning = page.waitForEvent('dialog').then(async (dialog) => {
+    expect(dialog.type()).toBe('beforeunload')
+    await dialog.dismiss()
+  })
+  const reloadAttempt = page.reload({ timeout: 2_000 }).catch(() => null)
+  await unloadWarning
+  await reloadAttempt
 })
 
 test('Full journey: Rigger vocabulary follows real rope evidence', async ({ page }) => {

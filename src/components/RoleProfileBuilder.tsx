@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Clipboard, Crown, Plus, RefreshCw, Search, Trash2, Undo2, X } from "lucide-react";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type SetStateAction } from "react";
 import { roleLibrary, roleLibraryRoleById } from "../taxonomy/roleLibrary";
 import { addRoleProfileEntry, buildEditableRoleProfileEntries, buildRoleProfileCandidates, makeRoleProfileEntryPrimary, optimizeRoleProfile, removeRoleProfileEntry, reorderRoleProfileEntry, replaceRoleProfileEntry, roleProfileEntriesEqual, selectDisplayableRoleProfileAlternates, type EditableRoleProfileEntry } from "../engine/roleProfileOptimizer";
 import { buildRoleLabelList } from "../engine/roleProfileExport";
@@ -23,7 +23,7 @@ function recommendationTrustLabel(evidenceType: "inferred" | "direct" | "hybrid"
   return "Needs your confirmation";
 }
 
-export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAnswers, embedded = false, onRoleSetChange }: { roleResults: RoleResult[]; refinementAnswers?: AssessmentAnswers["refinement"]; discoveryAnswers?: AssessmentAnswers["discovery"]; embedded?: boolean; onRoleSetChange?: (roles: EditableRoleProfileEntry[]) => void }) {
+export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAnswers, embedded = false, currentRoleSet, onRoleSetChange }: { roleResults: RoleResult[]; refinementAnswers?: AssessmentAnswers["refinement"]; discoveryAnswers?: AssessmentAnswers["discovery"]; embedded?: boolean; currentRoleSet?: EditableRoleProfileEntry[]; onRoleSetChange?: (roles: EditableRoleProfileEntry[]) => void }) {
   const optimization = useMemo(() => {
     const currentRefinementAnswers = refinementAnswers ?? {};
     const currentDiscoveryAnswers = discoveryAnswers ?? {};
@@ -33,7 +33,8 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
     });
   }, [roleResults, refinementAnswers, discoveryAnswers]);
   const initialRoles = useMemo(() => buildEditableRoleProfileEntries(optimization), [optimization]);
-  const [selectedRoles, setSelectedRoles] = useState<EditableRoleProfileEntry[]>(initialRoles);
+  const [uncontrolledSelectedRoles, setUncontrolledSelectedRoles] = useState<EditableRoleProfileEntry[]>(initialRoles);
+  const selectedRoles = currentRoleSet === undefined ? uncontrolledSelectedRoles : currentRoleSet;
   const [query, setQuery] = useState("");
   const [replacementRoleId, setReplacementRoleId] = useState<string>();
   const [status, setStatus] = useState("");
@@ -45,7 +46,15 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
   const roleSetMatchesSuggestion = roleProfileEntriesEqual(selectedRoles, initialRoles);
   const assessmentExplanationByRoleId = useMemo(() => buildRoleAssessmentExplanationMap(optimization, selectedRoles), [optimization, selectedRoles]);
 
-  useEffect(() => onRoleSetChange?.(selectedRoles), [onRoleSetChange, selectedRoles]);
+  useEffect(() => {
+    if (currentRoleSet === undefined) onRoleSetChange?.(uncontrolledSelectedRoles);
+  }, [currentRoleSet, onRoleSetChange, uncontrolledSelectedRoles]);
+
+  const setSelectedRoles = (update: SetStateAction<EditableRoleProfileEntry[]>) => {
+    const nextRoles = typeof update === "function" ? update(selectedRoles) : update;
+    if (currentRoleSet === undefined) setUncontrolledSelectedRoles(nextRoles);
+    else onRoleSetChange?.(nextRoles);
+  };
 
   const restoreSuggestedSet = () => {
     setSelectedRoles(initialRoles.map((role) => ({ ...role })));

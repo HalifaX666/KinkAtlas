@@ -65,6 +65,10 @@ export const readinessQuestions: ReadinessQuestion[] = seeds.map(([id, domain, p
   ],
 }))
 
+export const requiredReadinessQuestions = readinessQuestions.filter(
+  (question, index, all) => all.findIndex((item) => item.domain === question.domain) === index,
+)
+
 export const blindSpotLibrary: Record<string, Pick<BlindSpot, 'id' | 'competency' | 'title' | 'description'>> = {
   'prior-negotiation': { id: 'prior-negotiation', competency: 'ongoingConsent', title: 'Prior negotiation vs. ongoing consent', description: 'Some responses placed weight on what was agreed before an experience. Prior negotiation matters, and consent can still change during it.' },
   'prior-consent': { id: 'prior-consent', competency: 'ongoingConsent', title: 'Past enthusiasm and present choice', description: 'Earlier enthusiasm can be useful context, but it does not decide what someone wants now.' },

@@ -2,7 +2,7 @@ import { roleById } from "../data/roles";
 import { traitById } from "../data/traits";
 import { relationshipsForLibraryRole, roleLibrary, roleLibraryRoleById, type RoleLibraryDecisionPathway, type RoleLibraryPrimaryPolicy, type RoleLibraryRole } from "../taxonomy/roleLibrary";
 import type { ConfidenceLevel, RoleResult, AssessmentAnswers } from "../types";
-import { evaluateRefinementEvidence, refinementFallbackIsSuperseded, refinementQuestionIdsForTarget, refinementTargetByRoleId } from "./refinementEvidence";
+import { evaluateRefinementEvidence, preferredPrimaryRoleIdsFromRefinement, refinementFallbackIsSuperseded, refinementQuestionIdsForTarget, refinementTargetByRoleId } from "./refinementEvidence";
 import { calculateTraitScores } from "./discoveryScoring";
 import { refinementTargetIsSemanticallyEligible, selectEligibleRefinementQuestions } from "./refinementRouting";
 
@@ -374,6 +374,18 @@ export function buildEditableRoleProfileEntries(optimization: RoleProfileOptimiz
     definition: item.candidate.definition,
     assessmentRoleId: item.candidate.assessmentRoleId,
   }));
+}
+
+export function buildSuggestedRoleProfileEntries(
+  roleResults: RoleResult[],
+  refinementAnswers: AssessmentAnswers["refinement"] = {},
+  discoveryAnswers: AssessmentAnswers["discovery"] = {},
+): EditableRoleProfileEntry[] {
+  const optimization = optimizeRoleProfile(buildRoleProfileCandidates(roleResults, refinementAnswers, discoveryAnswers), 5, {
+    preferredPrimaryRoleIds: preferredPrimaryRoleIdsFromRefinement(refinementAnswers, discoveryAnswers),
+  });
+
+  return buildEditableRoleProfileEntries(optimization);
 }
 
 export function addRoleProfileEntry(roles: EditableRoleProfileEntry[], role: EditableRoleProfileEntry): EditableRoleProfileEntry[] {

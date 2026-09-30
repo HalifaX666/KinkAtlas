@@ -1,6 +1,6 @@
-import { ArrowLeft, ArrowRight, BookOpen, Eye, HeartHandshake, LockKeyhole, MessageCircle, Share2, ShieldCheck, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, ArrowRight, BookOpen, Eye, HeartHandshake, LockKeyhole, MessageCircle, Share2, ShieldCheck } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, Navigate } from "react-router-dom";
 import { RoleCard } from "../components/RoleCard";
 import { ShareResultsDialog } from "../components/ShareResultsDialog";
 import { RoleProfileBuilderLauncher } from "../components/RoleProfileBuilderLauncher";
@@ -15,23 +15,23 @@ import { activityRecommendations } from "../engine/activityRecommendations";
 import { generateRecommendations } from "../engine/recommendations";
 import { evaluateReadiness } from "../engine/readinessScoring";
 import { matchRoles } from "../engine/roleMatching";
-import type { EditableRoleProfileEntry } from "../engine/roleProfileOptimizer";
+import { buildSuggestedRoleProfileEntries } from "../engine/roleProfileOptimizer";
 import type { ReadinessBand } from "../types";
 
 const readinessLabels: Record<ReadinessBand, string> = { strong: "Established", developing: "Building", explore: "Further reflection", important: "Needs more reflection" };
 const blindSpotLabels = { notice: "Reflection cue", concern: "Worth reviewing", critical: "Important concept" } as const;
 
 export function ResultsPage() {
-  const { answers } = useAssessment();
+  const { answers, assessmentCompletion, currentRoleSet, setCurrentRoleSet, initializeCurrentRoleSet } = useAssessment();
   const [sharing, setSharing] = useState(false);
-  const [currentRoleSet, setCurrentRoleSet] = useState<EditableRoleProfileEntry[] | null>(null);
   const traitScores = useMemo(() => calculateTraitScores(answers.discovery), [answers.discovery]);
   const roleResults = useMemo(() => matchRoles(traitScores, answers.discovery), [traitScores, answers.discovery]);
+  const suggestedRoleSet = useMemo(() => buildSuggestedRoleProfileEntries(roleResults, answers.refinement, answers.discovery), [roleResults, answers.refinement, answers.discovery]);
+  const visibleRoleSet = currentRoleSet ?? suggestedRoleSet;
   const activityGuidance = useMemo(() => activityRecommendations(answers.boundaries, boundaryItems), [answers.boundaries]);
   const readiness = useMemo(() => evaluateReadiness(answers.readiness), [answers.readiness]);
   const recommendations = useMemo(() => generateRecommendations(roleResults, readiness.competencies), [roleResults, readiness.competencies]);
-  const shareData = useMemo(() => ({ roleResults, roleSet: currentRoleSet ?? [], readiness, boundaries: answers.boundaries, negotiation: answers.negotiation }), [roleResults, currentRoleSet, readiness, answers.boundaries, answers.negotiation]);
-  const assessmentIsComplete = negotiationQuestions.every((question) => answers.negotiation[question.id] !== undefined);
+  const shareData = useMemo(() => ({ roleResults, roleSet: visibleRoleSet, readiness, boundaries: answers.boundaries, negotiation: answers.negotiation }), [roleResults, visibleRoleSet, readiness, answers.boundaries, answers.negotiation]);
   const topTraits = Object.entries(traitScores)
     .sort(([, left], [, right]) => (right?.value ?? 0) - (left?.value ?? 0))
     .slice(0, 10);
@@ -39,17 +39,11 @@ export function ResultsPage() {
   const developingCompetencies = readiness.competencies.filter((item) => item.band !== "strong");
   const conversationStarters = negotiationQuestions.filter((question) => answers.negotiation[question.id]).slice(0, 8);
 
-  if (Object.keys(answers.discovery).length === 0)
-    return (
-      <div className="page-width empty-results">
-        <Sparkles />
-        <h1>Your map is still blank.</h1>
-        <p>Complete the private questionnaire to create a first set of explainable suggestions.</p>
-        <Link className="button primary" to="/assessment">
-          Start exploring <ArrowRight size={18} />
-        </Link>
-      </div>
-    );
+  useEffect(() => {
+    if (assessmentCompletion.complete) initializeCurrentRoleSet(suggestedRoleSet);
+  }, [assessmentCompletion.complete, initializeCurrentRoleSet, suggestedRoleSet]);
+
+  if (!assessmentCompletion.complete) return <Navigate to="/assessment" replace />;
 
   return (
     <div className="results-page">
@@ -72,7 +66,7 @@ export function ResultsPage() {
               <ArrowRight size={18} />
             </Link>
 
-            <Link className="quiet-button results-return-assessment" to="/assessment" state={assessmentIsComplete ? { returnTo: "review" } : undefined}>
+            <Link className="quiet-button results-return-assessment" to="/assessment" state={{ returnTo: "review" }}>
               <ArrowLeft size={16} />
               Go back to assessment
             </Link>
@@ -106,7 +100,7 @@ export function ResultsPage() {
         </div>
       </section>
 
-      <RoleProfileBuilderLauncher roleResults={roleResults} discoveryAnswers={answers.discovery} refinementAnswers={answers.refinement} onRoleSetChange={setCurrentRoleSet} />
+      <RoleProfileBuilderLauncher roleResults={roleResults} discoveryAnswers={answers.discovery} refinementAnswers={answers.refinement} currentRoleSet={visibleRoleSet} onRoleSetChange={(roles) => setCurrentRoleSet(roles)} />
       <section className="page-width role-set-export-section" aria-labelledby="role-set-export-heading">
         <div>
           <span className="eyebrow">When you are ready</span>

@@ -172,6 +172,7 @@ describe("assessment navigation", () => {
   it("preserves Discover answers while revisiting, re-advances same answers, recalculates after a change, and resets only on request", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
+    const confirmReset = vi.spyOn(window, "confirm").mockReturnValue(false);
     renderAssessment();
 
     const firstQuestion = discoveryQuestions[0];
@@ -206,10 +207,93 @@ describe("assessment navigation", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /begin/i }));
     fireEvent.click(screen.getByRole("button", { name: "Start over" }));
+    expect(screen.getByRole("heading", { name: "Discover" })).toBeInTheDocument();
+    expect(currentRadios().some((radio) => radio.checked)).toBe(true);
+
+    confirmReset.mockReturnValue(true);
+    fireEvent.click(screen.getByRole("button", { name: "Start over" }));
     expect(screen.getByRole("heading", { name: "A private reflection for adults." })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /begin/i }));
     expect(currentRadios().some((radio) => radio.checked)).toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("does not request destructive confirmation before any meaningful answer exists", () => {
+    const confirmReset = vi.spyOn(window, "confirm").mockReturnValue(true);
+    renderAssessment();
+
+    fireEvent.click(screen.getByRole("button", { name: "Start over" }));
+
+    expect(confirmReset).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "A private reflection for adults." })).toBeInTheDocument();
+  });
+
+  it("preserves exact Discover position and Back history across SPA route navigation", () => {
+    renderAssessment();
+    const answeredQuestions = discoveryQuestions.slice(0, 3);
+    answeredQuestions.forEach((question) => fireEvent.click(screen.getByRole("radio", { name: question.answers[0].label })));
+    const resumedQuestion = discoveryQuestions[3];
+    expect(screen.getByRole("group")).toHaveTextContent(resumedQuestion.prompt);
+
+    fireEvent.click(screen.getByRole("link", { name: "About" }));
+    expect(screen.getByRole("heading", { name: /Clearer language/i })).toBeInTheDocument();
+    fireEvent.click(within(screen.getByRole("navigation", { name: "Main navigation" })).getByRole("link", { name: "Start exploring" }));
+
+    expect(screen.getByRole("group")).toHaveTextContent(resumedQuestion.prompt);
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("group")).toHaveTextContent(answeredQuestions[2].prompt);
+    expect(screen.getByRole("radio", { name: answeredQuestions[2].answers[0].label })).toBeChecked();
+  });
+
+  it("preserves routed Refine position and history across SPA route navigation within the six-question cap", () => {
+    renderAssessment();
+    reachAgeRoleplayGate();
+    fireEvent.click(screen.getByRole("radio", { name: /Yes.*adult dynamic feels relevant to me/i }));
+    const resumedPrompt = "In non-sexual adult caregiving or age-inspired roleplay, which position feels closest to you?";
+    expect(screen.getByRole("group")).toHaveTextContent(resumedPrompt);
+
+    fireEvent.click(screen.getByRole("link", { name: "About" }));
+    fireEvent.click(within(screen.getByRole("navigation", { name: "Main navigation" })).getByRole("link", { name: "Start exploring" }));
+
+    expect(screen.getByRole("heading", { name: "Refine" })).toBeInTheDocument();
+    expect(screen.getByRole("group")).toHaveTextContent(resumedPrompt);
+    expect(screen.getByText(/Question \d+ of up to 6/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("radio", { name: /Yes.*adult dynamic feels relevant to me/i })).toBeChecked();
+  });
+
+  it("preserves Reflect, Define, and Communicate positions across SPA route navigation", () => {
+    renderAssessment();
+    completeDiscovery();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    continueThroughRefinement();
+
+    fireEvent.click(currentRadios()[0]);
+    expect(screen.getByRole("group")).toHaveTextContent(readinessSet[1].prompt);
+    routeRoundTrip();
+    expect(screen.getByRole("heading", { name: "Reflect" })).toBeInTheDocument();
+    expect(screen.getByRole("group")).toHaveTextContent(readinessSet[1].prompt);
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(currentRadios()[0]).toBeChecked();
+    fireEvent.click(currentRadios()[0]);
+    for (let index = 1; index < readinessSet.length; index += 1) fireEvent.click(currentRadios()[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    const firstBoundary = screen.getAllByRole("combobox")[0] as HTMLSelectElement;
+    fireEvent.change(firstBoundary, { target: { value: "love" } });
+    routeRoundTrip();
+    expect(screen.getByRole("heading", { name: "Define" })).toBeInTheDocument();
+    expect(screen.getAllByRole("combobox")[0]).toHaveValue("love");
+    screen.getAllByRole("combobox").slice(1).forEach((select) => fireEvent.change(select, { target: { value: "prefer-not" } }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    fireEvent.click(currentRadios()[0]);
+    expect(screen.getByRole("group")).toHaveTextContent(negotiationQuestions[1].prompt);
+    routeRoundTrip();
+    expect(screen.getByRole("heading", { name: "Communicate" })).toBeInTheDocument();
+    expect(screen.getByRole("group")).toHaveTextContent(negotiationQuestions[1].prompt);
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(currentRadios()[0]).toBeChecked();
   });
 
   it("supports Reflect revisits, cross-stage Back, and the reflection completion Back action", () => {
@@ -291,6 +375,7 @@ describe("assessment navigation", () => {
   it("aligns StageComplete actions and returns from Results to the completed assessment review state", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     const storageSetItem = vi.spyOn(Storage.prototype, "setItem");
     renderAssessment();
     completeDiscovery();
@@ -316,6 +401,25 @@ describe("assessment navigation", () => {
     expect(screen.getByRole("heading", { name: "Communicate" })).toBeInTheDocument();
     expect(currentRadios()[0]).toBeChecked();
     expect(fetchMock).toHaveBeenCalledTimes(requestsBeforeReturn);
+
+    fireEvent.click(currentRadios()[0]);
+    fireEvent.click(screen.getByRole("button", { name: /view my results/i }));
+    expect(screen.getByRole("heading", { name: "A map, not a verdict." })).toBeInTheDocument();
+    expect(fetchMock.mock.calls.filter(([, options]) => (options as RequestInit | undefined)?.method === "POST")).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("link", { name: "Go back to assessment" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start over" }));
+    expect(screen.getByRole("heading", { name: "A private reflection for adults." })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /begin/i }));
+    completeDiscovery();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    continueThroughRefinement();
+    completeReadiness();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    completeBoundaries();
+    completeNegotiation();
+    fireEvent.click(screen.getByRole("button", { name: /view my results/i }));
+    expect(fetchMock.mock.calls.filter(([, options]) => (options as RequestInit | undefined)?.method === "POST")).toHaveLength(2);
     expect(storageSetItem).not.toHaveBeenCalled();
   });
 });
@@ -324,3 +428,8 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
+
+function routeRoundTrip() {
+  fireEvent.click(screen.getByRole("link", { name: "About" }));
+  fireEvent.click(within(screen.getByRole("navigation", { name: "Main navigation" })).getByRole("link", { name: "Start exploring" }));
+}

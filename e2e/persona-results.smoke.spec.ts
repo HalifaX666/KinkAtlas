@@ -76,6 +76,12 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   await expect(page.locator(".profile-role-list > li").first()).toContainText("Your primary");
   await expect(page.locator(".profile-recommendation-summary > ol > li").first()).toContainText("Suggested primary");
 
+  await page.getByRole("link", { name: /Explore this result/i }).first().click();
+  await page.getByRole("link", { name: "Back to your map" }).click();
+  await openRoleSetBuilder(page);
+  expect(await namedRoleSetLabels(page, "Current role set")).toEqual(primaryOrder);
+  expect(await namedRoleSetLabels(page, "Suggested roles")).toEqual(suggested);
+
   await page.getByRole("button", { name: "Create my role cards" }).click();
   let dialog = page.getByRole("dialog", { name: "Export & Share" });
   await expect(dialog).toBeVisible();
@@ -131,6 +137,18 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   await expect(manualRole).not.toContainText(/Strong alignment|High confidence|Medium confidence|evidence breadth/i);
   await expect(dialog).toContainText("manually post to FetLife");
   await expect(dialog).toContainText("never connects to or posts to a FetLife profile");
+  await dialog.getByRole("button", { name: "Close export and sharing dialog" }).click();
+
+  while (await page.getByRole("button", { name: /^Remove / }).count()) {
+    await page.getByRole("button", { name: /^Remove / }).first().click();
+  }
+  await expect(page.getByText("No roles selected. Search the KinkAtlas role library whenever you want.")).toBeVisible();
+  await page.getByRole("link", { name: /Explore this result/i }).first().click();
+  await page.getByRole("link", { name: "Back to your map" }).click();
+  await openRoleSetBuilder(page);
+  await expect(page.getByText("No roles selected. Search the KinkAtlas role library whenever you want.")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Current role set" })).toHaveCount(0);
+  expect(await namedRoleSetLabels(page, "Suggested roles")).toEqual(suggested);
 
   await expectRenderedSanity(page);
   await guards.assertClean();

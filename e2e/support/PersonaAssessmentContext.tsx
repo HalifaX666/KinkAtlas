@@ -1,5 +1,10 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { assessmentPersonas } from "../../src/tests/fixtures/assessmentPersonas";
+import { getAssessmentCompletion, type AssessmentCompletion } from "../../src/engine/assessmentCompletion";
+import { calculateTraitScores } from "../../src/engine/discoveryScoring";
+import { applyRefinementAnswer, unansweredRefinementQuestions } from "../../src/engine/refinementRouting";
+import type { EditableRoleProfileEntry } from "../../src/engine/roleProfileOptimizer";
+import type { AssessmentNavigationState } from "../../src/context/AssessmentContext";
 import type { AssessmentAnswers, BoundaryValue } from "../../src/types";
 
 export const PERSONA_HARNESS_MARKER = "KINKATLAS_E2E_PERSONA_HARNESS_V1";
@@ -12,6 +17,20 @@ const emptyAnswers = (): AssessmentAnswers => ({
   negotiation: {},
 });
 
+const emptyNavigation = (): AssessmentNavigationState => ({
+  phase: "intro",
+  discoveryHistory: [],
+  discoveryCursor: null,
+  refinementHistory: [],
+  refinementCursor: null,
+  readinessIndex: 0,
+  negotiationIndex: 0,
+});
+
+function hasAnswers(answers: AssessmentAnswers) {
+  return Object.values(answers).some((section) => Object.keys(section).length > 0);
+}
+
 function initialAnswers(): AssessmentAnswers {
   const personaId = new URLSearchParams(window.location.search).get("__kinkatlas_e2e_persona");
 
@@ -23,17 +42,32 @@ function initialAnswers(): AssessmentAnswers {
     throw new Error(`Unknown E2E persona: ${personaId}`);
   }
 
-  return {
+  const answers: AssessmentAnswers = {
     discovery: { ...persona.answers.discovery },
     refinement: { ...persona.answers.refinement },
     readiness: { ...persona.answers.readiness },
     boundaries: { ...persona.answers.boundaries },
     negotiation: { ...persona.answers.negotiation },
   };
+
+  for (const question of unansweredRefinementQuestions(answers, calculateTraitScores(answers.discovery))) {
+    answers.refinement[question.id] = "prefer-not";
+  }
+
+  return answers;
 }
 
 interface AssessmentContextValue {
   answers: AssessmentAnswers;
+  assessmentNavigation: AssessmentNavigationState;
+  updateAssessmentNavigation: Dispatch<SetStateAction<AssessmentNavigationState>>;
+  assessmentCompletion: AssessmentCompletion;
+  currentRoleSet: EditableRoleProfileEntry[] | null;
+  setCurrentRoleSet: Dispatch<SetStateAction<EditableRoleProfileEntry[] | null>>;
+  initializeCurrentRoleSet: (roles: EditableRoleProfileEntry[]) => void;
+  completionRequested: boolean;
+  markCompletionRequested: () => boolean;
+  hasMeaningfulSession: boolean;
   answerDiscovery: (questionId: string, answerId: string) => void;
   answerRefinement: (questionId: string, answerId: string) => void;
   answerReadiness: (questionId: string, answerId: string) => void;
@@ -50,10 +84,57 @@ document.documentElement.dataset.personaHarness = PERSONA_HARNESS_MARKER;
 
 export function AssessmentProvider({ children }: { children: ReactNode }) {
   const [answers, setAnswers] = useState<AssessmentAnswers>(initialAnswers);
+  const [assessmentNavigation, updateAssessmentNavigation] = useState<AssessmentNavigationState>(emptyNavigation);
+  const [currentRoleSet, setCurrentRoleSet] = useState<EditableRoleProfileEntry[] | null>(null);
+  const [completionRequested, setCompletionRequested] = useState(false);
+  const completionRequestedRef = useRef(false);
+
+  const assessmentCompletion = useMemo(() => getAssessmentCompletion(answers), [answers]);
+  const hasMeaningfulSession = useMemo(() => hasAnswers(answers) || currentRoleSet !== null, [answers, currentRoleSet]);
+
+  useEffect(() => {
+    if (!hasMeaningfulSession) return;
+
+    const protectMemoryOnlySession = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = true;
+    };
+
+    window.addEventListener("beforeunload", protectMemoryOnlySession);
+    return () => window.removeEventListener("beforeunload", protectMemoryOnlySession);
+  }, [hasMeaningfulSession]);
+
+  const initializeCurrentRoleSet = useCallback((roles: EditableRoleProfileEntry[]) => {
+    setCurrentRoleSet((current) => current ?? roles.map((role) => ({ ...role })));
+  }, []);
+
+  const markCompletionRequested = useCallback(() => {
+    if (completionRequestedRef.current) return false;
+    completionRequestedRef.current = true;
+    setCompletionRequested(true);
+    return true;
+  }, []);
+
+  const reset = useCallback(() => {
+    completionRequestedRef.current = false;
+    setAnswers(emptyAnswers());
+    updateAssessmentNavigation(emptyNavigation());
+    setCurrentRoleSet(null);
+    setCompletionRequested(false);
+  }, []);
 
   const value = useMemo<AssessmentContextValue>(
     () => ({
       answers,
+      assessmentNavigation,
+      updateAssessmentNavigation,
+      assessmentCompletion,
+      currentRoleSet,
+      setCurrentRoleSet,
+      initializeCurrentRoleSet,
+      completionRequested,
+      markCompletionRequested,
+      hasMeaningfulSession,
 
       answerDiscovery: (questionId, answerId) =>
         setAnswers((current) => {
@@ -73,10 +154,7 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
       answerRefinement: (questionId, answerId) =>
         setAnswers((current) => ({
           ...current,
-          refinement: {
-            ...current.refinement,
-            [questionId]: answerId,
-          },
+          refinement: applyRefinementAnswer(current.refinement, questionId, answerId).refinement,
         })),
 
       answerReadiness: (questionId, answerId) =>
@@ -125,9 +203,9 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
           refinement: {},
         })),
 
-      reset: () => setAnswers(emptyAnswers()),
+      reset,
     }),
-    [answers],
+    [answers, assessmentNavigation, assessmentCompletion, currentRoleSet, completionRequested, hasMeaningfulSession, initializeCurrentRoleSet, markCompletionRequested, reset],
   );
 
   return <AssessmentContext.Provider value={value}>{children}</AssessmentContext.Provider>;
