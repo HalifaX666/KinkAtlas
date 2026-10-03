@@ -44,6 +44,7 @@
   "scripts/production-boundary.mjs",
   "scripts/public-file-surface.mjs",
   "scripts/public-surface-scan.mjs",
+  "scripts/public-surface-scan.test.mjs",
   "scripts/role-library-pipeline.test.ts",
   "scripts/role-library-pipeline.ts",
   "scripts/secret-scan.mjs",

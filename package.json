@@ -22,7 +22,7 @@
     "test:e2e:cross-browser": "playwright test --config playwright.cross-browser.config.ts",
     "test:e2e:a11y": "playwright test --config playwright.a11y.config.ts",
     "test:e2e:preview": "npm run build && npm run test:e2e:boundary && playwright test --config playwright.preview.config.ts",
-    "test:e2e:ci": "npm run test:e2e:smoke && npm run test:e2e:cross-browser && npm run test:e2e:a11y && npm run test:e2e:preview",
+    "test:e2e:ci": "npm run build && npm run test:e2e:smoke && npm run test:e2e:cross-browser && npm run test:e2e:a11y && npm run test:e2e:preview",
     "calibrate": "vitest run --config vitest.public.config.ts src/calibration/calibrationReport.test.ts src/calibration/recommendationReport.test.ts --reporter=verbose",
     "role-library:generate": "vite-node scripts/generate-role-library-runtime.ts",
     "role-library:check": "vite-node scripts/check-role-library-drift.ts",

@@ -14,7 +14,7 @@ const selfReferentialFiles = new Set([
 ])
 const escapePattern = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const localUserNames = [...new Set([process.env.USERNAME, process.env.USER]
-  .filter((value) => typeof value === 'string' && value.length >= 3 && !/^(?:admin|root|user)$/i.test(value)))]
+  .filter((value) => typeof value === 'string' && value.length >= 3 && !/^(?:admin|root|runner|runneradmin|user)$/i.test(value)))]
 const additionalChecks = [
   { label: 'historical phase markers', pattern: /\bphase\s*\d+(?:\.\d+)?\b/gi },
   { label: 'local machine paths', pattern: /(?:[a-z]:[\\/](?:users|home)[\\/]|\/(?:users|home)\/)/gi },
