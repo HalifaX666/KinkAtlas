@@ -2222,7 +2222,7 @@ p {
   text-transform: uppercase;
 }
 .conversation-starters .list-panel strong {
-  color: var(--text);
+  color: var(--ink);
   font-size: 0.92rem;
   font-weight: 450;
   line-height: 1.5;
@@ -3208,7 +3208,7 @@ summary:focus-visible {
   border-top: 1px solid var(--line);
 }
 .profile-role-assessment > strong {
-  color: var(--text);
+  color: var(--ink);
   font-size: 0.68rem;
 }
 .profile-role-assessment p b {

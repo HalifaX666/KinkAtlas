@@ -7,7 +7,7 @@ import { boundaryItems } from "../data/boundaries";
 import { calculateTraitScores } from "../engine/discoveryScoring";
 import { evaluateReadiness, generateBlindSpots, scoreReadiness } from "../engine/readinessScoring";
 import { matchRole, matchRoles } from "../engine/roleMatching";
-import type { AssessmentAnswers, Role, TraitScores } from "../types";
+import type { AssessmentAnswers, Role } from "../types";
 
 const empty = (): AssessmentAnswers => ({
   discovery: {},

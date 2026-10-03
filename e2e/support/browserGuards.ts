@@ -91,3 +91,11 @@ export async function expectRenderedSanity(page: Page) {
   await expect(page.getByText('Your map is still blank.')).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Something went wrong.' })).toHaveCount(0)
 }
+
+export async function expectNoHorizontalOverflow(page: Page) {
+  const dimensions = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }))
+  expect(dimensions.scrollWidth, 'document horizontal overflow').toBeLessThanOrEqual(dimensions.clientWidth)
+}

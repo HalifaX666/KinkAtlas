@@ -1,4 +1,4 @@
-import { readdir, readFile, stat } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { dirname, extname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -16,17 +16,6 @@ async function exists(path) {
     if (error && typeof error === 'object' && error.code === 'ENOENT') return false
     throw error
   }
-}
-
-async function filesUnder(directory) {
-  if (!(await exists(directory))) return []
-  const files = []
-  for (const entry of await readdir(directory)) {
-    const path = resolve(directory, entry)
-    if ((await stat(path)).isDirectory()) files.push(...(await filesUnder(path)))
-    else files.push(path)
-  }
-  return files
 }
 
 async function resolveImport(importer, specifier) {

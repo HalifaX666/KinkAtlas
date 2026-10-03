@@ -4,7 +4,6 @@ import {
   expectActivityStatus,
   expectBandAtLeast,
   expectBandAtMost,
-  expectBlindSpot,
   expectConfidence,
   expectCriticalFlag,
   expectRawAboveRanking,

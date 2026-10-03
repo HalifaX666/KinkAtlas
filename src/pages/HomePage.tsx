@@ -1,4 +1,4 @@
-import { ArrowRight, Brain, Compass, HeartHandshake, LockKeyhole, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Brain, Compass, HeartHandshake, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PrivacyNote } from "../components/PrivacyNote";
 import { CompletionCounter } from "../components/CompletionCounter";

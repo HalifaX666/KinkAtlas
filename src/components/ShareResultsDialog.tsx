@@ -136,6 +136,8 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
   const exportLabel = cardCount === 1 ? 'Export card' : `Export ${cardCount} cards`
   const shareLabel = cardCount === 1 ? 'Share card' : `Share ${cardCount} cards`
 
+  // The backdrop is a mouse convenience only; Escape and the focused close button provide keyboard-equivalent controls.
+  // eslint-disable-next-line jsx-a11y/no-static-element-interactions
   return <div className="share-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
     <div className="share-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} ref={dialogRef}>
       <header><BrandLogo size="footer" /><button className="quiet-button share-close" type="button" onClick={onClose} aria-label="Close export and sharing dialog" ref={closeRef}><X /></button></header>

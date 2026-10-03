@@ -55,9 +55,14 @@ describe('launch deployment metadata', () => {
 
   it('runs all required CI checks without deployment credentials', () => {
     const workflow = read('.github/workflows/ci.yml')
-    for (const command of ['npm ci', 'npm run typecheck', 'npm test', 'npm run role-library:check', 'npm run build', 'npm run calibrate', 'npm run production-boundary', 'npm run public-self-containment', 'npm run public-surface:check', 'npm run secrets:check']) expect(workflow).toContain(command)
+    for (const command of ['npm ci', 'npm run typecheck', 'npm run lint', 'npm run styles:check', 'npm run test:coverage', 'npm run role-library:check', 'npm run build', 'npm run calibrate', 'npm run production-boundary', 'npm run public-self-containment', 'npm run public-surface:check', 'npm run secrets:check', 'npx playwright install --with-deps chromium firefox webkit', 'npm run test:e2e:ci']) expect(workflow).toContain(command)
     expect(workflow).toContain('node-version: 22')
     expect(workflow).toContain('pull_request:')
-    expect(workflow).not.toMatch(/deploy|upload-artifact|\$\{\{\s*secrets\./i)
+    expect(workflow).toContain('uses: actions/upload-artifact@v4')
+    expect(workflow).toContain('name: vitest-coverage')
+    expect(workflow).toContain('path: coverage/')
+    expect(workflow).toContain('name: playwright-failure-artifacts')
+    expect(workflow).toContain('test-results/')
+    expect(workflow).not.toMatch(/\bdeploy\b|\$\{\{\s*secrets\./i)
   })
 })
