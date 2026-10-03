@@ -2882,6 +2882,7 @@ p {
     flex-direction: column;
     align-items: start;
     gap: 0.3rem;
+    overflow-wrap: anywhere;
   }
   .stage-nav {
     margin-bottom: 35px;
