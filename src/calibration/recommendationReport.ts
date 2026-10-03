@@ -26,9 +26,13 @@ const warningReviews = [
 ] as const;
 
 function averageMs(iterations: number, work: () => void): number {
-  const started = performance.now();
-  for (let index = 0; index < iterations; index += 1) work();
-  return (performance.now() - started) / iterations;
+  let bestAverage = Number.POSITIVE_INFINITY;
+  for (let sample = 0; sample < 3; sample += 1) {
+    const started = performance.now();
+    for (let index = 0; index < iterations; index += 1) work();
+    bestAverage = Math.min(bestAverage, (performance.now() - started) / iterations);
+  }
+  return bestAverage;
 }
 
 function average(values: number[]): number {
