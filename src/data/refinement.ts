@@ -558,6 +558,7 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-age-roleplay-position",
     kind: "refinement",
     family: "caregiver-little",
+    dependsOn: [{ questionId: "ref-age-roleplay-interest", answerIds: ["yes"] }],
     prompt: "In non-sexual adult caregiving or age-inspired roleplay, which position feels closest to you?",
     context: adultAgeRoleplayContext,
     answers: [
@@ -606,6 +607,10 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-caregiver-title",
     kind: "refinement",
     family: "caregiver-little",
+    dependsOn: [
+      { questionId: "ref-age-roleplay-interest", answerIds: ["yes"] },
+      { questionId: "ref-age-roleplay-position", answerIds: ["caregiver"] },
+    ],
     prompt: "On the caregiving side of this non-sexual adult dynamic, does either title fit?",
     context: adultAgeRoleplayContext,
     answers: [
@@ -648,6 +653,10 @@ export const refinementQuestions: RefinementQuestion[] = [
     id: "ref-little-vocabulary",
     kind: "refinement",
     family: "caregiver-little",
+    dependsOn: [
+      { questionId: "ref-age-roleplay-interest", answerIds: ["yes"] },
+      { questionId: "ref-age-roleplay-position", answerIds: ["little"] },
+    ],
     prompt: "If Little feels relevant, which non-sexual adult role label feels closest to you?",
     context: adultAgeRoleplayContext,
     answers: [

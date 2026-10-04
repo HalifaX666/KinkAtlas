@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { calculateTraitScores } from "../engine/discoveryScoring";
-import { evaluateRefinementEvidence, preferredPrimaryRoleIdsFromRefinement, supportedRefinementTargets } from "../engine/refinementEvidence";
+import { evaluateRefinementEvidence, preferredPrimaryRoleIdsFromRefinement, refinementFallbackDisposition, supportedRefinementTargets } from "../engine/refinementEvidence";
 import { refinementQuestions } from "../data/refinement";
-import { applyRefinementAnswer, eligibleRefinementFamilies, MAX_REFINEMENT_QUESTIONS, selectEligibleRefinementQuestions, selectRefinementQuestions } from "../engine/refinementRouting";
+import { applyRefinementAnswer, eligibleRefinementFamilies, MAX_REFINEMENT_QUESTIONS, selectEligibleRefinementQuestions, selectRefinementQuestions, validateRefinementQuestionDependencies } from "../engine/refinementRouting";
 import { buildEditableRoleProfileEntries, buildRoleProfileCandidates, optimizeRoleProfile, selectPrimaryRoleProfile, type RoleProfileCandidate, type RoleProfileRecommendation } from "../engine/roleProfileOptimizer";
 import { matchRoles } from "../engine/roleMatching";
-import type { AssessmentAnswers } from "../types";
+import type { AssessmentAnswers, RefinementQuestion } from "../types";
 
 const answers = (discovery: Record<string, string>, refinement: Record<string, string> = {}): AssessmentAnswers => ({
   discovery,
@@ -13,6 +13,41 @@ const answers = (discovery: Record<string, string>, refinement: Record<string, s
   readiness: {},
   boundaries: {},
   negotiation: {},
+});
+
+const dependencyQuestion = (id: string, dependsOn?: RefinementQuestion["dependsOn"]): RefinementQuestion => ({
+  id,
+  kind: "refinement",
+  family: "caregiver-little",
+  prompt: id,
+  dependsOn,
+  answers: [{ id: "yes", label: "Yes", noScore: true }],
+});
+
+describe("Refine dependency metadata", () => {
+  it("validates the complete question set", () => {
+    expect(() => validateRefinementQuestionDependencies(refinementQuestions)).not.toThrow();
+  });
+
+  it("rejects unknown questions, unknown answers, self-dependencies, and cycles", () => {
+    expect(() => validateRefinementQuestionDependencies([
+      dependencyQuestion("child", [{ questionId: "missing", answerIds: ["yes"] }]),
+    ])).toThrow(/unknown question/);
+
+    expect(() => validateRefinementQuestionDependencies([
+      dependencyQuestion("parent"),
+      dependencyQuestion("child", [{ questionId: "parent", answerIds: ["missing"] }]),
+    ])).toThrow(/unknown answer/);
+
+    expect(() => validateRefinementQuestionDependencies([
+      dependencyQuestion("self", [{ questionId: "self", answerIds: ["yes"] }]),
+    ])).toThrow(/depend on itself/);
+
+    expect(() => validateRefinementQuestionDependencies([
+      dependencyQuestion("first", [{ questionId: "second", answerIds: ["yes"] }]),
+      dependencyQuestion("second", [{ questionId: "first", answerIds: ["yes"] }]),
+    ])).toThrow(/dependency cycle/);
+  });
 });
 
 describe("Refine evidence architecture", () => {
@@ -399,6 +434,31 @@ describe("Refine evidence architecture", () => {
     });
     expect(declinedInterest.invalidatedQuestionIds).toEqual(["ref-age-roleplay-position", "ref-caregiver-title", "ref-little-vocabulary"]);
   });
+  it("clears both branch-specific descendants when the selected position changes", () => {
+    const caregiverToLittle = applyRefinementAnswer({
+      "ref-age-roleplay-interest": "yes",
+      "ref-age-roleplay-position": "caregiver",
+      "ref-caregiver-title": "daddy",
+      "ref-little-vocabulary": "little-princess",
+    }, "ref-age-roleplay-position", "little");
+    const littleToCaregiver = applyRefinementAnswer({
+      "ref-age-roleplay-interest": "yes",
+      "ref-age-roleplay-position": "little",
+      "ref-caregiver-title": "mommy",
+      "ref-little-vocabulary": "little-prince",
+    }, "ref-age-roleplay-position", "caregiver");
+
+    expect(caregiverToLittle.refinement).toEqual({
+      "ref-age-roleplay-interest": "yes",
+      "ref-age-roleplay-position": "little",
+    });
+    expect(littleToCaregiver.refinement).toEqual({
+      "ref-age-roleplay-interest": "yes",
+      "ref-age-roleplay-position": "caregiver",
+    });
+    expect(caregiverToLittle.invalidatedQuestionIds).toEqual(["ref-caregiver-title", "ref-little-vocabulary"]);
+    expect(littleToCaregiver.invalidatedQuestionIds).toEqual(["ref-caregiver-title", "ref-little-vocabulary"]);
+  });
   it("makes Little princess eligible only after direct Little vocabulary confirmation", () => {
     const assessment = answers(
       {
@@ -484,6 +544,26 @@ describe("Refine evidence architecture", () => {
 
     expect(little?.eligible).toBe(false);
     expect(preferredPrimaryRoleIdsFromRefinement(assessment.refinement, assessment.discovery)).toEqual([]);
+  });
+  it("derives fallback suppression and supersession from preference metadata only", () => {
+    const eligibleQuestionIds = new Set(["ref-age-roleplay-position", "ref-little-vocabulary"]);
+
+    expect(refinementFallbackDisposition("little", {
+      "ref-age-roleplay-position": "little",
+      "ref-little-vocabulary": "little-princess",
+    }, eligibleQuestionIds)).toEqual({
+      kind: "superseded-by-direct",
+      fallbackGroup: "little-vocabulary",
+      targetId: "little-princess",
+    });
+    expect(refinementFallbackDisposition("little", {
+      "ref-age-roleplay-position": "little",
+      "ref-little-vocabulary": "other",
+    }, eligibleQuestionIds)).toEqual({ kind: "suppressed", fallbackGroup: "little-vocabulary" });
+    expect(refinementFallbackDisposition("middle", {
+      "ref-age-roleplay-position": "little",
+      "ref-little-vocabulary": "little-princess",
+    }, eligibleQuestionIds)).toBeUndefined();
   });
   it("makes Daddy eligible only after direct caregiver-title confirmation", () => {
     const assessment = answers(

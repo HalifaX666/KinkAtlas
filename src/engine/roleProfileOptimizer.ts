@@ -2,7 +2,7 @@ import { roleById } from "../data/roles";
 import { traitById } from "../data/traits";
 import { relationshipsForLibraryRole, roleLibrary, roleLibraryRoleById, type RoleLibraryDecisionPathway, type RoleLibraryPrimaryPolicy, type RoleLibraryRole } from "../taxonomy/roleLibrary";
 import type { ConfidenceLevel, RoleResult, AssessmentAnswers } from "../types";
-import { evaluateRefinementEvidence, preferredPrimaryRoleIdsFromRefinement, refinementFallbackIsSuperseded, refinementQuestionIdsForTarget, refinementTargetByRoleId } from "./refinementEvidence";
+import { evaluateRefinementEvidence, preferredPrimaryRoleIdsFromRefinement, refinementFallbackDisposition, refinementQuestionIdsForTarget, refinementTargetByRoleId } from "./refinementEvidence";
 import { calculateTraitScores } from "./discoveryScoring";
 import { refinementTargetIsSemanticallyEligible, selectEligibleRefinementQuestions } from "./refinementRouting";
 
@@ -338,12 +338,17 @@ function candidateEvidence(role: RoleLibraryRole, roleResults: RoleResult[], ass
         ? "unconfirmed"
         : undefined;
 
-  if (role.id === "role:little-180ca01b" && refinementFallbackIsSuperseded("little", refinementAnswers, eligibleRefinementQuestionIds)) {
+  const fallbackDisposition = refinementTarget
+    ? refinementFallbackDisposition(refinementTarget.id, refinementAnswers, eligibleRefinementQuestionIds)
+    : undefined;
+  if (fallbackDisposition) {
     return {
       evidenceType: "hybrid" as const,
       eligible: false,
       confidence: undefined,
-      explanation: refinementAnswers["ref-little-vocabulary"] === "other" ? "The user indicated that another Little-related label fits better, so KinkAtlas does not force the generic Little label." : "A more specific directly confirmed Little vocabulary label supersedes generic Little in the suggested role set.",
+      explanation: fallbackDisposition.kind === "suppressed"
+        ? "The user indicated that another related label fits better, so KinkAtlas does not force the fallback label."
+        : "A more specific directly confirmed vocabulary label supersedes the fallback label in the suggested role set.",
     };
   }
 

@@ -4,10 +4,57 @@ import type { AssessmentAnswers, RefinementFamilyId, RefinementQuestion, Refinem
 
 export const MAX_REFINEMENT_QUESTIONS = 6;
 
-const dependentQuestionIds: Record<string, readonly string[]> = {
-  "ref-age-roleplay-interest": ["ref-age-roleplay-position", "ref-caregiver-title", "ref-little-vocabulary"],
-  "ref-age-roleplay-position": ["ref-caregiver-title", "ref-little-vocabulary"],
-};
+export function validateRefinementQuestionDependencies(questions: readonly RefinementQuestion[]): void {
+  const questionById = new Map(questions.map((question) => [question.id, question]));
+
+  questions.forEach((question) => {
+    question.dependsOn?.forEach((dependency) => {
+      const parent = questionById.get(dependency.questionId);
+      if (!parent) throw new Error(`Refinement question ${question.id} depends on unknown question ${dependency.questionId}.`);
+      if (dependency.questionId === question.id) throw new Error(`Refinement question ${question.id} cannot depend on itself.`);
+      if (!dependency.answerIds.length) throw new Error(`Refinement question ${question.id} has an empty answer dependency for ${dependency.questionId}.`);
+      dependency.answerIds.forEach((answerId) => {
+        if (!parent.answers.some((answer) => answer.id === answerId)) {
+          throw new Error(`Refinement question ${question.id} depends on unknown answer ${answerId} from ${dependency.questionId}.`);
+        }
+      });
+    });
+  });
+
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const visit = (questionId: string) => {
+    if (visiting.has(questionId)) throw new Error(`Refinement question dependency cycle includes ${questionId}.`);
+    if (visited.has(questionId)) return;
+    visiting.add(questionId);
+    questionById.get(questionId)?.dependsOn?.forEach((dependency) => visit(dependency.questionId));
+    visiting.delete(questionId);
+    visited.add(questionId);
+  };
+  questions.forEach((question) => visit(question.id));
+}
+
+export function refinementDependenciesSatisfied(
+  question: RefinementQuestion,
+  refinementAnswers: AssessmentAnswers["refinement"],
+): boolean {
+  return question.dependsOn?.every((dependency) => dependency.answerIds.includes(refinementAnswers[dependency.questionId])) ?? true;
+}
+
+function descendantQuestionIds(questionId: string, questions: readonly RefinementQuestion[]): string[] {
+  const descendants: string[] = [];
+  const collect = (parentId: string) => {
+    questions.forEach((question) => {
+      if (!question.dependsOn?.some((dependency) => dependency.questionId === parentId) || descendants.includes(question.id)) return;
+      descendants.push(question.id);
+      collect(question.id);
+    });
+  };
+  collect(questionId);
+  return descendants;
+}
+
+validateRefinementQuestionDependencies(refinementQuestions);
 
 export interface RefinementAnswerUpdate {
   refinement: AssessmentAnswers["refinement"];
@@ -16,10 +63,12 @@ export interface RefinementAnswerUpdate {
 
 export function applyRefinementAnswer(current: AssessmentAnswers["refinement"], questionId: string, answerId: string): RefinementAnswerUpdate {
   const answerChanged = current[questionId] !== answerId;
-  const invalidateAgeRoleplayBranch = questionId === "ref-age-roleplay-interest" && answerId !== "yes";
-  const invalidatePositionChildren = questionId === "ref-age-roleplay-position" && answerChanged;
-  const invalidatedQuestionIds = invalidateAgeRoleplayBranch || invalidatePositionChildren ? [...(dependentQuestionIds[questionId] ?? [])] : [];
   const refinement = { ...current, [questionId]: answerId };
+  const questionById = new Map(refinementQuestions.map((question) => [question.id, question]));
+  const invalidatedQuestionIds = descendantQuestionIds(questionId, refinementQuestions).filter((dependentQuestionId) => {
+    const dependentQuestion = questionById.get(dependentQuestionId);
+    return answerChanged || (dependentQuestion ? !refinementDependenciesSatisfied(dependentQuestion, refinement) : false);
+  });
 
   invalidatedQuestionIds.forEach((dependentQuestionId) => {
     delete refinement[dependentQuestionId];
@@ -197,18 +246,6 @@ function shouldAskAdultAgeRoleplayGate(answers: AssessmentAnswers): boolean {
   return answerId === "strong" || answerId === "some" || answerId === "curious";
 }
 
-function adultAgeRoleplayInterest(answers: AssessmentAnswers): boolean {
-  return answers.refinement["ref-age-roleplay-interest"] === "yes";
-}
-
-function caregiverPositionSelected(answers: AssessmentAnswers): boolean {
-  return answers.refinement["ref-age-roleplay-position"] === "caregiver";
-}
-
-function littlePositionSelected(answers: AssessmentAnswers): boolean {
-  return answers.refinement["ref-age-roleplay-position"] === "little";
-}
-
 function routeCandidates(answers: AssessmentAnswers, traitScores: TraitScores): RefinementRouteCandidate[] {
   const submission = submissionSupported(answers, traitScores);
   const dominance = dominanceSupported(answers, traitScores);
@@ -370,17 +407,17 @@ function routeCandidates(answers: AssessmentAnswers, traitScores: TraitScores): 
     },
     {
       questionId: "ref-age-roleplay-position",
-      eligible: adultAgeRoleplayInterest(answers),
+      eligible: true,
       strength: 1,
     },
     {
       questionId: "ref-caregiver-title",
-      eligible: adultAgeRoleplayInterest(answers) && caregiverPositionSelected(answers),
+      eligible: true,
       strength: 1,
     },
     {
       questionId: "ref-little-vocabulary",
-      eligible: adultAgeRoleplayInterest(answers) && littlePositionSelected(answers),
+      eligible: true,
       strength: 1,
     },
   ];
@@ -409,7 +446,8 @@ export function eligibleRefinementFamilies(answers: AssessmentAnswers, traitScor
     families.push("pet");
   }
 
-  if (shouldAskAdultAgeRoleplayGate(answers) || adultAgeRoleplayInterest(answers)) {
+  const ageRoleplayPosition = refinementQuestions.find((question) => question.id === "ref-age-roleplay-position");
+  if (shouldAskAdultAgeRoleplayGate(answers) || (ageRoleplayPosition && refinementDependenciesSatisfied(ageRoleplayPosition, answers.refinement))) {
     families.push("caregiver-little");
   }
 
@@ -446,6 +484,10 @@ export function selectEligibleRefinementQuestions(answers: AssessmentAnswers, tr
 
   routeCandidates(answers, traitScores)
     .filter((candidate) => candidate.eligible)
+    .filter((candidate) => {
+      const question = questionById.get(candidate.questionId);
+      return question ? refinementDependenciesSatisfied(question, answers.refinement) : false;
+    })
     .forEach((candidate) => {
       const existing = strongestCandidateByQuestionId.get(candidate.questionId);
 

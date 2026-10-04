@@ -20,7 +20,7 @@ Role meanings vary by person, community, and context. A description in KinkAtlas
 
 The neutral source dataset is `src/data/role-library/role-library.source.json`. It contains the public fields needed to generate `src/data/role-library/role-library.json`, the compact runtime dataset used by the browser.
 
-The generator validates IDs, references, supported modes, relationships, and families before emitting deterministic JSON. The drift check compares generated values with the checked-in runtime file so an ungenerated source edit fails verification.
+The generator validates IDs, references, supported modes, relationships, and families before emitting deterministic JSON. Relationship validation rejects duplicate directed edges and reversed duplicates for symmetric relationship types. The drift check compares generated values with the checked-in runtime file so an ungenerated source edit fails verification.
 
 Do not edit the runtime file as the source of truth. Make an intentional change in the neutral source dataset, generate the runtime output, and review both the semantic change and the resulting diff.
 
@@ -59,9 +59,17 @@ Alignment, confidence, and evidence breadth have separate meanings and must rema
 
 ## Families and relationships
 
-Families support organization and exploration. Membership may be many-to-many and must not make a role assessable or recommended by itself.
+`relationships[]` is the reviewed semantic graph used for role-to-role exploration. Each edge's `rationale` is the reviewed explanation shown for that relationship; application code should not maintain a second relationship-type explanation map.
+
+`canonicalRoleId` and `nearestRoleIds` bridge library vocabulary to the scored-role evidence system. They are not substitutes for reviewed relationship edges. `familyIds` supports organization and lower-priority exploration fallback; family membership may be many-to-many and must not create scoring evidence or make a role assessable or recommended by itself.
 
 Relationship edges should be added only after comparing both terms. Choose the narrowest supported relationship type, keep directionality correct, and explain the distinction in a neutral rationale. Aliases should represent genuinely interchangeable vocabulary; a narrower or context-specific role should not be marked as an alias merely because it overlaps a broader term.
+
+## Refine metadata contracts
+
+Refine-to-Refine sequencing belongs in question `dependsOn` metadata. Routing may still enforce Discovery evidence thresholds, but it must evaluate question dependencies and clear invalid descendants generically rather than duplicating question-ID branches.
+
+Fallback vocabulary behavior belongs in answer `primaryPreference` metadata. `fallback`, `direct`, and `suppress-fallback` preferences within a `fallbackGroup` determine supersession without role-specific optimizer exceptions.
 
 ## Contribution workflow
 

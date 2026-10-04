@@ -46,6 +46,16 @@ const relationshipTypes = new Set([
   'alias',
   'persona-related',
 ])
+const symmetricRelationshipTypes = new Set([
+  'sibling',
+  'directional-counterpart',
+  'switch-counterpart',
+  'activity-related',
+  'commonly-overlapping',
+  'near-synonym',
+  'alias',
+  'persona-related',
+])
 
 const requiredRoleKeys = new Set([
   'id',
@@ -187,6 +197,8 @@ export function validateRoleLibraryDataset(value: unknown): JsonObject {
     }
   })
 
+  const exactRelationshipKeys = new Set<string>()
+  const symmetricRelationshipKeys = new Set<string>()
   dataset.relationships.forEach((relationshipValue, index) => {
     const location = `relationships[${index}]`
     const relationship = requireObject(relationshipValue, location)
@@ -194,11 +206,26 @@ export function validateRoleLibraryDataset(value: unknown): JsonObject {
     requireOnlyKeys(relationship, relationshipKeys, location)
     const fromRoleId = requireNonEmptyString(relationship.fromRoleId, `${location}.fromRoleId`)
     const toRoleId = requireNonEmptyString(relationship.toRoleId, `${location}.toRoleId`)
-    requireEnum(relationship.type, relationshipTypes, `${location}.type`)
+    const type = requireEnum(relationship.type, relationshipTypes, `${location}.type`)
     requireNonEmptyString(relationship.rationale, `${location}.rationale`)
     if (!roleIds.has(fromRoleId)) fail(`${location}.fromRoleId references missing role ${JSON.stringify(fromRoleId)}.`)
     if (!roleIds.has(toRoleId)) fail(`${location}.toRoleId references missing role ${JSON.stringify(toRoleId)}.`)
     if (fromRoleId === toRoleId) fail(`${location} cannot relate a role to itself.`)
+
+    const exactKey = JSON.stringify([fromRoleId, toRoleId, type])
+    if (exactRelationshipKeys.has(exactKey)) {
+      fail(`${location} duplicates relationship ${fromRoleId} -> ${toRoleId} (${type}).`)
+    }
+    exactRelationshipKeys.add(exactKey)
+
+    if (symmetricRelationshipTypes.has(type)) {
+      const endpoints = [fromRoleId, toRoleId].sort()
+      const symmetricKey = JSON.stringify([endpoints[0], endpoints[1], type])
+      if (symmetricRelationshipKeys.has(symmetricKey)) {
+        fail(`${location} reverses an existing symmetric relationship between ${endpoints[0]} and ${endpoints[1]} (${type}).`)
+      }
+      symmetricRelationshipKeys.add(symmetricKey)
+    }
   })
 
   return dataset

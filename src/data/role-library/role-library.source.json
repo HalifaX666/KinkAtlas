@@ -10835,12 +10835,6 @@
       "rationale": "Primal Switch can include pursuit."
     },
     {
-      "fromRoleId": "role:primal-prey-544c0478",
-      "toRoleId": "role:primal-switch-705db664",
-      "type": "switch-counterpart",
-      "rationale": "Primal Switch can include evasion or being pursued."
-    },
-    {
       "fromRoleId": "role:sadist-967ed11a",
       "toRoleId": "role:masochist-a8bcaeab",
       "type": "directional-counterpart",

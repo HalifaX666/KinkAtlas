@@ -68,12 +68,18 @@ export interface RefinementAnswerOption extends AnswerOption {
   primaryPreference?: RefinementPrimaryPreference;
 }
 
+export interface RefinementQuestionDependency {
+  questionId: string;
+  answerIds: string[];
+}
+
 export interface RefinementQuestion {
   id: string;
   kind: "refinement";
   family: RefinementFamilyId;
   prompt: string;
   context?: string;
+  dependsOn?: RefinementQuestionDependency[];
   answers: RefinementAnswerOption[];
 }
 

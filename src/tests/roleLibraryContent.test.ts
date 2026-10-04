@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { roleLibrary } from "../taxonomy/roleLibrary";
+import { buildRelatedRoleProfiles } from "../engine/roleProfileExploration";
+import { roleLibrary, type RoleLibraryRelationshipType } from "../taxonomy/roleLibrary";
 
 const PROHIBITED_PUBLIC_TEXT = /verified catalog|exact catalog|source-backed|source-derived|source association|source definition|https?:\/\//i;
 const PLACEHOLDER_TEXT = /\b(?:todo|tbd|lorem ipsum)\b|placeholder definition|definition (?:is )?unavailable/i;
@@ -56,5 +57,45 @@ describe("public role-library content policy", () => {
 
   it("contains no URLs or private workflow language", () => {
     expect(JSON.stringify(roleLibrary)).not.toMatch(PROHIBITED_PUBLIC_TEXT);
+  });
+
+  it("keeps the reviewed relationship graph valid and duplicate-free", () => {
+    const roleIds = new Set(roleLibrary.roles.map((role) => role.id));
+    const symmetricTypes = new Set<RoleLibraryRelationshipType>([
+      "sibling", "directional-counterpart", "switch-counterpart", "activity-related",
+      "commonly-overlapping", "near-synonym", "alias", "persona-related",
+    ]);
+    const exactKeys = roleLibrary.relationships.map((relationship) => JSON.stringify([
+      relationship.fromRoleId, relationship.toRoleId, relationship.type,
+    ]));
+    const semanticKeys = roleLibrary.relationships.map((relationship) => {
+      const endpoints = symmetricTypes.has(relationship.type)
+        ? [relationship.fromRoleId, relationship.toRoleId].sort()
+        : [relationship.fromRoleId, relationship.toRoleId];
+      return JSON.stringify([...endpoints, relationship.type]);
+    });
+
+    expect(roleLibrary.relationships).toHaveLength(59);
+    expect(new Set(exactKeys).size).toBe(exactKeys.length);
+    expect(new Set(semanticKeys).size).toBe(semanticKeys.length);
+    roleLibrary.relationships.forEach((relationship) => {
+      expect(roleIds.has(relationship.fromRoleId)).toBe(true);
+      expect(roleIds.has(relationship.toRoleId)).toBe(true);
+      expect(relationship.rationale.trim()).not.toBe("");
+    });
+  });
+
+  it("uses reviewed relationship rationales for related-role explanations without duplicate roles", () => {
+    const reviewedTypes: RoleLibraryRelationshipType[] = [
+      "directional-counterpart", "switch-counterpart", "broader-than", "near-synonym", "commonly-overlapping",
+    ];
+
+    reviewedTypes.forEach((type) => {
+      const relationship = roleLibrary.relationships.find((candidate) => candidate.type === type)!;
+      const related = buildRelatedRoleProfiles([relationship.fromRoleId], roleLibrary.roles.length);
+      const target = related.find((candidate) => candidate.roleId === relationship.toRoleId);
+      expect(target?.reason, type).toBe(relationship.rationale);
+      expect(new Set(related.map((candidate) => candidate.roleId)).size, type).toBe(related.length);
+    });
   });
 });

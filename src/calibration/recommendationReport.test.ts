@@ -31,7 +31,7 @@ describe("recommendation quality report", () => {
       confirmationBased: 137,
       legitimateTopFiveReach: 366,
       manualOnly: 446,
-      relationships: 60,
+      relationships: 59,
       familyCoverage: 449,
     });
     expect(report.questions).toMatchObject({ broad: 20, refinements: 52, mandatoryMaximum: 26, optionalPool: 325 });

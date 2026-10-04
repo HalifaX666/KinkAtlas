@@ -16,10 +16,12 @@ export interface RoleLibraryRole {
   assessmentMode: RoleLibraryAssessmentMode
   recommendationEligibility: RoleLibraryRecommendationEligibility
   primaryPolicy: RoleLibraryPrimaryPolicy
+  // These fields bridge library vocabulary to the scored-role evidence model; they are not semantic graph edges.
   canonicalRoleId?: string
   nearestRoleIds: string[]
   evidenceCluster?: string
   decisionPathway: RoleLibraryDecisionPathway
+  // Families organize exploration and do not create scoring or recommendation evidence.
   familyIds: string[]
   definition?: string
 }

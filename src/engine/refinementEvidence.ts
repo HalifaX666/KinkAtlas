@@ -1,6 +1,6 @@
 import { refinementQuestionById, refinementQuestions } from "../data/refinement";
 import { roleLibraryRoleById } from "../taxonomy/roleLibrary";
-import type { AssessmentAnswers, RefinementEvidence, RefinementPrimaryPreference, RefinementTargetId } from "../types";
+import type { AssessmentAnswers, RefinementEvidence, RefinementPrimaryPreference, RefinementPrimaryPreferenceGroup, RefinementTargetId } from "../types";
 import { calculateTraitScores } from "./discoveryScoring";
 import { refinementTargetIsSemanticallyEligible, selectEligibleRefinementQuestions } from "./refinementRouting";
 
@@ -303,7 +303,15 @@ export function preferredPrimaryRoleIdsFromRefinement(refinementAnswers: Assessm
   return [...new Set(roleIds)].sort((left, right) => left.localeCompare(right));
 }
 
-export function refinementFallbackIsSuperseded(targetId: RefinementTargetId, refinementAnswers: AssessmentAnswers["refinement"], eligibleQuestionIds: ReadonlySet<string>): boolean {
+export type RefinementFallbackDisposition =
+  | { kind: "superseded-by-direct"; fallbackGroup: RefinementPrimaryPreferenceGroup; targetId: RefinementTargetId }
+  | { kind: "suppressed"; fallbackGroup: RefinementPrimaryPreferenceGroup };
+
+export function refinementFallbackDisposition(
+  targetId: RefinementTargetId,
+  refinementAnswers: AssessmentAnswers["refinement"],
+  eligibleQuestionIds: ReadonlySet<string>,
+): RefinementFallbackDisposition | undefined {
   const fallbackGroups = new Set(
     refinementQuestions.flatMap((question) =>
       question.answers.flatMap((answer) => {
@@ -314,10 +322,15 @@ export function refinementFallbackIsSuperseded(targetId: RefinementTargetId, ref
   );
   const selected = selectedPrimaryPreferences(refinementAnswers, eligibleQuestionIds);
 
-  return selected.some(({ preference }) => {
-    if (preference.kind === "suppress-fallback") return fallbackGroups.has(preference.fallbackGroup);
-    return preference.kind === "direct" && preference.targetId !== targetId && Boolean(preference.fallbackGroup && fallbackGroups.has(preference.fallbackGroup));
-  });
+  for (const { preference } of selected) {
+    if (preference.kind === "suppress-fallback" && fallbackGroups.has(preference.fallbackGroup)) {
+      return { kind: "suppressed", fallbackGroup: preference.fallbackGroup };
+    }
+    if (preference.kind === "direct" && preference.targetId !== targetId && preference.fallbackGroup && fallbackGroups.has(preference.fallbackGroup)) {
+      return { kind: "superseded-by-direct", fallbackGroup: preference.fallbackGroup, targetId: preference.targetId };
+    }
+  }
+  return undefined;
 }
 
 export function evaluateRefinementEvidence(refinementAnswers: AssessmentAnswers["refinement"]): RefinementEvidence[] {

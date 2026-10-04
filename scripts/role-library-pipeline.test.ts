@@ -22,6 +22,12 @@ const dataset = () => ({
   families: { "example-family": "Example family" },
 });
 
+const relationshipDataset = () => {
+  const value = dataset();
+  value.roles.push({ ...role, id: "role:other", label: "Other" });
+  return value;
+};
+
 describe("neutral role-library pipeline", () => {
   it("reproduces the checked-in runtime deterministically", async () => {
     const generated = await generateRoleLibrary();
@@ -29,7 +35,7 @@ describe("neutral role-library pipeline", () => {
       roleCount: 812,
       definitionCount: 708,
       unavailableCount: 104,
-      relationshipCount: 60,
+      relationshipCount: 59,
       familyCount: 26,
     });
     expect(generated.serialized).toBe(await readFile(roleLibraryRuntimePath, "utf8"));
@@ -73,5 +79,36 @@ describe("neutral role-library pipeline", () => {
       rationale: "Test relationship.",
     });
     expect(() => validateRoleLibraryDataset(missingRole)).toThrow(/references missing role/);
+  });
+
+  it("rejects exact duplicate semantic relationship edges even when rationales differ", () => {
+    const value = relationshipDataset();
+    value.relationships.push(
+      { fromRoleId: role.id, toRoleId: "role:other", type: "sibling", rationale: "First rationale." },
+      { fromRoleId: role.id, toRoleId: "role:other", type: "sibling", rationale: "Different rationale." },
+    );
+
+    expect(() => validateRoleLibraryDataset(value)).toThrow(/duplicates relationship/);
+  });
+
+  it("rejects reversed duplicates for symmetric relationship types", () => {
+    const value = relationshipDataset();
+    value.relationships.push(
+      { fromRoleId: role.id, toRoleId: "role:other", type: "switch-counterpart", rationale: "First direction." },
+      { fromRoleId: "role:other", toRoleId: role.id, type: "switch-counterpart", rationale: "Reverse direction." },
+    );
+
+    expect(() => validateRoleLibraryDataset(value)).toThrow(/reverses an existing symmetric relationship/);
+  });
+
+  it("accepts independent relationship types and preserves directional edges", () => {
+    const value = relationshipDataset();
+    value.relationships.push(
+      { fromRoleId: role.id, toRoleId: "role:other", type: "broader-than", rationale: "Example is broader." },
+      { fromRoleId: "role:other", toRoleId: role.id, type: "broader-than", rationale: "Other is independently broader." },
+      { fromRoleId: role.id, toRoleId: "role:other", type: "activity-related", rationale: "A separate symmetric relationship type." },
+    );
+
+    expect(() => validateRoleLibraryDataset(value)).not.toThrow();
   });
 });
