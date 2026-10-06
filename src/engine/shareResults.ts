@@ -1,6 +1,8 @@
 import { boundaryItems, boundaryOptions } from '../data/boundaries'
 import { negotiationQuestions } from '../data/negotiation'
 import { competencyDefinitions } from '../data/readiness'
+import { drawRoleEmblemOnCanvas } from '../data/roleEmblems'
+import { buildRoleSetCardPresentations, roleLibraryRoleForIdentity, type RoleSetCardPresentation } from '../data/roleIdentity'
 import { explainRoleResult } from './roleExplanation'
 import type { EditableRoleProfileEntry } from './roleProfileOptimizer'
 import type { AssessmentAnswers, ReadinessAssessment, RoleResult } from '../types'
@@ -23,13 +25,10 @@ export interface ShareResultsData {
   negotiation: AssessmentAnswers['negotiation']
 }
 
-export interface ShareableRoleResult {
+export interface ShareableRoleResult extends RoleSetCardPresentation {
   id: string
   name: string
-  source: EditableRoleProfileEntry['source']
-  alignment?: string
-  confidence?: string
-  evidenceBreadth?: number
+  family: string
   summary: string
   supportingSignals: string[]
 }
@@ -53,14 +52,6 @@ export const defaultShareOptions: ShareOptions = {
   negotiation: false,
 }
 
-const alignmentLabels: Record<RoleResult['alignment'], string> = {
-  strong: 'Strong Alignment',
-  explore: 'Worth Exploring',
-  some: 'Some Alignment',
-  insufficient: 'Limited Evidence',
-}
-
-const confidenceLabel = (confidence: RoleResult['confidence']) => confidence === 'moderate' ? 'Medium confidence' : `${confidence[0].toUpperCase()}${confidence.slice(1)} confidence`
 const blindSpotLabels = { notice: 'Reflection cue', concern: 'Worth reviewing', critical: 'Important concept' } as const
 const productExplanation = 'KinkAtlas is a private self-reflection tool that suggests role vocabulary from your answers, not an identity assignment.'
 const separateLensesExplanation = 'Reflection considers knowledge and attitudes, not real-world readiness. Boundaries remain independent of role alignment.'
@@ -74,43 +65,46 @@ const roleMetricsExplanation = (includeAlignment = true, includeConfidence = tru
 const unavailableRoleDefinition = 'KinkAtlas does not currently have a reviewed description for this term. Explore how different people and communities use it, then decide what it means to you.'
 
 export function toShareableRoleResult(result: RoleResult): ShareableRoleResult {
+  const libraryRole = roleLibraryRoleForIdentity(result.role.id, result.role.id)
+  if (!libraryRole) throw new Error(`No role-library identity exists for ${result.role.id}.`)
   const explanation = explainRoleResult(result)
   const signals = [...explanation.supportingSignals, ...explanation.differentiatingSignals]
     .filter((signal, index, all) => all.findIndex((candidate) => candidate.traitId === signal.traitId) === index)
     .slice(0, 4)
     .map((signal) => signal.label)
 
-  return {
-    id: result.role.id,
-    name: result.role.name,
+  const [presentation] = buildRoleSetCardPresentations([{
+    roleId: libraryRole.id,
+    label: libraryRole.label,
     source: 'recommended',
-    alignment: alignmentLabels[result.alignment],
-    confidence: confidenceLabel(result.confidence),
-    evidenceBreadth: Math.round(result.coverage * 100),
-    summary: result.role.description,
+    definition: result.role.description,
+    assessmentRoleId: result.role.id,
+  }], [result])
+  return {
+    ...presentation,
+    id: presentation.roleId,
+    name: presentation.label,
+    family: presentation.familyLabel,
+    summary: presentation.summary ?? result.role.description,
     supportingSignals: signals,
   }
 }
 
 export function getShareableRoleSet(roleSet: EditableRoleProfileEntry[], roleResults: RoleResult[]): ShareableRoleResult[] {
   const resultById = new Map(roleResults.map((result) => [result.role.id, result]))
-  return roleSet.map((entry) => {
+  return buildRoleSetCardPresentations(roleSet, roleResults).map((presentation, index) => {
+    const entry = roleSet[index]
     const result = entry.source === 'recommended' && entry.assessmentRoleId
       ? resultById.get(entry.assessmentRoleId)
       : undefined
-    if (result) return {
-      ...toShareableRoleResult(result),
-      id: entry.roleId,
-      name: entry.label,
-      source: entry.source,
-      summary: entry.definition?.trim() || result.role.description,
-    }
+    const signals = result ? toShareableRoleResult(result).supportingSignals : []
     return {
+      ...presentation,
       id: entry.roleId,
       name: entry.label,
-      source: entry.source,
-      summary: entry.definition?.trim() || unavailableRoleDefinition,
-      supportingSignals: [],
+      family: presentation.familyLabel,
+      summary: presentation.summary ?? unavailableRoleDefinition,
+      supportingSignals: signals,
     }
   })
 }
@@ -282,66 +276,92 @@ const drawLines = (context: CanvasRenderingContext2D, lines: string[], x: number
   return y + Math.min(lines.length, maxLines) * lineHeight
 }
 
-export async function createRoleCardImage(role: ShareableRoleResult): Promise<Blob> {
-  const { canvas, context } = createCanvas(ROLE_CARD_SIZE)
-  drawBackground(context, canvas.width, canvas.height)
-  drawBrand(context, 72, 64, 1.05)
-  context.fillStyle = '#aea3a4'
-  context.font = '20px system-ui, sans-serif'
-  context.fillText('KinkAtlas helps you explore role vocabulary through self-reflection.', 74, 160)
+const truncateText = (text: string, maxLength: number) => text.length > maxLength ? `${text.slice(0, maxLength - 1).trimEnd()}…` : text
 
-  context.fillStyle = '#d7a85f'
-  context.font = '700 20px system-ui, sans-serif'
-  context.fillText('YOUR KINK ATLAS', 74, 220)
-  context.fillStyle = '#f4efeb'
-  context.font = '64px Georgia, serif'
-  const titleEnd = drawLines(context, wrapText(role.name.toUpperCase(), 24), 72, 310, 76, 2)
+const drawRoleCardBackground = (context: CanvasRenderingContext2D) => {
+  context.fillStyle = '#1b181a'
+  context.fillRect(0, 0, ROLE_CARD_SIZE.width, ROLE_CARD_SIZE.height)
+  const gradient = context.createRadialGradient(540, 215, 20, 540, 215, 570)
+  gradient.addColorStop(0, 'rgba(143,82,112,.28)')
+  gradient.addColorStop(1, 'rgba(27,24,26,0)')
+  context.fillStyle = gradient
+  context.fillRect(0, 0, ROLE_CARD_SIZE.width, ROLE_CARD_SIZE.height)
 
-  context.fillStyle = '#e9cb93'
-  context.font = '700 25px system-ui, sans-serif'
-  const hasAssessmentMetrics = role.alignment !== undefined || role.confidence !== undefined || role.evidenceBreadth !== undefined
-  context.fillText(role.source === 'user-selected' ? 'Selected by you' : hasAssessmentMetrics ? role.alignment ?? '' : 'Suggested', 74, titleEnd + 24)
-  context.fillStyle = '#bdb2b3'
-  context.font = '23px system-ui, sans-serif'
-  if (role.source === 'user-selected' || !hasAssessmentMetrics) {
-    context.fillText(role.source === 'user-selected' ? 'No assessment alignment or confidence' : 'No alignment score or confidence', 74, titleEnd + 64)
-  } else {
-    context.fillText(role.confidence ?? '', 74, titleEnd + 64)
-    if (role.evidenceBreadth !== undefined) context.fillText(`${role.evidenceBreadth}% evidence breadth`, 74, titleEnd + 100)
-  }
+  context.strokeStyle = 'rgba(215,168,95,.38)'
+  context.lineWidth = 2
+  context.beginPath()
+  context.moveTo(36, 36)
+  context.lineTo(1044, 36)
+  context.lineTo(1044, 1314)
+  context.lineTo(36, 1314)
+  context.closePath()
+  context.stroke()
+  context.strokeStyle = 'rgba(255,255,255,.07)'
+  context.beginPath()
+  context.moveTo(50, 50)
+  context.lineTo(1030, 50)
+  context.lineTo(1030, 1300)
+  context.lineTo(50, 1300)
+  context.closePath()
+  context.stroke()
+}
 
-  context.fillStyle = '#d7a85f'
-  context.font = '700 20px system-ui, sans-serif'
-  context.fillText('ROLE MEANING', 74, titleEnd + 160)
-  context.fillStyle = '#d8d0ce'
-  context.font = '29px system-ui, sans-serif'
-  const summaryEnd = drawLines(context, wrapText(role.summary, 54), 74, titleEnd + 198, 43, 6)
-
-  context.fillStyle = '#d7a85f'
-  context.font = '700 20px system-ui, sans-serif'
-  context.fillText(role.source === 'user-selected' ? "WHY IT'S IN YOUR SET" : 'WHY IT MATCHED', 74, summaryEnd + 58)
-  context.fillStyle = '#f4efeb'
-  context.font = '27px system-ui, sans-serif'
-  if (role.source === 'user-selected') context.fillText('• Added by you; KinkAtlas did not score this selection.', 82, summaryEnd + 110)
-  else if (!hasAssessmentMetrics) context.fillText('• Suggested without an assessment alignment score.', 82, summaryEnd + 110)
-  else role.supportingSignals.forEach((signal, index) => context.fillText(`• ${signal}`, 82, summaryEnd + 110 + index * 54))
-
+const drawRoleCardDivider = (context: CanvasRenderingContext2D, y: number) => {
   context.strokeStyle = 'rgba(255,255,255,.14)'
   context.lineWidth = 2
   context.beginPath()
-  context.moveTo(72, 1230)
-  context.lineTo(1008, 1230)
+  context.moveTo(72, y)
+  context.lineTo(1008, y)
   context.stroke()
+}
+
+export async function createRoleCardImage(role: ShareableRoleResult): Promise<Blob> {
+  const { canvas, context } = createCanvas(ROLE_CARD_SIZE)
+  drawRoleCardBackground(context)
+
   context.fillStyle = '#aea3a4'
-  context.font = '16px system-ui, sans-serif'
-  context.fillText('Alignment reflects theme similarity; confidence reflects information amount, not ranking.', 74, 1252)
-  context.fillText('Evidence breadth is answer-backed theme coverage, not match strength.', 74, 1274)
+  context.font = '800 18px system-ui, sans-serif'
+  context.fillText('KINKATLAS', 72, 88)
+
+  drawRoleEmblemOnCanvas(context, role.emblem, { x: 390, y: 112, width: 300, height: 330 }, '#e9cb93')
+
+  context.fillStyle = '#d7a85f'
+  context.font = '800 19px system-ui, sans-serif'
+  context.fillText(truncateText(role.familyLabel.toUpperCase(), 76), 72, 478)
+  context.fillStyle = '#f4efeb'
+  context.font = '64px Georgia, serif'
+  drawLines(context, wrapText(role.label, 25), 72, 548, 70, 2)
+
   context.fillStyle = '#d8d0ce'
-  context.font = '18px system-ui, sans-serif'
-  context.fillText('Vocabulary suggestions—not identity or consent.', 74, 1297)
-  context.fillStyle = '#93898b'
-  context.font = '16px system-ui, sans-serif'
-  context.fillText('Reflection and boundaries are separate. Results do not certify readiness or safety.', 74, 1322)
+  context.font = '25px system-ui, sans-serif'
+  drawLines(context, wrapText(role.summary, 72), 72, 690, 36, 3)
+
+  role.attributes.slice(0, 4).forEach((attribute, index) => {
+    const y = 820 + index * 48
+    drawRoleCardDivider(context, y)
+    context.fillStyle = '#93898b'
+    context.font = '18px system-ui, sans-serif'
+    context.textAlign = 'left'
+    context.fillText(truncateText(attribute.label, 28), 72, y + 31)
+    context.fillStyle = '#f4efeb'
+    context.font = '700 18px system-ui, sans-serif'
+    context.textAlign = 'right'
+    context.fillText(truncateText(attribute.value, 46), 1008, y + 31)
+  })
+  context.textAlign = 'left'
+
+  drawRoleCardDivider(context, 1024)
+  context.fillStyle = '#e9cb93'
+  context.font = '800 20px system-ui, sans-serif'
+  context.fillText(role.sourceLabel.toUpperCase(), 72, 1068)
+  context.fillStyle = '#aea3a4'
+  context.font = '20px system-ui, sans-serif'
+  role.assessmentDetails.slice(0, 3).forEach((detail, index) => context.fillText(truncateText(detail, 72), 72, 1112 + index * 36))
+
+  drawRoleCardDivider(context, 1238)
+  context.fillStyle = '#d8d0ce'
+  context.font = '700 19px system-ui, sans-serif'
+  context.fillText(truncateText(`kinkatlas.ca${role.publicPath}`, 78), 72, 1282)
 
   return canvasToBlob(canvas)
 }

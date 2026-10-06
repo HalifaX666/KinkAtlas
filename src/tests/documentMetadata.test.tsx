@@ -32,6 +32,7 @@ describe("route document metadata", () => {
     ["/terms", "Terms of Use | KinkAtlas", "index, follow"],
     ["/assessment", "Kink & BDSM Exploration Quiz | KinkAtlas", "index, follow"],
     ["/results", "Your Kink Map | KinkAtlas", "noindex, nofollow"],
+    ["/roles", "Role Library | KinkAtlas", "index, follow"],
   ])("sets safe metadata for %s", (path, title, robots) => {
     renderMetadata(path);
 
@@ -64,6 +65,12 @@ describe("route document metadata", () => {
     expect(document.querySelector('meta[property="og:url"]')).toHaveAttribute("content", "https://kinkatlas.ca/");
   });
 
+  it("does not advertise a fixed Role Library total in public metadata", () => {
+    renderMetadata("/roles");
+
+    expect(document.querySelector('meta[name="description"]')?.getAttribute("content")).not.toMatch(/812|\b\d+\s+(?:roles|terms)\b/i);
+  });
+
   it("sets route-specific canonical URLs", () => {
     renderMetadata("/about");
 
@@ -78,18 +85,26 @@ describe("route document metadata", () => {
     expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute("href", "https://kinkatlas.ca/about");
   });
 
-  it("uses only the reviewed role name in role metadata and keeps role pages out of the index", () => {
+  it("uses only the reviewed role name in public role metadata", () => {
     renderMetadata("/roles/dominant");
 
     expect(document.title).toBe("Dominant | KinkAtlas");
 
-    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "noindex, follow");
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "index, follow");
 
     expect(document.querySelector('meta[name="description"]')?.getAttribute("content")).not.toMatch(/alignment|confidence|score|answer/i);
 
-    expect(document.querySelector('link[rel="canonical"]')).not.toBeInTheDocument();
+    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute("href", "https://kinkatlas.ca/roles/dominant");
 
-    expect(document.querySelector('meta[property="og:url"]')).not.toBeInTheDocument();
+    expect(document.querySelector('meta[property="og:url"]')).toHaveAttribute("content", "https://kinkatlas.ca/roles/dominant");
+  });
+
+  it("uses the human-readable scored-role page for Discovery vocabulary without a library-label match", () => {
+    renderMetadata("/roles/praise-receiver");
+
+    expect(document.title).toBe("Praise Receiver | KinkAtlas");
+    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute("href", "https://kinkatlas.ca/roles/praise-receiver");
+    expect(document.querySelector('meta[name="description"]')?.getAttribute("content")).not.toMatch(/alignment|confidence|score|answer/i);
   });
 
   it("keeps private results out of the index and without a canonical URL", () => {

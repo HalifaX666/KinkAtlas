@@ -79,15 +79,15 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   const discoveryOrder = await roleSetLabels(page, ".role-grid > .role-card h3");
   await page.getByRole("link", { name: /Explore this result/i }).first().click();
   await expect(page.locator("fieldset.question-card")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Evidence from your answers" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "How this relates to your answers" })).toBeVisible();
   await expect(page.getByText("Browsing role pages does not change your results.")).toBeVisible();
-  await page.locator(".related-roles a").first().click();
-  await expect(page.getByRole("heading", { name: "Evidence from your answers" })).toBeVisible();
+  await page.locator(".related-role-library .role-identity-link").first().click();
+  await expect(page.getByRole("heading", { name: "How this relates to your answers" })).toBeVisible();
   await expect(page.locator("fieldset.question-card")).toHaveCount(0);
-  await page.locator(".related-roles a").first().click();
-  await expect(page.getByRole("heading", { name: "Evidence from your answers" })).toBeVisible();
+  await page.locator(".related-role-library .role-identity-link").first().click();
+  await expect(page.getByRole("heading", { name: "How this relates to your answers" })).toBeVisible();
   await expect(page.locator("fieldset.question-card")).toHaveCount(0);
-  await page.getByRole("link", { name: "Back to your map" }).click();
+  await page.getByRole("link", { name: "Back to your results" }).click();
   await expect(page.getByRole("heading", { name: "Role discovery" })).toBeVisible();
   expect(await roleSetLabels(page, ".role-grid > .role-card h3")).toEqual(discoveryOrder);
   await openRoleSetBuilder(page);
@@ -144,8 +144,9 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   expect(exported).not.toContain(replacedRole);
 
   const manualRole = dialog.locator(".role-card-options > label").filter({ hasText: "Soft Dom" });
-  await expect(manualRole).toContainText("Added by you");
+  await expect(manualRole).toContainText("Your primary");
   await expect(manualRole).toContainText("No assessment score or confidence");
+  await expect(manualRole).not.toContainText("Suggested by assessment");
   await expect(manualRole).not.toContainText(/Strong alignment|High confidence|Medium confidence|evidence breadth/i);
   await expect(dialog).toContainText("manually post to FetLife");
   await expect(dialog).toContainText("never connects to or posts to a FetLife profile");
@@ -156,7 +157,7 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   }
   await expect(page.getByText("No roles selected. Search the KinkAtlas role library whenever you want.")).toBeVisible();
   await page.getByRole("link", { name: /Explore this result/i }).first().click();
-  await page.getByRole("link", { name: "Back to your map" }).click();
+  await page.getByRole("link", { name: "Back to your results" }).click();
   await openRoleSetBuilder(page);
   await expect(page.getByText("No roles selected. Search the KinkAtlas role library whenever you want.")).toBeVisible();
   await expect(page.getByRole("list", { name: "Current role set" })).toHaveCount(0);

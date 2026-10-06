@@ -12,6 +12,7 @@ export function Shell() {
           <BrandLogo size="header" />
         </Link>
         <nav aria-label="Main navigation">
+          <NavLink to="/roles">Role Library</NavLink>
           <NavLink to="/philosophy">Consent philosophy</NavLink>
           <NavLink to="/about">About</NavLink>
           <NavLink to="/assessment" className="nav-cta">
@@ -35,6 +36,7 @@ export function Shell() {
           <nav className="footer-links" aria-label="Further information">
             <Link to="/about#how-it-works">How it works</Link>
             <Link to="/about#privacy">Privacy</Link>
+            <Link to="/roles">Role Library</Link>
             <Link to="/faq">FAQ</Link>
             <Link to="/terms">Terms</Link>
             <Link to="/contact">Contact</Link>

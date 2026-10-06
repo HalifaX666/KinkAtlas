@@ -40,7 +40,7 @@ export function RoleProfileBuilderLauncher({ roleResults, refinementAnswers, dis
 
   return (
     <section className="section page-width profile-builder-section" aria-labelledby="profile-builder-heading">
-      <span className="eyebrow">02 · Your role set</span>
+      <span className="eyebrow">Manage your role set</span>
       <details className="profile-builder-disclosure" open={isOpen || isClosing} data-closing={isClosing || undefined}>
         <summary onClick={toggleDisclosure}>
           <h2 id="profile-builder-heading">Build your role set</h2>

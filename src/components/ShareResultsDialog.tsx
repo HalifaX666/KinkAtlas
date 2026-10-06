@@ -1,6 +1,8 @@
 import { Copy, Download, FileText, Images, Share2, X } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { roleLibraryRoleForIdentity } from '../data/roleIdentity'
 import { BrandLogo } from './BrandLogo'
+import { RoleIdentityCard } from './RoleIdentityCard'
 import {
   buildFullReflection,
   buildQuickSummary,
@@ -152,12 +154,10 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
         <div className="share-panel-heading"><div><h3 id="role-cards-heading">Select roles to export</h3><p>These roles follow the current order of Your Role Set. Each selection becomes its own 1080 × 1350 PNG card.</p></div><div className="selection-actions"><button type="button" className="quiet-button" onClick={() => setSelectedIds(new Set(roleCards.map((role) => role.id)))}>Select all</button><button type="button" className="quiet-button" onClick={() => setSelectedIds(new Set())}>Clear all</button></div></div>
         <p className="selection-count" aria-live="polite">{cardCount} of {roleCards.length} roles selected</p>
         <fieldset className="role-card-options"><legend className="sr-only">Roles to export</legend>{roleCards.map((role) => {
-          const details = role.source === 'user-selected'
-            ? 'Added by you · No assessment score or confidence'
-            : role.alignment === undefined && role.confidence === undefined
-              ? 'Assessment suggestion · No alignment score or confidence'
-              : `${role.alignment} · ${role.confidence}`
-          return <label key={role.id}><input type="checkbox" checked={selectedIds.has(role.id)} onChange={(event) => toggleRole(role.id, event.target.checked)} /><span className="role-card-mini" aria-hidden="true"><small>Kink Atlas</small><strong>{role.name}</strong><em>{details}</em></span><span><strong>{role.name}</strong><small>{details}</small></span></label>
+          const libraryRole = roleLibraryRoleForIdentity(role.roleId)
+          if (!libraryRole) return null
+          const details = [role.sourceLabel, ...role.assessmentDetails].join(' · ')
+          return <label key={role.id}><input type="checkbox" checked={selectedIds.has(role.id)} onChange={(event) => toggleRole(role.id, event.target.checked)} /><div className="role-identity-card-export" aria-hidden="true"><RoleIdentityCard role={libraryRole} variant="preview" presentation={role} headingLevel={4} showLink={false} staticFooter={`kinkatlas.ca${role.publicPath}`} /></div><span><strong>{role.name}</strong><small>{details}</small></span></label>
         })}</fieldset>
         {!roleCards.length && <div className="empty-panel"><p>Your current role set is empty. An empty set is valid; add a role in the builder if you want to create role cards.</p></div>}
         <label className="overview-option"><input type="checkbox" checked={overviewConfidence} onChange={(event) => setOverviewConfidence(event.target.checked)} /><span>Include confidence on overview card</span></label>

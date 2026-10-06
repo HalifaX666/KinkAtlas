@@ -2,7 +2,9 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RoleProfileBuilder } from '../components/RoleProfileBuilder'
+import { RoleSetIdentityGallery } from '../components/RoleSetIdentityGallery'
 import { ShareResultsDialog } from '../components/ShareResultsDialog'
+import { buildRoleSetCardPresentations } from '../data/roleIdentity'
 import { calculateTraitScores } from '../engine/discoveryScoring'
 import { evaluateReadiness } from '../engine/readinessScoring'
 import { matchRoles } from '../engine/roleMatching'
@@ -13,13 +15,9 @@ import { roleLibrary } from '../taxonomy/roleLibrary'
 
 const answers = { 'd-power-give': 'strong', 'd-position-give': 'strong', 'r-lead': 'strong', 'r-responsibility': 'strong' }
 const roleResults = matchRoles(calculateTraitScores(answers), answers)
-const initialRoleSet: EditableRoleProfileEntry[] = roleResults.filter((result) => result.alignment !== 'insufficient').slice(0, 5).map((result) => ({
-  roleId: result.role.id,
-  label: result.role.name,
-  source: 'recommended',
-  definition: result.role.description,
-  assessmentRoleId: result.role.id,
-}))
+const initialRoleSet: EditableRoleProfileEntry[] = buildEditableRoleProfileEntries(
+  optimizeRoleProfile(buildRoleProfileCandidates(roleResults)),
+)
 const data: ShareResultsData = {
   roleResults,
   roleSet: initialRoleSet,
@@ -34,7 +32,8 @@ function mockImageExport(downloads?: string[], drawnText?: string[]) {
   const gradient = { addColorStop: vi.fn() }
   const context = {
     fillStyle: '', strokeStyle: '', lineWidth: 0, font: '',
-    fillRect: vi.fn(), createRadialGradient: vi.fn(() => gradient), beginPath: vi.fn(), arc: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(), stroke: vi.fn(), fillText: vi.fn((text: string) => drawnText?.push(text)),
+    lineCap: '', lineJoin: '',
+    fillRect: vi.fn(), createRadialGradient: vi.fn(() => gradient), beginPath: vi.fn(), closePath: vi.fn(), arc: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(), bezierCurveTo: vi.fn(), stroke: vi.fn(), fillText: vi.fn((text: string) => drawnText?.push(text)),
   }
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context as unknown as CanvasRenderingContext2D)
   vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((callback) => callback(new Blob(['local image'], { type: 'image/png' })))
@@ -59,6 +58,7 @@ afterEach(() => {
 function RoleSetSharingHarness({ suggestedRoleSet }: { suggestedRoleSet: EditableRoleProfileEntry[] }) {
   const [roleSet, setRoleSet] = useState(suggestedRoleSet)
   return <>
+    <RoleSetIdentityGallery roleSet={roleSet} roleResults={roleResults} />
     <RoleProfileBuilder roleResults={roleResults} onRoleSetChange={setRoleSet} />
     <ShareResultsDialog data={{ ...data, roleSet }} onClose={vi.fn()} />
   </>
@@ -66,12 +66,16 @@ function RoleSetSharingHarness({ suggestedRoleSet }: { suggestedRoleSet: Editabl
 
 function shareRoleLabels() {
   return within(screen.getByRole('group', { name: 'Roles to export' })).getAllByRole('checkbox').map((choice) => (
-    choice.closest('label')?.querySelectorAll('strong').item(1).textContent
+    choice.closest('label')?.querySelector(':scope > span:last-child > strong')?.textContent
   ))
 }
 
 function roleListLabels(name: string) {
   return within(screen.getByRole('list', { name })).getAllByRole('listitem').map((item) => item.querySelector('strong')?.textContent)
+}
+
+function visualRoleLabels() {
+  return within(screen.getByRole('list', { name: 'Current role cards' })).getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)
 }
 
 async function searchResultFor(label: string) {
@@ -81,14 +85,117 @@ async function searchResultFor(label: string) {
 }
 
 describe('Export & Share dialog', () => {
-  it('uses neutral assessment wording on a suggested card without metrics', async () => {
+  it('uses canonical primary wording and a static role reference on an exported card without metrics', async () => {
     const drawnText: string[] = []
     mockImageExport(undefined, drawnText)
 
-    await createRoleCardImage({ id: 'role:test', name: 'Test role', source: 'recommended', summary: 'A reviewed test definition.', supportingSignals: [] })
+    const role = getShareableRoleSet([{ roleId: 'role:kinkster-fbb59ce7', label: 'Kinkster', source: 'recommended' }], roleResults)[0]
+    await createRoleCardImage(role)
 
-    expect(drawnText).toContain('• Suggested without an assessment alignment score.')
+    expect(drawnText).toContain('YOUR PRIMARY')
+    expect(drawnText).toContain('kinkatlas.ca/roles/kinkster')
+    expect(role.emblem.identityKey).toBe('kinkatlas-emblem:role:kinkster-fbb59ce7')
+    expect(role.family).not.toBe('')
     expect(drawnText.join(' ')).not.toMatch(/psychometric/i)
+    expect(drawnText).not.toContain('ROLE IDENTITY')
+    expect(drawnText).not.toContain('Explore role')
+  })
+
+  it('uses one ordered role-card presentation model for Results, selector previews, and PNG export', () => {
+    const labels = ['Brat', 'Rigger', 'Primal Switch', 'Kinkster', 'Caregiver']
+    const roleSet: EditableRoleProfileEntry[] = labels.map((label, index) => {
+      const role = roleLibrary.roles.find((candidate) => candidate.label === label)!
+      const result = roleResults.find((candidate) => candidate.role.name === label)
+      return {
+        roleId: role.id,
+        label,
+        source: index < 3 ? 'recommended' : 'user-selected',
+        definition: role.definition,
+        assessmentRoleId: index < 3 ? result?.role.id : undefined,
+      }
+    })
+    const presentations = buildRoleSetCardPresentations(roleSet, roleResults)
+    const exported = getShareableRoleSet(roleSet, roleResults)
+    const sharedFields = (role: typeof presentations[number]) => ({
+      roleId: role.roleId,
+      label: role.label,
+      familyLabel: role.familyLabel,
+      summary: role.summary,
+      attributes: role.attributes,
+      emblem: role.emblem,
+      source: role.source,
+      sourceLabel: role.sourceLabel,
+      assessmentDetails: role.assessmentDetails,
+      alignment: role.alignment,
+      confidence: role.confidence,
+      evidenceBreadth: role.evidenceBreadth,
+      publicPath: role.publicPath,
+    })
+
+    expect(presentations.map((role) => role.label)).toEqual(labels)
+    expect(exported.map(sharedFields)).toEqual(presentations.map(sharedFields))
+    expect(presentations.map((role) => role.sourceLabel)).toEqual([
+      'Your primary',
+      'Suggested by assessment',
+      'Suggested by assessment',
+      'Added by you',
+      'Added by you',
+    ])
+    expect(presentations.slice(0, 3).every((role) => role.alignment && role.confidence && role.evidenceBreadth !== undefined)).toBe(true)
+    expect(presentations.slice(3).every((role) => role.alignment === undefined && role.confidence === undefined && role.evidenceBreadth === undefined)).toBe(true)
+
+    const { container } = render(<RoleSetIdentityGallery roleSet={roleSet} roleResults={roleResults} />)
+    expect(visualRoleLabels()).toEqual(labels)
+    presentations.forEach((presentation) => {
+      const card = container.querySelector(`[data-role-id="${presentation.roleId}"]`)!
+      expect(card).toHaveTextContent(presentation.familyLabel)
+      expect(card).toHaveTextContent(presentation.label)
+      if (presentation.summary) expect(card).toHaveTextContent(presentation.summary)
+      presentation.attributes.slice(0, 4).forEach((attribute) => {
+        expect(card).toHaveTextContent(attribute.label)
+        expect(card).toHaveTextContent(attribute.value)
+      })
+      expect(card).toHaveTextContent(presentation.sourceLabel)
+      presentation.assessmentDetails.forEach((detail) => expect(card).toHaveTextContent(detail))
+      expect(card.querySelector('[data-emblem-key]')).toHaveAttribute('data-emblem-key', presentation.emblem.identityKey)
+    })
+  })
+
+  it('renders export choices with the canonical RoleIdentityCard instead of a legacy mini-card', () => {
+    const labels = ['Voyeur', 'Primal Prey', 'Kinkster', 'Tease', 'Vers']
+    const roleSet: EditableRoleProfileEntry[] = labels.map((label, index) => {
+      const role = roleLibrary.roles.find((candidate) => candidate.label === label)!
+      const result = roleResults.find((candidate) => candidate.role.name === label)
+      return {
+        roleId: role.id,
+        label,
+        source: index < 2 ? 'recommended' : 'user-selected',
+        definition: role.definition,
+        assessmentRoleId: index < 2 ? result?.role.id : undefined,
+      }
+    })
+    const presentations = buildRoleSetCardPresentations(roleSet, roleResults)
+    const { container } = render(<ShareResultsDialog data={{ ...data, roleSet }} onClose={vi.fn()} />)
+    const previews = [...container.querySelectorAll('.role-identity-card-export > .role-identity-card-preview')]
+
+    expect(previews).toHaveLength(labels.length)
+    expect(container.querySelector('.role-card-mini')).not.toBeInTheDocument()
+    expect(shareRoleLabels()).toEqual(labels)
+    previews.forEach((preview, index) => {
+      const presentation = presentations[index]
+      expect(preview).toHaveClass('role-identity-card')
+      expect(preview).toHaveTextContent(presentation.label)
+      expect(preview).toHaveTextContent(presentation.familyLabel)
+      if (presentation.summary) expect(preview).toHaveTextContent(presentation.summary)
+      presentation.attributes.slice(0, 4).forEach((attribute) => {
+        expect(preview).toHaveTextContent(attribute.label)
+        expect(preview).toHaveTextContent(attribute.value)
+      })
+      expect(preview).toHaveTextContent(presentation.sourceLabel)
+      presentation.assessmentDetails.forEach((detail) => expect(preview).toHaveTextContent(detail))
+      expect(preview).toHaveTextContent(`kinkatlas.ca${presentation.publicPath}`)
+      expect(preview.querySelector('[data-emblem-key]')).toHaveAttribute('data-emblem-key', presentation.emblem.identityKey)
+    })
   })
 
   it('renders safely when the assessment produced no suggested role set', () => {
@@ -288,7 +395,7 @@ describe('Export & Share dialog', () => {
   })
 
   it('starts with every role in the current role set selected and labelled', () => {
-    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
+    const { container } = render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
 
     expect(screen.getByRole('button', { name: /role cards/i })).toHaveAttribute('aria-pressed', 'true')
     const roleChoices = within(screen.getByRole('group', { name: 'Roles to export' })).getAllByRole('checkbox')
@@ -298,6 +405,8 @@ describe('Export & Share dialog', () => {
     expect(screen.getByRole('checkbox', { name: /include confidence on overview card/i })).toBeChecked()
     expect(screen.getByRole('button', { name: 'Export 5 cards' })).toBeEnabled()
     expect(screen.getByRole('button', { name: 'Share 5 cards' })).toBeEnabled()
+    expect(container.querySelectorAll('.role-identity-card-export')).toHaveLength(5)
+    expect(container.querySelectorAll('.role-identity-card-export [data-emblem-key]')).toHaveLength(5)
   })
 
   it('offers FetLife only as an optional manual sharing destination', () => {
@@ -335,26 +444,40 @@ describe('Export & Share dialog', () => {
     render(<RoleSetSharingHarness suggestedRoleSet={suggestedRoleSet} />)
 
     expect(shareRoleLabels()).toEqual(initialLabels)
+    expect(visualRoleLabels()).toEqual(initialLabels)
+    const immutableSuggested = roleListLabels('Suggested roles')
 
     fireEvent.click(screen.getByRole('button', { name: `Replace ${initialLabels[0]}` }))
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search roles' }), { target: { value: replacement.label } })
     fireEvent.click(await screen.findByRole('button', { name: `Replace with ${replacement.label}` }))
     let expectedLabels = [replacement.label, ...initialLabels.slice(1)]
     await waitFor(() => expect(shareRoleLabels()).toEqual(expectedLabels))
+    expect(visualRoleLabels()).toEqual(expectedLabels)
+    expect(roleListLabels('Suggested roles')).toEqual(immutableSuggested)
 
     fireEvent.click(screen.getByRole('button', { name: `Move ${replacement.label} down` }))
     expectedLabels = [expectedLabels[1], expectedLabels[0], ...expectedLabels.slice(2)]
     await waitFor(() => expect(shareRoleLabels()).toEqual(expectedLabels))
+    expect(visualRoleLabels()).toEqual(expectedLabels)
+
+    const promoted = expectedLabels[2]
+    fireEvent.click(screen.getByRole('button', { name: `Make ${promoted} primary` }))
+    expectedLabels = [promoted, ...expectedLabels.slice(0, 2), ...expectedLabels.slice(3)]
+    await waitFor(() => expect(shareRoleLabels()).toEqual(expectedLabels))
+    expect(visualRoleLabels()).toEqual(expectedLabels)
+    expect(roleListLabels('Suggested roles')).toEqual(immutableSuggested)
 
     const removedLabel = expectedLabels[expectedLabels.length - 1]
     fireEvent.click(screen.getByRole('button', { name: `Remove ${removedLabel}` }))
     expectedLabels = expectedLabels.slice(0, -1)
     await waitFor(() => expect(shareRoleLabels()).toEqual(expectedLabels))
+    expect(visualRoleLabels()).toEqual(expectedLabels)
 
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search roles' }), { target: { value: added.label } })
     fireEvent.click(await screen.findByRole('button', { name: `Add ${added.label}` }))
     expectedLabels = [...expectedLabels, added.label]
     await waitFor(() => expect(shareRoleLabels()).toEqual(expectedLabels))
+    expect(visualRoleLabels()).toEqual(expectedLabels)
 
     const manualChoice = within(screen.getByRole('group', { name: 'Roles to export' })).getByRole('checkbox', { name: new RegExp(added.label, 'i') })
     expect(manualChoice.closest('label')).toHaveTextContent('Added by you')

@@ -120,8 +120,8 @@ export function RoleProfileBuilder({ roleResults, refinementAnswers, discoveryAn
               <li key={recommendation.candidate.roleId}>
                 <div className="profile-suggestion-heading">
                   <strong>{recommendation.candidate.label}</strong>
-                  {optimization.primary?.candidate.roleId === recommendation.candidate.roleId && <span>Suggested primary</span>}
                 </div>
+                {optimization.primary?.candidate.roleId === recommendation.candidate.roleId && <span>Suggested primary</span>}
                 <small>{recommendationTrustLabel(recommendation.candidate.evidenceType, recommendation.candidate.confidence)}</small>
                 <Suspense fallback={<small>Loading role details…</small>}>
                   <LazyRoleDefinitionDetails roleId={recommendation.candidate.roleId} assessmentExplanation={assessmentExplanationByRoleId.get(recommendation.candidate.roleId)} />

@@ -103,6 +103,18 @@ describe('role result explanations', () => {
     expect(screen.getByRole('link', { name: /explore this result/i })).toBeInTheDocument()
   })
 
+  it.each([
+    ['praise-focused-player', '/roles/praise-receiver'],
+    ['rope-bottom', '/roles/rope-bottom'],
+    ['pet', '/roles/pet'],
+    ['voyeur', '/roles/voyeur'],
+    ['objectification-player', '/roles/objectification-roleplayer'],
+    ['objectified-roleplayer', '/roles/objectified-roleplayer'],
+  ])('always links the %s discovery result to its public role page', (roleId, path) => {
+    render(<MemoryRouter><RoleCard result={matchRole(roleById[roleId], {}, {})} /></MemoryRouter>)
+    expect(screen.getByRole('link', { name: /explore this result/i })).toHaveAttribute('href', path)
+  })
+
   it('builds supporting and differentiating signals only from scoring evidence', () => {
     const result = matchRole(roleById.dominant, calculateTraitScores(dominantAnswers), dominantAnswers)
     const explanation = explainRoleResult(result)
@@ -127,7 +139,7 @@ describe('role result explanations', () => {
   it('shows not-implied content and marks reflection prompts as non-scoring on RolePage', () => {
     render(<AssessmentProvider><MemoryRouter initialEntries={['/roles/dominant']}><Routes><Route path="/roles/:roleId" element={<RolePage />} /></Routes></MemoryRouter></AssessmentProvider>)
 
-    expect(screen.getByText(roleById.dominant.notImplied)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: "What it doesn't automatically mean" })).toBeInTheDocument()
     expect(screen.getByText(/optional prompts do not affect scoring/i)).toBeInTheDocument()
     expect(screen.getByText(roleById.dominant.reflectionQuestions[0])).toBeInTheDocument()
   })
@@ -136,7 +148,7 @@ describe('role result explanations', () => {
     render(<AssessmentProvider><MemoryRouter initialEntries={['/roles/not-a-role']}><Routes><Route path="/roles/:roleId" element={<RolePage />} /></Routes></MemoryRouter></AssessmentProvider>)
 
     expect(screen.getByRole('heading', { name: 'Role not found.' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Start exploring' })).toHaveAttribute('href', '/assessment')
+    expect(screen.getByRole('link', { name: 'Browse Role Library' })).toHaveAttribute('href', '/roles')
     expect(screen.getByRole('link', { name: 'Return home' })).toHaveAttribute('href', '/')
     expect(screen.queryByRole('link', { name: /return to results/i })).not.toBeInTheDocument()
   })

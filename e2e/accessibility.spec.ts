@@ -17,6 +17,18 @@ test('high-value application states have no WCAG A/AA axe violations', async ({ 
   await expect(page.locator('fieldset.question-card')).toBeVisible()
   await expectNoAxeViolations(page, 'Assessment active question')
 
+  await page.goto('/roles')
+  await expect(page.getByRole('heading', { level: 1, name: 'Explore the language of kink.' })).toBeVisible()
+  await expectNoAxeViolations(page, 'Role Library')
+
+  await page.goto('/roles/dominant')
+  await expect(page.getByRole('heading', { level: 1, name: 'Dominant' })).toBeVisible()
+  await expectNoAxeViolations(page, 'Curated role detail')
+
+  await page.goto('/roles/kinkster')
+  await expect(page.locator('[data-emblem-key="kinkatlas-emblem:role:kinkster-fbb59ce7"]')).toBeVisible()
+  await expectNoAxeViolations(page, 'Library role detail')
+
   await openPersonaResults(page, 'balanced-authority-pattern')
   await expectNoAxeViolations(page, 'Results')
 
@@ -24,7 +36,7 @@ test('high-value application states have no WCAG A/AA axe violations', async ({ 
   await expectNoAxeViolations(page, 'Results with Role Set Builder open')
 
   await page.getByRole('link', { name: /Explore this result/i }).first().click()
-  await expect(page.getByRole('heading', { name: 'Evidence from your answers' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'How this relates to your answers' })).toBeVisible()
   await expectNoAxeViolations(page, 'Role detail')
   await guards.assertClean()
 })

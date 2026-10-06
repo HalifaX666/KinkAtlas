@@ -4,6 +4,7 @@ import { Link, Navigate } from "react-router-dom";
 import { RoleCard } from "../components/RoleCard";
 import { ShareResultsDialog } from "../components/ShareResultsDialog";
 import { RoleProfileBuilderLauncher } from "../components/RoleProfileBuilderLauncher";
+import { RoleSetIdentityGallery } from "../components/RoleSetIdentityGallery";
 import { boundaryItems, boundaryOptions } from "../data/boundaries";
 import { getConversationStarter } from "../data/conversationStarters";
 import { negotiationQuestions } from "../data/negotiation";
@@ -100,6 +101,7 @@ export function ResultsPage() {
         </div>
       </section>
 
+      <RoleSetIdentityGallery roleSet={visibleRoleSet} roleResults={roleResults} />
       <RoleProfileBuilderLauncher roleResults={roleResults} discoveryAnswers={answers.discovery} refinementAnswers={answers.refinement} currentRoleSet={visibleRoleSet} onRoleSetChange={(roles) => setCurrentRoleSet(roles)} />
       <section className="page-width role-set-export-section" aria-labelledby="role-set-export-heading">
         <div>

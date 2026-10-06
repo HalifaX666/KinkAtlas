@@ -109,7 +109,7 @@ describe("memory-only session integrity", () => {
     expect(listLabels("Current role set")).toEqual(reorderedLabels);
 
     fireEvent.click(screen.getAllByRole("link", { name: /Explore this result/i })[0]);
-    fireEvent.click(screen.getByRole("link", { name: "Back to your map" }));
+    fireEvent.click(screen.getByRole("link", { name: "Back to your results" }));
     fireEvent.click(screen.getByText("Build your role set"));
     await waitFor(() => expect(listLabels("Current role set")).toEqual(reorderedLabels));
     expect(listLabels("Suggested roles")).toEqual(suggestedLabels);
@@ -120,7 +120,7 @@ describe("memory-only session integrity", () => {
     expect(screen.getByText("No roles selected. Search the KinkAtlas role library whenever you want.")).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("link", { name: /Explore this result/i })[0]);
-    fireEvent.click(screen.getByRole("link", { name: "Back to your map" }));
+    fireEvent.click(screen.getByRole("link", { name: "Back to your results" }));
     fireEvent.click(screen.getByText("Build your role set"));
     await screen.findByText("No roles selected. Search the KinkAtlas role library whenever you want.");
     expect(screen.queryByRole("list", { name: "Current role set" })).not.toBeInTheDocument();

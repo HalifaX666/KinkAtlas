@@ -1,8 +1,11 @@
 import { useEffect } from "react";
 import { matchPath, useLocation } from "react-router-dom";
-import { roleById } from "../data/roles";
+import { roleById, roles } from "../data/roles";
+import { roleLibraryRoleBySlug, roleLibrarySlug } from "../taxonomy/roleLibrarySlugs";
 
 export const baseDescription = "KinkAtlas is a private, rules-based kink and BDSM self-reflection quiz for exploring interests, roles, boundaries, dynamics, and kink vocabulary without storing your assessment data.";
+
+const scoredRoleBySlug = new Map(roles.map((role) => [roleLibrarySlug({ label: role.name }), role]));
 
 interface RouteMetadata {
   title: string;
@@ -66,6 +69,13 @@ const publicRoutes: Record<string, RouteMetadata> = {
     description: "Review your private, in-session KinkAtlas reflection and vocabulary suggestions.",
     robots: "noindex, nofollow",
   },
+
+  "/roles": {
+    title: "Role Library | KinkAtlas",
+    description: "Browse kink and BDSM role vocabulary with reviewed definitions, related terms, and clear assessment boundaries.",
+    robots: "index, follow",
+    canonicalPath: "/roles",
+  },
 };
 
 export function metadataForPath(pathname: string): RouteMetadata {
@@ -80,13 +90,25 @@ export function metadataForPath(pathname: string): RouteMetadata {
   const roleMatch = matchPath("/roles/:roleId", normalizedPath);
 
   if (roleMatch?.params.roleId) {
-    const role = roleById[roleMatch.params.roleId];
+    const role = roleLibraryRoleBySlug.get(roleMatch.params.roleId);
 
     if (role) {
       return {
-        title: `${role.name} | KinkAtlas`,
-        description: `Explore ${role.name} as role vocabulary for reflection. A role label never assigns identity or implies consent.`,
-        robots: "noindex, follow",
+        title: `${role.label} | KinkAtlas`,
+        description: `Explore ${role.label} as role vocabulary for reflection. A role label never assigns identity or implies consent.`,
+        robots: "index, follow",
+        canonicalPath: `/roles/${roleLibrarySlug(role)}`,
+      };
+    }
+
+    const scoredRole = scoredRoleBySlug.get(roleMatch.params.roleId) ?? roleById[roleMatch.params.roleId];
+
+    if (scoredRole) {
+      return {
+        title: `${scoredRole.name} | KinkAtlas`,
+        description: `Explore ${scoredRole.name} as role vocabulary for reflection. A role label never assigns identity or implies consent.`,
+        robots: "index, follow",
+        canonicalPath: `/roles/${roleLibrarySlug({ label: scoredRole.name })}`,
       };
     }
   }

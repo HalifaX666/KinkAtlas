@@ -92,22 +92,22 @@ describe("post-assessment role-page scoring boundary", () => {
     expect(document.querySelector("fieldset.question-card")).not.toBeInTheDocument();
     expect(screen.queryByText("Refine this result")).not.toBeInTheDocument();
     expect(screen.queryByText("Add discriminating context")).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "What this vocabulary describes" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Evidence from your answers" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "What does this mean?" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "How this relates to your answers" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Does the vocabulary feel useful?" })).toBeInTheDocument();
     expect(screen.getByText(/optional prompts do not affect scoring/i)).toBeInTheDocument();
     expect(screen.getByText(/browsing role pages does not change your results/i)).toBeInTheDocument();
     fireEvent.click(screen.getByText("How was this calculated?"));
-    expect(screen.getByText("How was this calculated?").closest("details")).toHaveTextContent("Alignment describes how closely your observed preferences resemble this role’s weighted themes");
+    expect(screen.getByText("How was this calculated?").closest("details")).toHaveTextContent("Alignment describes how closely your observed preferences resemble this role's weighted themes");
 
     for (let index = 0; index < 2; index += 1) {
       const relatedSection = screen.getByRole("heading", { name: "Useful distinctions" }).closest("section")!;
       fireEvent.click(within(relatedSection).getAllByRole("link")[0]);
       expect(screen.queryByRole("radio")).not.toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: "Evidence from your answers" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "How this relates to your answers" })).toBeInTheDocument();
     }
 
-    fireEvent.click(screen.getByRole("link", { name: "Back to your map" }));
+    fireEvent.click(screen.getByRole("link", { name: "Back to your results" }));
     await screen.findByRole("heading", { name: "A map, not a verdict." });
     expect(captureAssessmentOutput()).toEqual(before);
   });
