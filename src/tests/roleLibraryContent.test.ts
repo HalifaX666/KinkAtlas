@@ -18,9 +18,9 @@ describe("public role-library content policy", () => {
       "direct-primary": 27,
       competitive: 22,
       contextual: 181,
-      "manual-only": 582,
+      "manual-only": 877,
     });
-    expect(Object.values(counts).reduce((sum, count) => sum + count, 0)).toBe(812);
+    expect(Object.values(counts).reduce((sum, count) => sum + count, 0)).toBe(1107);
     expect(roleLibrary.roles.every((role) => role.primaryPolicy)).toBe(true);
     expect(roleLibrary.roles.filter((role) => role.recommendationEligibility === "exploration-only").every((role) => role.primaryPolicy === "manual-only")).toBe(true);
     expect(roleLibrary.roles.filter((role) => role.decisionPathway === "manual-only").every((role) => role.primaryPolicy === "manual-only")).toBe(true);
@@ -40,8 +40,8 @@ describe("public role-library content policy", () => {
     const available = roleLibrary.roles.filter((role) => role.definition !== undefined);
     const unavailable = roleLibrary.roles.filter((role) => role.definition === undefined);
 
-    expect(available).toHaveLength(708);
-    expect(unavailable).toHaveLength(104);
+    expect(available).toHaveLength(998);
+    expect(unavailable).toHaveLength(109);
     expect(new Set(available.map((role) => role.definition)).size).toBe(available.length);
 
     available.forEach((role) => {

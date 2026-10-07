@@ -14,13 +14,27 @@ const PILOT_IDS = [
   'role:pet-8f0d1b30', 'role:owner-4b1b8aa3',
 ]
 
+const LEGACY_ROLE_EMBLEM_CATALOG_SIZE = 812
+const G2_ROLE_EMBLEM_CATALOG_SIZE = 1107
+const PHASE_F_FINGERPRINT_DIGEST = 'ba75e806875e9217'
+
+function fingerprintDigest(value: string): string {
+  let hash = 0xcbf29ce484222325n
+  for (const character of value) {
+    hash ^= BigInt(character.charCodeAt(0))
+    hash = BigInt.asUintN(64, hash * 0x100000001b3n)
+  }
+  return hash.toString(16).padStart(16, '0')
+}
+
 describe('public role identity presentation', () => {
-  it('resolves a distinct production emblem identity for all 812 roles', () => {
+  it('resolves a distinct production emblem identity for all 1107 roles', () => {
     const fingerprints = roleEmblemRecipes.map(roleEmblemPrimaryGeometryFingerprint)
-    expect(roleEmblemRecipes).toHaveLength(812)
-    expect(roleEmblemRecipeByRoleId.size).toBe(812)
-    expect(new Set(roleEmblemRecipes.map((recipe) => recipe.identityKey)).size).toBe(812)
-    expect(new Set(fingerprints).size).toBe(812)
+    expect(roleEmblemRecipes).toHaveLength(1107)
+    expect(roleEmblemRecipeByRoleId.size).toBe(1107)
+    expect(new Set(roleEmblemRecipes.map((recipe) => recipe.identityKey)).size).toBe(1107)
+    expect(new Set(fingerprints).size).toBe(1107)
+    expect(new Set(roleEmblemRecipes.map((recipe) => recipe.catalogOrdinal)).size).toBe(1107)
     roleLibrary.roles.forEach((role) => {
       const recipe = roleEmblemRecipeByRoleId.get(role.id)
       expect(recipe, role.id).toBeDefined()
@@ -29,6 +43,32 @@ describe('public role identity presentation', () => {
       expect(recipe?.identityKey).toContain(role.id)
       expect(roleEmblemPrimaryGeometryFingerprint(roleEmblemRecipe(role.id))).toBe(roleEmblemPrimaryGeometryFingerprint(recipe!))
     })
+  })
+
+  it('preserves the exact Phase F fingerprint and ordinal namespace for the original 812 roles', () => {
+    const legacyRolesById = [...roleLibrary.roles.slice(0, LEGACY_ROLE_EMBLEM_CATALOG_SIZE)]
+      .sort((left, right) => left.id.localeCompare(right.id))
+    const fingerprintRows = legacyRolesById.map((role, index) => {
+      const recipe = roleEmblemRecipe(role)
+      expect(recipe.catalogOrdinal, role.id).toBe(index + 1)
+      return [role.id, roleEmblemPrimaryGeometryFingerprint(recipe)]
+    })
+    expect(fingerprintDigest(JSON.stringify(fingerprintRows))).toBe(PHASE_F_FINGERPRINT_DIGEST)
+  })
+
+  it('assigns every G2 role a unique deterministic ordinal after the frozen legacy namespace', () => {
+    const g2RolesById = [...roleLibrary.roles.slice(LEGACY_ROLE_EMBLEM_CATALOG_SIZE, G2_ROLE_EMBLEM_CATALOG_SIZE)]
+      .sort((left, right) => left.id.localeCompare(right.id))
+    const ordinals = g2RolesById.map((role, index) => {
+      const recipe = roleEmblemRecipe(role)
+      expect(recipe.catalogOrdinal, role.id).toBe(LEGACY_ROLE_EMBLEM_CATALOG_SIZE + index + 1)
+      return recipe.catalogOrdinal
+    })
+
+    expect(g2RolesById).toHaveLength(295)
+    expect(Math.min(...ordinals)).toBe(813)
+    expect(Math.max(...ordinals)).toBe(1107)
+    expect(new Set(ordinals).size).toBe(295)
   })
 
   it('fingerprints only normalized visible geometry and contains no catalog barcode', () => {
@@ -105,25 +145,25 @@ describe('public role identity presentation', () => {
   })
 
   it('leaves semantic taxonomy baselines unchanged', () => {
-    expect(roleLibrary.roles).toHaveLength(812)
-    expect(roleLibrary.roles.filter((role) => role.definition)).toHaveLength(708)
-    expect(roleLibrary.roles.filter((role) => !role.definition)).toHaveLength(104)
+    expect(roleLibrary.roles).toHaveLength(1107)
+    expect(roleLibrary.roles.filter((role) => role.definition)).toHaveLength(998)
+    expect(roleLibrary.roles.filter((role) => !role.definition)).toHaveLength(109)
     expect(roleLibrary.relationships).toHaveLength(59)
     expect(Object.keys(roleLibrary.families)).toHaveLength(26)
     expect(Object.fromEntries(['direct-primary', 'competitive', 'contextual', 'manual-only'].map((policy) => [policy, roleLibrary.roles.filter((role) => role.primaryPolicy === policy).length]))).toEqual({
       'direct-primary': 27,
       competitive: 22,
       contextual: 181,
-      'manual-only': 582,
+      'manual-only': 877,
     })
   })
 })
 
 describe('public role slugs', () => {
-  it('creates a unique URL-safe round-trip for all 812 roles', () => {
+  it('creates a unique URL-safe round-trip for all 1107 roles', () => {
     const slugs = roleLibrary.roles.map(roleLibrarySlug)
-    expect(slugs).toHaveLength(812)
-    expect(new Set(slugs).size).toBe(812)
+    expect(slugs).toHaveLength(1107)
+    expect(new Set(slugs).size).toBe(1107)
     slugs.forEach((slug, index) => {
       expect(slug).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
       expect(roleLibraryRoleBySlug.get(slug)?.id).toBe(roleLibrary.roles[index].id)

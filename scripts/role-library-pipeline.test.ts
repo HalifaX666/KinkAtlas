@@ -32,9 +32,9 @@ describe("neutral role-library pipeline", () => {
   it("reproduces the checked-in runtime deterministically", async () => {
     const generated = await generateRoleLibrary();
     expect(generated).toMatchObject({
-      roleCount: 812,
-      definitionCount: 708,
-      unavailableCount: 104,
+      roleCount: 1107,
+      definitionCount: 998,
+      unavailableCount: 109,
       relationshipCount: 59,
       familyCount: 26,
     });

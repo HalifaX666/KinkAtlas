@@ -235,8 +235,28 @@ function familyKeyForRole(role: RoleLibraryRole, motif: RoleEmblemMotif): string
   return role.familyIds[0] ?? role.category ?? role.facets[0] ?? motif
 }
 
+const generatedRecipeCombinationCount = enclosureOrder.length * compositionOrder.length * coreOrder.length
+const LEGACY_ROLE_EMBLEM_CATALOG_SIZE = 812
+const G2_ROLE_EMBLEM_CATALOG_SIZE = 1107
+
+function catalogBandCommands(catalogOrdinal: number): readonly RoleEmblemCommand[] {
+  const band = Math.floor((catalogOrdinal - 1) / generatedRecipeCombinationCount)
+  return band === 0 ? [] : [circle(6, 114, 1 + band * 0.25)]
+}
+
+const rolesSortedById = (roles: readonly RoleLibraryRole[]) =>
+  [...roles].sort((left, right) => left.id.localeCompare(right.id))
+
+// Catalog generations are ordered independently so a later append cannot change an existing
+// role's generated geometry. Establish another frozen boundary before shipping the next generation.
+const versionedCatalogRoles = [
+  ...rolesSortedById(roleLibrary.roles.slice(0, LEGACY_ROLE_EMBLEM_CATALOG_SIZE)),
+  ...rolesSortedById(roleLibrary.roles.slice(LEGACY_ROLE_EMBLEM_CATALOG_SIZE, G2_ROLE_EMBLEM_CATALOG_SIZE)),
+  ...roleLibrary.roles.slice(G2_ROLE_EMBLEM_CATALOG_SIZE),
+]
+
 const stableCatalogOrdinalByRoleId = new Map(
-  [...roleLibrary.roles].sort((left, right) => left.id.localeCompare(right.id)).map((role, index) => [role.id, index + 1]),
+  versionedCatalogRoles.map((role, index) => [role.id, index + 1]),
 )
 
 function createRecipe(role: RoleLibraryRole): RoleEmblemRecipe {
@@ -249,8 +269,8 @@ function createRecipe(role: RoleLibraryRole): RoleEmblemRecipe {
   const enclosureDigit = compositionIndex % enclosureOrder.length
   const compositionDigit = Math.floor(compositionIndex / enclosureOrder.length) % compositionOrder.length
   const coreDigit = Math.floor(compositionIndex / (enclosureOrder.length * compositionOrder.length)) % coreOrder.length
-  // This reversible mixing keeps all 1,000 combinations unique while ensuring adjacent catalog
-  // entries change their whole silhouette rather than merely cycling one small detail.
+  // This reversible mixing keeps every combination within a catalog band unique while ensuring
+  // adjacent entries change their whole silhouette rather than merely cycling one small detail.
   const generatedEnclosure = enclosureOrder[enclosureDigit]
   const generatedComposition = compositionOrder[(compositionDigit + enclosureDigit * 3) % compositionOrder.length]
   const generatedCore = coreOrder[(coreDigit + enclosureDigit * 7 + compositionDigit * 3) % coreOrder.length]
@@ -262,7 +282,7 @@ function createRecipe(role: RoleLibraryRole): RoleEmblemRecipe {
     : semanticModifierCommands[semanticModifier]
   const commands = presentation
     ? [...curatedCommands[presentation.emblem], ...directionCommands(direction)]
-    : [...enclosureCommands[generatedEnclosure], ...semanticCommands, ...compositionCommands[generatedComposition], ...coreCommands[generatedCore], ...directionCommands(direction)]
+    : [...enclosureCommands[generatedEnclosure], ...semanticCommands, ...compositionCommands[generatedComposition], ...coreCommands[generatedCore], ...directionCommands(direction), ...catalogBandCommands(ordinal)]
   return {
     identityKey: `kinkatlas-emblem:${role.id}`,
     roleId: role.id,

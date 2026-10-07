@@ -15,22 +15,22 @@ describe("recommendation quality report", () => {
   it("preserves coverage, question, and deterministic role-set invariants", () => {
     const report = buildRecommendationReport();
     expect(report.coverage).toEqual({
-      roles: 812,
-      decisionPolicies: 812,
-      primaryPolicies: 812,
+      roles: 1107,
+      decisionPolicies: 1107,
+      primaryPolicies: 1107,
       primaryPolicyDistribution: {
         "direct-primary": 27,
         competitive: 22,
         contextual: 181,
-        "manual-only": 582,
+        "manual-only": 877,
       },
-      definitionStates: 812,
-      usableDefinitions: 708,
-      unavailableDefinitions: 104,
+      definitionStates: 1107,
+      usableDefinitions: 998,
+      unavailableDefinitions: 109,
       automaticRecommendation: 229,
       confirmationBased: 137,
       legitimateTopFiveReach: 366,
-      manualOnly: 446,
+      manualOnly: 741,
       relationships: 59,
       familyCoverage: 449,
     });
@@ -41,7 +41,7 @@ describe("recommendation quality report", () => {
     expect(report.primaryOutcomes.personasWithPrimary + report.primaryOutcomes.personasWithoutPrimary).toBe(50);
     expect(report.primaryOutcomes.contextualRecommendationsExcludedFromPrimary).toBeGreaterThan(0);
     expect(renderRecommendationReport(report)).toContain("recommendations 50/50");
-    expect(renderRecommendationReport(report)).toContain("PRIMARY POLICY: direct-primary 27; competitive 22; contextual 181; manual-only 582");
+    expect(renderRecommendationReport(report)).toContain("PRIMARY POLICY: direct-primary 27; competitive 22; contextual 181; manual-only 877");
   });
 
   it("retains all five reviewed diagnostic warnings with explicit reasons", () => {
