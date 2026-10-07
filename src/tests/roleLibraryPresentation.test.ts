@@ -146,8 +146,8 @@ describe('public role identity presentation', () => {
 
   it('leaves semantic taxonomy baselines unchanged', () => {
     expect(roleLibrary.roles).toHaveLength(1107)
-    expect(roleLibrary.roles.filter((role) => role.definition)).toHaveLength(998)
-    expect(roleLibrary.roles.filter((role) => !role.definition)).toHaveLength(109)
+    expect(roleLibrary.roles.filter((role) => role.definition)).toHaveLength(1107)
+    expect(roleLibrary.roles.filter((role) => !role.definition)).toHaveLength(0)
     expect(roleLibrary.relationships).toHaveLength(59)
     expect(Object.keys(roleLibrary.families)).toHaveLength(26)
     expect(Object.fromEntries(['direct-primary', 'competitive', 'contextual', 'manual-only'].map((policy) => [policy, roleLibrary.roles.filter((role) => role.primaryPolicy === policy).length]))).toEqual({

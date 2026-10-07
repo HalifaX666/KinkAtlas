@@ -33,8 +33,8 @@ describe("neutral role-library pipeline", () => {
     const generated = await generateRoleLibrary();
     expect(generated).toMatchObject({
       roleCount: 1107,
-      definitionCount: 998,
-      unavailableCount: 109,
+      definitionCount: 1107,
+      unavailableCount: 0,
       relationshipCount: 59,
       familyCount: 26,
     });

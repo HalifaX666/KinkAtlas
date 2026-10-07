@@ -61,10 +61,11 @@ describe('standalone role pages', () => {
     expect(container.querySelector('.role-attribute-list-empty')).toBeInTheDocument()
   })
 
-  it('shows an intentional unavailable state without synthesizing a definition', () => {
+  it('shows the reviewed definition for a formerly unavailable role', () => {
     renderRole('/roles/gag-bottom')
     expect(screen.getByRole('heading', { level: 1, name: 'Gag Bottom' })).toBeInTheDocument()
-    expect(screen.getAllByText(/doesn't have a reviewed explanation for this term yet/i)).toHaveLength(2)
+    expect(screen.getAllByText(/Gag Bottom takes the receiving position in gag play/i)).toHaveLength(3)
+    expect(screen.queryByText(/doesn't have a reviewed explanation for this term yet/i)).not.toBeInTheDocument()
   })
 
   it.each([

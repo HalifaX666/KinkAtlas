@@ -40,8 +40,9 @@ describe("public role-library content policy", () => {
     const available = roleLibrary.roles.filter((role) => role.definition !== undefined);
     const unavailable = roleLibrary.roles.filter((role) => role.definition === undefined);
 
-    expect(available).toHaveLength(998);
-    expect(unavailable).toHaveLength(109);
+    expect(available).toHaveLength(1107);
+    expect(unavailable).toHaveLength(0);
+    expect(roleLibrary.roles.every((role) => Boolean(role.definition?.trim()))).toBe(true);
     expect(new Set(available.map((role) => role.definition)).size).toBe(available.length);
 
     available.forEach((role) => {
@@ -53,6 +54,16 @@ describe("public role-library content policy", () => {
       expect(definition, role.label).not.toMatch(PROHIBITED_PUBLIC_TEXT);
       expect(definition, role.label).not.toMatch(PLACEHOLDER_TEXT);
     });
+  });
+
+  it("retains the deferred generic opener only for the four reviewed exceptions", () => {
+    const genericOpener = "is flexible role or identity vocabulary centered on";
+    const genericLabels = roleLibrary.roles
+      .filter((role) => role.definition?.includes(genericOpener))
+      .map((role) => role.label)
+      .sort();
+
+    expect(genericLabels).toEqual(["Bear", "Dilf", "Duchess", "Milf"]);
   });
 
   it("contains no URLs or private workflow language", () => {
