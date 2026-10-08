@@ -42,6 +42,7 @@
   "scripts/private-material-denylist.mjs",
   "scripts/primary-policy-audit.ts",
   "scripts/production-boundary.mjs",
+  "scripts/public-role-pages.mjs",
   "scripts/public-file-surface.mjs",
   "scripts/public-surface-scan.mjs",
   "scripts/public-surface-scan.test.mjs",

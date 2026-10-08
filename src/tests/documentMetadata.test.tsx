@@ -94,6 +94,10 @@ describe("route document metadata", () => {
 
     expect(document.querySelector('meta[name="description"]')?.getAttribute("content")).not.toMatch(/alignment|confidence|score|answer/i);
 
+    expect(document.querySelector('meta[name="description"]')).toHaveAttribute("content", expect.stringContaining("negotiated authority"));
+
+    expect(document.querySelector('meta[property="og:type"]')).toHaveAttribute("content", "article");
+
     expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute("href", "https://kinkatlas.ca/roles/dominant");
 
     expect(document.querySelector('meta[property="og:url"]')).toHaveAttribute("content", "https://kinkatlas.ca/roles/dominant");

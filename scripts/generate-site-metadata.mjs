@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { publicRoleRoutes, writePublicRolePages } from './public-role-pages.mjs'
 
 export const indexableRoutes = ['/', '/about', '/faq', '/contact', '/philosophy', '/terms', '/roles', '/assessment']
 
@@ -20,7 +21,7 @@ export function buildRobots(siteUrl) {
 }
 
 export function buildSitemap(siteUrl) {
-  const entries = indexableRoutes.map((route) => `  <url><loc>${siteUrl}${route}</loc></url>`).join('\n')
+  const entries = [...indexableRoutes, ...publicRoleRoutes].map((route) => `  <url><loc>${siteUrl}${route}</loc></url>`).join('\n')
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`
 }
 
@@ -28,20 +29,22 @@ export function writeSiteMetadata({ distDirectory = resolve('dist'), siteUrlValu
   if (!existsSync(distDirectory)) throw new Error(`Build output does not exist: ${distDirectory}`)
   const siteUrl = normalizeSiteUrl(siteUrlValue)
   writeFileSync(resolve(distDirectory, 'robots.txt'), buildRobots(siteUrl), 'utf8')
+  const indexPath = resolve(distDirectory, 'index.html')
+  const html = readFileSync(indexPath, 'utf8')
+  const rolePagesWritten = writePublicRolePages({ baseHtml: html, distDirectory, siteUrl })
 
   if (!siteUrl) {
-    console.warn('VITE_SITE_URL is not configured; canonical URL, og:url, sitemap.xml, and the robots sitemap directive were intentionally omitted.')
-    return { siteUrl: undefined, sitemapWritten: false }
+    console.warn(`VITE_SITE_URL is not configured; canonical URL, og:url, sitemap.xml, and the robots sitemap directive were intentionally omitted. Generated ${rolePagesWritten} static role pages.`)
+    return { siteUrl: undefined, sitemapWritten: false, rolePagesWritten }
   }
 
   writeFileSync(resolve(distDirectory, 'sitemap.xml'), buildSitemap(siteUrl), 'utf8')
-  const indexPath = resolve(distDirectory, 'index.html')
-  const html = readFileSync(indexPath, 'utf8')
+  const homeHtml = html
     .replace('<!-- site-url-metadata -->', `<link rel="canonical" href="${siteUrl}/" />\n    <meta property="og:url" content="${siteUrl}/" />`)
     .replaceAll('content="/social-preview.png"', `content="${siteUrl}/social-preview.png"`)
-  writeFileSync(indexPath, html, 'utf8')
-  console.log(`Generated canonical metadata and sitemap for ${siteUrl}.`)
-  return { siteUrl, sitemapWritten: true }
+  writeFileSync(indexPath, homeHtml, 'utf8')
+  console.log(`Generated canonical metadata, ${rolePagesWritten} static role pages, and sitemap for ${siteUrl}.`)
+  return { siteUrl, sitemapWritten: true, rolePagesWritten }
 }
 
 const invokedPath = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : undefined

@@ -3,6 +3,16 @@
   publish = "dist"
 
 [[redirects]]
+  from = "/roles"
+  to = "/roles/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/roles/:role"
+  to = "/roles/:role/index.html"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
@@ -22,8 +32,3 @@
   for = "/results"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
-
-[[headers]]
-  for = "/roles/*"
-  [headers.values]
-    X-Robots-Tag = "noindex, follow"

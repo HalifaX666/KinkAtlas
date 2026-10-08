@@ -12,6 +12,21 @@ interface RouteMetadata {
   description: string;
   robots: "index, follow" | "noindex, follow" | "noindex, nofollow";
   canonicalPath?: string;
+  ogType?: "website" | "article";
+}
+
+function roleMetadataDescription(role: { label: string; definition?: string }) {
+  const definition = role.definition?.trim();
+
+  if (!definition) {
+    return `Explore ${role.label} as role vocabulary for reflection. A role label never assigns identity or implies consent.`;
+  }
+
+  if (definition.length <= 180) {
+    return definition;
+  }
+
+  return `${definition.slice(0, 177).replace(/\s+\S*$/, "").trimEnd()}...`;
 }
 
 const publicRoutes: Record<string, RouteMetadata> = {
@@ -95,9 +110,10 @@ export function metadataForPath(pathname: string): RouteMetadata {
     if (role) {
       return {
         title: `${role.label} | KinkAtlas`,
-        description: `Explore ${role.label} as role vocabulary for reflection. A role label never assigns identity or implies consent.`,
+        description: roleMetadataDescription(role),
         robots: "index, follow",
         canonicalPath: `/roles/${roleLibrarySlug(role)}`,
+        ogType: "article",
       };
     }
 
@@ -181,7 +197,7 @@ export function DocumentMetadata() {
 
     setPropertyMeta("og:title", metadata.title);
     setPropertyMeta("og:description", metadata.description);
-    setPropertyMeta("og:type", "website");
+    setPropertyMeta("og:type", metadata.ogType ?? "website");
     setPropertyMeta("og:site_name", "KinkAtlas");
     setPropertyMeta("og:image", socialImage);
     setPropertyMeta("og:image:alt", socialImageAlt);

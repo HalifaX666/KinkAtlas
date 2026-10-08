@@ -21,3 +21,22 @@ test('built production preview supports ordinary assessment navigation without t
   await expectNoHorizontalOverflow(page)
   await guards.assertClean()
 })
+
+test('a pre-rendered public role page exposes content before JavaScript and boots the SPA', async ({ page, request }) => {
+  const response = await request.get('/roles/dominant/index.html')
+  expect(response.ok()).toBe(true)
+  const html = await response.text()
+  expect(html).toContain('<title>Dominant | KinkAtlas</title>')
+  expect(html).toContain('<h1>Dominant</h1>')
+  expect(html).toContain('A Dominant is someone who takes negotiated authority')
+  expect(html).not.toContain('Your Kink Map')
+
+  const guards = await installBrowserGuards(page)
+  await page.goto('/roles/dominant')
+  await expect(page.getByRole('heading', { level: 1, name: 'Dominant' })).toBeVisible()
+  await expect(page).toHaveTitle('Dominant | KinkAtlas')
+  await page.getByRole('link', { name: 'Back to Role Library' }).first().click()
+  await expect(page).toHaveURL(/\/roles$/)
+  await expect(page.getByRole('heading', { level: 1, name: 'Explore the language of kink.' })).toBeVisible()
+  await guards.assertClean()
+})
