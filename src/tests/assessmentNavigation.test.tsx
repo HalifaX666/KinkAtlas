@@ -228,7 +228,7 @@ describe("assessment navigation", () => {
     expect(screen.getByRole("heading", { name: "A private reflection for adults." })).toBeInTheDocument();
   });
 
-  it("preserves exact Discover position and Back history across SPA route navigation", () => {
+  it("preserves exact Discover position and Back history across SPA route navigation", async () => {
     renderAssessment();
     const answeredQuestions = discoveryQuestions.slice(0, 3);
     answeredQuestions.forEach((question) => fireEvent.click(screen.getByRole("radio", { name: question.answers[0].label })));
@@ -236,7 +236,7 @@ describe("assessment navigation", () => {
     expect(screen.getByRole("group")).toHaveTextContent(resumedQuestion.prompt);
 
     fireEvent.click(screen.getByRole("link", { name: "About" }));
-    expect(screen.getByRole("heading", { name: /Clearer language/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Clearer language/i })).toBeInTheDocument();
     fireEvent.click(within(screen.getByRole("navigation", { name: "Main navigation" })).getByRole("link", { name: "Start exploring" }));
 
     expect(screen.getByRole("group")).toHaveTextContent(resumedQuestion.prompt);
@@ -372,7 +372,7 @@ describe("assessment navigation", () => {
     expect(currentRadios()[0]).toBeChecked();
   });
 
-  it("aligns StageComplete actions and returns from Results to the completed assessment review state", () => {
+  it("aligns StageComplete actions and returns from Results to the completed assessment review state", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     vi.spyOn(window, "confirm").mockReturnValue(true);
@@ -391,7 +391,7 @@ describe("assessment navigation", () => {
     expect(within(stageActions as HTMLElement).getByRole("button", { name: /view my results/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /view my results/i }));
-    expect(screen.getByRole("heading", { name: "A map, not a verdict." })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "A map, not a verdict." })).toBeInTheDocument();
     const guideLink = screen.getByRole("link", { name: /learn how to read your results/i });
     expect(guideLink).toHaveAttribute("href", "/about#how-to-read-results");
     expect(guideLink).toHaveAttribute("target", "_blank");
@@ -404,7 +404,7 @@ describe("assessment navigation", () => {
 
     fireEvent.click(currentRadios()[0]);
     fireEvent.click(screen.getByRole("button", { name: /view my results/i }));
-    expect(screen.getByRole("heading", { name: "A map, not a verdict." })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "A map, not a verdict." })).toBeInTheDocument();
     expect(fetchMock.mock.calls.filter(([, options]) => (options as RequestInit | undefined)?.method === "POST")).toHaveLength(1);
 
     fireEvent.click(screen.getByRole("link", { name: "Go back to assessment" }));

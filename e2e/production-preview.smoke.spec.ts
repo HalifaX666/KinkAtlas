@@ -11,6 +11,8 @@ test('built production preview supports ordinary assessment navigation without t
 
   await page.getByRole('link', { name: 'Start exploring' }).first().click()
   await expect(page).toHaveURL(/\/assessment$/)
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
+  await expect(page.locator('link[rel="canonical"]')).toHaveCount(0)
   await page.getByRole('button', { name: /begin/i }).click()
   const question = page.locator('fieldset.question-card')
   const firstQuestionId = await question.getByRole('radio').first().getAttribute('name')
@@ -19,6 +21,14 @@ test('built production preview supports ordinary assessment navigation without t
 
   await expectRenderedSanity(page)
   await expectNoHorizontalOverflow(page)
+
+  await page.goto('/results')
+  await expect(page).toHaveURL(/\/assessment$/)
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
+
+  await page.goto('/not-a-real-route')
+  await expect(page.getByRole('heading', { level: 1, name: 'That path is not on this map.' })).toBeVisible()
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
   await guards.assertClean()
 })
 
@@ -37,6 +47,8 @@ test('a pre-rendered public role page exposes content before JavaScript and boot
   await expect(page).toHaveTitle('Dominant | KinkAtlas')
   await page.getByRole('link', { name: 'Back to Role Library' }).first().click()
   await expect(page).toHaveURL(/\/roles$/)
+  await expect(page.getByRole('heading', { level: 1, name: 'Explore the language of kink.' })).toBeVisible()
+  await page.goto('/roles')
   await expect(page.getByRole('heading', { level: 1, name: 'Explore the language of kink.' })).toBeVisible()
   await guards.assertClean()
 })

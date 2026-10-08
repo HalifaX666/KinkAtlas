@@ -1,13 +1,8 @@
 import { roleLibrary, type RoleLibraryRole } from './roleLibrary'
+import { roleSlug } from './roleSlug'
 
 export function roleLibrarySlug(role: Pick<RoleLibraryRole, 'label'>): string {
-  return role.label
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLocaleLowerCase('en-US')
-    .replace(/[’']/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+  return roleSlug(role)
 }
 
 export const roleLibraryRoleBySlug = new Map<string, RoleLibraryRole>()

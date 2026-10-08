@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { matchPath, useLocation } from "react-router-dom";
 import { roleById, roles } from "../data/roles";
-import { roleLibraryRoleBySlug, roleLibrarySlug } from "../taxonomy/roleLibrarySlugs";
+import { roleSlug } from "../taxonomy/roleSlug";
 
 export const baseDescription = "KinkAtlas is a private, rules-based kink and BDSM self-reflection quiz for exploring interests, roles, boundaries, dynamics, and kink vocabulary without storing your assessment data.";
 
-const scoredRoleBySlug = new Map(roles.map((role) => [roleLibrarySlug({ label: role.name }), role]));
+const scoredRoleBySlug = new Map(roles.map((role) => [roleSlug({ label: role.name }), role]));
 
 interface RouteMetadata {
   title: string;
@@ -75,8 +75,7 @@ const publicRoutes: Record<string, RouteMetadata> = {
   "/assessment": {
     title: "Kink & BDSM Exploration Quiz | KinkAtlas",
     description: "Explore kink interests, dynamics, boundaries, and role vocabulary through a private, rules-based assessment.",
-    robots: "index, follow",
-    canonicalPath: "/assessment",
+    robots: "noindex, nofollow",
   },
 
   "/results": {
@@ -105,28 +104,50 @@ export function metadataForPath(pathname: string): RouteMetadata {
   const roleMatch = matchPath("/roles/:roleId", normalizedPath);
 
   if (roleMatch?.params.roleId) {
-    const role = roleLibraryRoleBySlug.get(roleMatch.params.roleId);
+    return {
+      title: "Role | KinkAtlas",
+      description: "Explore kink and BDSM role vocabulary without assigning identity or implying consent.",
+      robots: "noindex, nofollow",
+    };
+  }
 
-    if (role) {
-      return {
-        title: `${role.label} | KinkAtlas`,
-        description: roleMetadataDescription(role),
-        robots: "index, follow",
-        canonicalPath: `/roles/${roleLibrarySlug(role)}`,
-        ogType: "article",
-      };
-    }
+  return {
+    title: "Page Not Found | KinkAtlas",
+    description: "This KinkAtlas page could not be found.",
+    robots: "noindex, nofollow",
+  };
+}
 
-    const scoredRole = scoredRoleBySlug.get(roleMatch.params.roleId) ?? roleById[roleMatch.params.roleId];
+export async function resolvedMetadataForPath(pathname: string): Promise<RouteMetadata> {
+  const normalizedPath = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  const roleMatch = matchPath("/roles/:roleId", normalizedPath);
 
-    if (scoredRole) {
-      return {
-        title: `${scoredRole.name} | KinkAtlas`,
-        description: `Explore ${scoredRole.name} as role vocabulary for reflection. A role label never assigns identity or implies consent.`,
-        robots: "index, follow",
-        canonicalPath: `/roles/${roleLibrarySlug({ label: scoredRole.name })}`,
-      };
-    }
+  if (!roleMatch?.params.roleId) {
+    return metadataForPath(normalizedPath);
+  }
+
+  const { roleLibraryRoleBySlug, roleLibrarySlug } = await import("../taxonomy/roleLibrarySlugs");
+  const role = roleLibraryRoleBySlug.get(roleMatch.params.roleId);
+
+  if (role) {
+    return {
+      title: `${role.label} | KinkAtlas`,
+      description: roleMetadataDescription(role),
+      robots: "index, follow",
+      canonicalPath: `/roles/${roleLibrarySlug(role)}`,
+      ogType: "article",
+    };
+  }
+
+  const scoredRole = scoredRoleBySlug.get(roleMatch.params.roleId) ?? roleById[roleMatch.params.roleId];
+
+  if (scoredRole) {
+    return {
+      title: `${scoredRole.name} | KinkAtlas`,
+      description: `Explore ${scoredRole.name} as role vocabulary for reflection. A role label never assigns identity or implies consent.`,
+      robots: "index, follow",
+      canonicalPath: `/roles/${roleSlug({ label: scoredRole.name })}`,
+    };
   }
 
   return {
@@ -181,48 +202,59 @@ export function DocumentMetadata() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const metadata = metadataForPath(pathname);
-    const siteOrigin = configuredSiteOrigin();
+    let active = true;
 
-    const canonicalUrl = metadata.canonicalPath ? new URL(metadata.canonicalPath, siteOrigin).href : undefined;
+    const applyMetadata = (metadata: RouteMetadata) => {
+      if (!active) return;
+      const siteOrigin = configuredSiteOrigin();
 
-    const socialImage = new URL("/social-preview.png", siteOrigin).href;
+      const canonicalUrl = metadata.canonicalPath ? new URL(metadata.canonicalPath, siteOrigin).href : undefined;
 
-    const socialImageAlt = "KinkAtlas | Discover your desires. Know your boundaries. Learn your language.";
+      const socialImage = new URL("/social-preview.png", siteOrigin).href;
 
-    document.title = metadata.title;
+      const socialImageAlt = "KinkAtlas | Discover your desires. Know your boundaries. Learn your language.";
 
-    setNamedMeta("description", metadata.description);
-    setNamedMeta("robots", metadata.robots);
+      document.title = metadata.title;
 
-    setPropertyMeta("og:title", metadata.title);
-    setPropertyMeta("og:description", metadata.description);
-    setPropertyMeta("og:type", metadata.ogType ?? "website");
-    setPropertyMeta("og:site_name", "KinkAtlas");
-    setPropertyMeta("og:image", socialImage);
-    setPropertyMeta("og:image:alt", socialImageAlt);
+      setNamedMeta("description", metadata.description);
+      setNamedMeta("robots", metadata.robots);
 
-    setNamedMeta("twitter:card", "summary_large_image");
-    setNamedMeta("twitter:title", metadata.title);
-    setNamedMeta("twitter:description", metadata.description);
-    setNamedMeta("twitter:image", socialImage);
-    setNamedMeta("twitter:image:alt", socialImageAlt);
+      setPropertyMeta("og:title", metadata.title);
+      setPropertyMeta("og:description", metadata.description);
+      setPropertyMeta("og:type", metadata.ogType ?? "website");
+      setPropertyMeta("og:site_name", "KinkAtlas");
+      setPropertyMeta("og:image", socialImage);
+      setPropertyMeta("og:image:alt", socialImageAlt);
 
-    let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+      setNamedMeta("twitter:card", "summary_large_image");
+      setNamedMeta("twitter:title", metadata.title);
+      setNamedMeta("twitter:description", metadata.description);
+      setNamedMeta("twitter:image", socialImage);
+      setNamedMeta("twitter:image:alt", socialImageAlt);
 
-    if (canonicalUrl) {
-      if (!canonical) {
-        canonical = document.createElement("link");
-        canonical.rel = "canonical";
-        document.head.append(canonical);
+      let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+
+      if (canonicalUrl) {
+        if (!canonical) {
+          canonical = document.createElement("link");
+          canonical.rel = "canonical";
+          document.head.append(canonical);
+        }
+
+        canonical.href = canonicalUrl;
+        setPropertyMeta("og:url", canonicalUrl);
+      } else {
+        canonical?.remove();
+        document.querySelector('meta[property="og:url"]')?.remove();
       }
+    };
 
-      canonical.href = canonicalUrl;
-      setPropertyMeta("og:url", canonicalUrl);
-    } else {
-      canonical?.remove();
-      document.querySelector('meta[property="og:url"]')?.remove();
-    }
+    applyMetadata(metadataForPath(pathname));
+    void resolvedMetadataForPath(pathname).then(applyMetadata);
+
+    return () => {
+      active = false;
+    };
   }, [pathname]);
 
   return null;

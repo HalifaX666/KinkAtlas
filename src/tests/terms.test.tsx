@@ -50,10 +50,10 @@ describe('Terms of Use and privacy transparency', () => {
     expect(section).toHaveTextContent('does not automatically read from or modify a FetLife profile')
   })
 
-  it('exposes the Terms route, metadata, and footer link', () => {
+  it('exposes the Terms route, metadata, and footer link', async () => {
     window.history.replaceState({}, '', '/terms')
     render(<App />)
-    expect(screen.getByRole('heading', { name: 'Terms of Use', level: 1 })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Terms of Use', level: 1 })).toBeInTheDocument()
     expect(document.title).toBe('Terms of Use | KinkAtlas')
     const footer = screen.getByRole('contentinfo')
     const navigation = within(footer).getByRole('navigation', { name: 'Further information' })

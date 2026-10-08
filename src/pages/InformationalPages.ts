@@ -1,0 +1,5 @@
+export { AboutPage } from './AboutPage'
+export { ContactPage } from './ContactPage'
+export { FaqPage } from './FaqPage'
+export { PhilosophyPage } from './PhilosophyPage'
+export { TermsPage } from './TermsPage'

@@ -23,6 +23,7 @@ describe('launch deployment metadata', () => {
     expect(config).toContain("style-src 'self' 'unsafe-inline'")
     expect(config).toContain("img-src 'self' data: blob:")
     expect(config).toContain("frame-ancestors 'none'")
+    expect(config).toMatch(/for = "\/assessment"[\s\S]*X-Robots-Tag = "noindex, nofollow"/)
     expect(config).toMatch(/for = "\/results"[\s\S]*X-Robots-Tag = "noindex, nofollow"/)
     expect(config).not.toMatch(/for = "\/roles(?:\/\*)?"[\s\S]*X-Robots-Tag = "noindex/)
   })
@@ -45,7 +46,7 @@ describe('launch deployment metadata', () => {
 
   it('generates a valid domain-bound sitemap containing every canonical public role route', () => {
     const sitemap = buildSitemap('https://example.test')
-    expect(indexableRoutes).toEqual(['/', '/about', '/faq', '/contact', '/philosophy', '/terms', '/roles', '/assessment'])
+    expect(indexableRoutes).toEqual(['/', '/about', '/faq', '/contact', '/philosophy', '/terms', '/roles'])
     for (const route of indexableRoutes) expect(sitemap).toContain(`<loc>https://example.test${route}</loc>`)
     expect(publicRoleRoutes).toHaveLength(1107)
     expect(new Set(publicRoleRoutes).size).toBe(1107)
@@ -55,6 +56,7 @@ describe('launch deployment metadata', () => {
     expect(urls).toHaveLength(indexableRoutes.length + 1107)
     expect(new Set(urls).size).toBe(urls.length)
     expect(sitemap).not.toMatch(/\/results/)
+    expect(sitemap).not.toMatch(/\/assessment/)
     expect(normalizeSiteUrl('https://example.test/')).toBe('https://example.test')
     expect(normalizeSiteUrl('http://localhost:5173')).toBeUndefined()
     expect(normalizeSiteUrl('https://example.test/path')).toBeUndefined()

@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, useNavigate } from "react-router-dom";
 import { afterEach, describe, expect, it } from "vitest";
 import { baseDescription, DocumentMetadata } from "../components/DocumentMetadata";
 
@@ -21,6 +21,12 @@ function renderMetadata(path: string) {
   expect(screen.getByRole("main", { name: "route content" })).toBeInTheDocument();
 }
 
+function MetadataNavigation() {
+  const navigate = useNavigate();
+
+  return <><DocumentMetadata /><button type="button" onClick={() => navigate("/about")}>Open About</button></>;
+}
+
 describe("route document metadata", () => {
   it.each([
     ["/", "KinkAtlas | Private Kink & BDSM Self-Reflection Quiz", "index, follow"],
@@ -30,7 +36,7 @@ describe("route document metadata", () => {
     ["/contact", "Contact | KinkAtlas", "index, follow"],
     ["/philosophy", "Consent Philosophy | KinkAtlas", "index, follow"],
     ["/terms", "Terms of Use | KinkAtlas", "index, follow"],
-    ["/assessment", "Kink & BDSM Exploration Quiz | KinkAtlas", "index, follow"],
+    ["/assessment", "Kink & BDSM Exploration Quiz | KinkAtlas", "noindex, nofollow"],
     ["/results", "Your Kink Map | KinkAtlas", "noindex, nofollow"],
     ["/roles", "Role Library | KinkAtlas", "index, follow"],
   ])("sets safe metadata for %s", (path, title, robots) => {
@@ -85,10 +91,10 @@ describe("route document metadata", () => {
     expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute("href", "https://kinkatlas.ca/about");
   });
 
-  it("uses only the reviewed role name in public role metadata", () => {
+  it("uses only the reviewed role name in public role metadata", async () => {
     renderMetadata("/roles/dominant");
 
-    expect(document.title).toBe("Dominant | KinkAtlas");
+    await waitFor(() => expect(document.title).toBe("Dominant | KinkAtlas"));
 
     expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "index, follow");
 
@@ -103,12 +109,30 @@ describe("route document metadata", () => {
     expect(document.querySelector('meta[property="og:url"]')).toHaveAttribute("content", "https://kinkatlas.ca/roles/dominant");
   });
 
-  it("uses the human-readable scored-role page for Discovery vocabulary without a library-label match", () => {
+  it("uses the human-readable scored-role page for Discovery vocabulary without a library-label match", async () => {
     renderMetadata("/roles/praise-receiver");
 
-    expect(document.title).toBe("Praise Receiver | KinkAtlas");
+    await waitFor(() => expect(document.title).toBe("Praise Receiver | KinkAtlas"));
     expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute("href", "https://kinkatlas.ca/roles/praise-receiver");
     expect(document.querySelector('meta[name="description"]')?.getAttribute("content")).not.toMatch(/alignment|confidence|score|answer/i);
+  });
+
+  it("does not let a pending role lookup overwrite metadata after navigation", async () => {
+    render(<MemoryRouter initialEntries={["/roles/dominant"]}><MetadataNavigation /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole("button", { name: "Open About" }));
+
+    await waitFor(() => expect(document.title).toBe("About KinkAtlas"));
+    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute("href", "https://kinkatlas.ca/about");
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "index, follow");
+  });
+
+  it("keeps the private assessment workflow out of the index and without a canonical URL", () => {
+    renderMetadata("/assessment");
+
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
+    expect(document.querySelector('link[rel="canonical"]')).not.toBeInTheDocument();
+    expect(document.querySelector('meta[property="og:url"]')).not.toBeInTheDocument();
   });
 
   it("keeps private results out of the index and without a canonical URL", () => {

@@ -16,7 +16,7 @@ describe("assessment flow", () => {
     });
 
     fireEvent.click(startLinks[startLinks.length - 1]);
-    fireEvent.click(screen.getByRole("button", { name: /begin/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /begin/i }));
 
     expect(screen.getByRole("group").querySelector("legend")).toHaveFocus();
 
@@ -104,7 +104,7 @@ describe("assessment flow", () => {
     );
 
     expect(
-      screen.getByRole("heading", {
+      await screen.findByRole("heading", {
         name: "A map, not a verdict.",
       }),
     ).toBeInTheDocument();

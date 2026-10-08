@@ -29,6 +29,11 @@
     X-Permitted-Cross-Domain-Policies = "none"
 
 [[headers]]
+  for = "/assessment"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
   for = "/results"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"

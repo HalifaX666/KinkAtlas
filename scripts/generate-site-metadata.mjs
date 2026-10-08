@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { publicRoleRoutes, writePublicRolePages } from './public-role-pages.mjs'
 
-export const indexableRoutes = ['/', '/about', '/faq', '/contact', '/philosophy', '/terms', '/roles', '/assessment']
+export const indexableRoutes = ['/', '/about', '/faq', '/contact', '/philosophy', '/terms', '/roles']
 
 export function normalizeSiteUrl(value) {
   if (!value?.trim()) return undefined

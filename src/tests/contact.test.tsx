@@ -12,9 +12,11 @@ afterEach(() => {
   window.history.replaceState(null, "", "/");
 });
 
-function renderContact() {
+async function renderContact() {
   window.history.replaceState(null, "", "/contact");
-  return render(<App />);
+  const view = render(<App />);
+  await screen.findByRole("heading", { level: 1, name: "Get in touch" });
+  return view;
 }
 
 function fillValidContactForm() {
@@ -25,9 +27,9 @@ function fillValidContactForm() {
 }
 
 describe("public Contact page", () => {
-  it("renders an accessible, privacy-separated form with all required topics and honeypot", () => {
+  it("renders an accessible, privacy-separated form with all required topics and honeypot", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
-    const { container } = renderContact();
+    const { container } = await renderContact();
 
     expect(screen.getByText("Contact", { selector: ".eyebrow" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: "Get in touch" })).toBeInTheDocument();
@@ -65,9 +67,9 @@ describe("public Contact page", () => {
     expect(container.textContent).not.toContain("mailto:");
   });
 
-  it("keeps randomized placeholders stable over rerenders and selects only approved values", () => {
+  it("keeps randomized placeholders stable over rerenders and selects only approved values", async () => {
     const random = vi.spyOn(Math, "random").mockReturnValue(0.5);
-    const { rerender } = renderContact();
+    const { rerender } = await renderContact();
     const name = screen.getByLabelText("Name (optional)");
     const email = screen.getByLabelText("Email (optional)");
     const message = screen.getByLabelText("Message");
@@ -85,7 +87,7 @@ describe("public Contact page", () => {
 
     cleanup();
     random.mockReturnValue(0.9);
-    renderContact();
+    await renderContact();
     expect(screen.getByLabelText("Name (optional)")).not.toHaveAttribute("placeholder", placeholders[0] ?? "");
     expect(screen.getByLabelText("Email (optional)")).not.toHaveAttribute("placeholder", placeholders[1] ?? "");
     expect(screen.getByLabelText("Message")).not.toHaveAttribute("placeholder", placeholders[2] ?? "");
@@ -102,7 +104,7 @@ describe("public Contact page", () => {
           }),
     );
     vi.stubGlobal("fetch", fetchMock);
-    const { container } = renderContact();
+    const { container } = await renderContact();
     const placeholders = [screen.getByLabelText("Name (optional)").getAttribute("placeholder"), screen.getByLabelText("Email (optional)").getAttribute("placeholder"), screen.getByLabelText("Message").getAttribute("placeholder")];
     fillValidContactForm();
 
@@ -131,7 +133,7 @@ describe("public Contact page", () => {
 
   it("retains user input and shows a generic failure message when delivery fails", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 500 })));
-    renderContact();
+    await renderContact();
     fillValidContactForm();
 
     fireEvent.submit(screen.getByRole("form", { name: "Write a note" }));
@@ -147,7 +149,7 @@ describe("public Contact page", () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
     const fetchMock = vi.fn((input: RequestInfo | URL, _init?: RequestInit) => Promise.resolve(input === "/.netlify/functions/completion-count" ? new Response(JSON.stringify({ count: 12 }), { status: 200 }) : new Response(null, { status: 200 })));
     vi.stubGlobal("fetch", fetchMock);
-    renderContact();
+    await renderContact();
 
     fireEvent.change(screen.getByLabelText("Topic"), { target: { value: "Privacy" } });
     fireEvent.change(screen.getByLabelText("Message"), { target: { value: "A privacy question." } });
@@ -167,8 +169,8 @@ describe("public Contact page", () => {
     expect(contactPageSource).toMatch(/fetch\("\/"/);
   });
 
-  it("exposes Contact in the footer and applies public route metadata", () => {
-    renderContact();
+  it("exposes Contact in the footer and applies public route metadata", async () => {
+    await renderContact();
 
     const footerNavigation = within(screen.getByRole("contentinfo")).getByRole("navigation", { name: "Further information" });
     expect(within(footerNavigation).getByRole("link", { name: "Contact" })).toHaveAttribute("href", "/contact");
