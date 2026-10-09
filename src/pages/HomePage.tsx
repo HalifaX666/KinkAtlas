@@ -48,6 +48,7 @@ export function HomePage() {
             <a className="button secondary" href="/about#how-it-works">
               How this works
             </a>
+            <Link className="quiet-button" to="/restore">Restore a private backup</Link>
           </div>
           <div className="hero-trust">
             <span>No account</span>
@@ -144,7 +145,7 @@ export function HomePage() {
         <div className="faq-grid">
           <details>
             <summary>Will my answers be saved?</summary>
-            <p>No. Answers live only in browser memory. Reloading or closing this tab erases them. The app has no account, database, tracking pixel, or answer-storage API.</p>
+            <p>Not automatically. Answers live only in browser memory, and reloading or closing this tab erases them. They leave memory only if you explicitly create and download an encrypted Private Restore file. The app has no account, answer-storage database, or tracking pixel.</p>
           </details>
           <details>
             <summary>Can this tell me which role I am?</summary>

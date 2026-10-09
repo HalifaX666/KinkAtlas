@@ -5,7 +5,7 @@ const questions = [
   ["What is KinkAtlas?", "KinkAtlas is a private self-reflection tool that suggests role vocabulary from patterns in your answers. It does not decide your identity."],
   ["How does KinkAtlas work?", "It uses deterministic, rules-based assessment with reviewed question-to-theme mappings and role evidence rules."],
   ["Does KinkAtlas use AI to generate my results?", "Generative AI does not analyze your answers or generate your results."],
-  ["Are my answers stored?", "Assessment answers and results are not persisted by KinkAtlas. They remain in browser memory for the current session; refreshing or closing clears that session."],
+  ["Are my answers stored?", "Assessment answers and results are not persisted by KinkAtlas. They remain in browser memory for the current session; refreshing or closing clears it unless you explicitly create and download an encrypted Private Restore file."],
   ["Why might I get fewer than five suggested roles?", "Suggestions require enough relevant evidence. Fewer than five suggestions—or zero suggestions—is valid; KinkAtlas does not fill the set with weak matches."],
   ["What do Alignment and Confidence mean?", "Alignment is how closely your answers resemble a role’s themes. Confidence is how much relevant information was available. Confidence does not determine ranking."],
   ["What does Evidence breadth mean?", "Evidence breadth is how much of a role’s relevant theme set had usable answer evidence; it is not match strength."],

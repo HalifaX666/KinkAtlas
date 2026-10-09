@@ -25,6 +25,8 @@ describe('launch deployment metadata', () => {
     expect(config).toContain("frame-ancestors 'none'")
     expect(config).toMatch(/for = "\/assessment"[\s\S]*X-Robots-Tag = "noindex, nofollow"/)
     expect(config).toMatch(/for = "\/results"[\s\S]*X-Robots-Tag = "noindex, nofollow"/)
+    expect(config).toMatch(/for = "\/capsule"[\s\S]*X-Robots-Tag = "noindex, nofollow"/)
+    expect(config).toMatch(/for = "\/restore"[\s\S]*X-Robots-Tag = "noindex, nofollow"/)
     expect(config).not.toMatch(/for = "\/roles(?:\/\*)?"[\s\S]*X-Robots-Tag = "noindex/)
   })
 
@@ -57,6 +59,7 @@ describe('launch deployment metadata', () => {
     expect(new Set(urls).size).toBe(urls.length)
     expect(sitemap).not.toMatch(/\/results/)
     expect(sitemap).not.toMatch(/\/assessment/)
+    expect(sitemap).not.toMatch(/\/capsule|\/restore/)
     expect(normalizeSiteUrl('https://example.test/')).toBe('https://example.test')
     expect(normalizeSiteUrl('http://localhost:5173')).toBeUndefined()
     expect(normalizeSiteUrl('https://example.test/path')).toBeUndefined()

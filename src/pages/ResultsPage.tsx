@@ -114,6 +114,7 @@ export function ResultsPage() {
           <Share2 size={18} />
           Create my role cards
         </button>
+        <Link className="quiet-button" to="/restore">Create a Private Restore backup</Link>
       </section>
 
       <section className="section page-width">

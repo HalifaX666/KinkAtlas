@@ -4,6 +4,7 @@ import { decryptSecretBytes, encryptSecretBytes, randomCapsuleBytes } from './ca
 import {
   CAPSULE_LIMITS,
   canonicalJson,
+  canonicalJsonFromValidatedValue,
   decodeBase64Url,
   encodeBase64Url,
   isSharedDisclosurePayload,
@@ -79,7 +80,7 @@ export function serializeCapsuleEnvelope(
   transport: CapsuleEnvelopeTransport = 'fragment',
 ): string {
   const envelope = validateSecretEnvelope(envelopeValue)
-  const serialized = canonicalJson(envelope as unknown as CapsuleJsonValue)
+  const serialized = canonicalJsonFromValidatedValue(envelope as unknown as CapsuleJsonValue)
   if (textEncoder.encode(serialized).byteLength > transportByteLimit(transport)) {
     throw new CapsuleError('oversized-input')
   }

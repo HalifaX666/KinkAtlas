@@ -16,6 +16,8 @@ const FaqPage = lazy(() => informationalPages().then(({ FaqPage }) => ({ default
 const PhilosophyPage = lazy(() => informationalPages().then(({ PhilosophyPage }) => ({ default: PhilosophyPage })))
 const TermsPage = lazy(() => informationalPages().then(({ TermsPage }) => ({ default: TermsPage })))
 const ResultsPage = lazy(() => import('./pages/ResultsPage').then(({ ResultsPage }) => ({ default: ResultsPage })))
+const CapsulePage = lazy(() => import('./pages/CapsulePage').then(({ CapsulePage }) => ({ default: CapsulePage })))
+const RestorePage = lazy(() => import('./pages/RestorePage').then(({ RestorePage }) => ({ default: RestorePage })))
 const RoleLibraryPage = lazy(() => import('./pages/RoleLibraryPage').then(({ RoleLibraryPage }) => ({ default: RoleLibraryPage })))
 const RolePage = lazy(() => import('./pages/RolePage').then(({ RolePage }) => ({ default: RolePage })))
 
@@ -28,5 +30,5 @@ function LazyRoute({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  return <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><AppErrorBoundary><ScrollRestoration /><DocumentMetadata /><AssessmentProvider><Routes><Route element={<Shell />}><Route index element={<HomePage />} /><Route path="about" element={<LazyRoute><AboutPage /></LazyRoute>} /><Route path="faq" element={<LazyRoute><FaqPage /></LazyRoute>} /><Route path="contact" element={<LazyRoute><ContactPage /></LazyRoute>} /><Route path="philosophy" element={<LazyRoute><PhilosophyPage /></LazyRoute>} /><Route path="terms" element={<LazyRoute><TermsPage /></LazyRoute>} /><Route path="assessment" element={<AssessmentPage />} /><Route path="results" element={<LazyRoute><ResultsPage /></LazyRoute>} /><Route path="roles" element={<LazyRoute><RoleLibraryPage /></LazyRoute>} /><Route path="roles/:roleId" element={<LazyRoute><RolePage /></LazyRoute>} /><Route path="*" element={<NotFoundPage />} /></Route></Routes></AssessmentProvider></AppErrorBoundary></BrowserRouter>
+  return <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><AppErrorBoundary><ScrollRestoration /><DocumentMetadata /><AssessmentProvider><Routes><Route element={<Shell />}><Route index element={<HomePage />} /><Route path="about" element={<LazyRoute><AboutPage /></LazyRoute>} /><Route path="faq" element={<LazyRoute><FaqPage /></LazyRoute>} /><Route path="contact" element={<LazyRoute><ContactPage /></LazyRoute>} /><Route path="philosophy" element={<LazyRoute><PhilosophyPage /></LazyRoute>} /><Route path="terms" element={<LazyRoute><TermsPage /></LazyRoute>} /><Route path="assessment" element={<AssessmentPage />} /><Route path="results" element={<LazyRoute><ResultsPage /></LazyRoute>} /><Route path="capsule" element={<LazyRoute><CapsulePage /></LazyRoute>} /><Route path="restore" element={<LazyRoute><RestorePage /></LazyRoute>} /><Route path="roles" element={<LazyRoute><RoleLibraryPage /></LazyRoute>} /><Route path="roles/:roleId" element={<LazyRoute><RolePage /></LazyRoute>} /><Route path="*" element={<NotFoundPage />} /></Route></Routes></AssessmentProvider></AppErrorBoundary></BrowserRouter>
 }

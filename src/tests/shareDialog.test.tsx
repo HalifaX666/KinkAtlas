@@ -12,6 +12,7 @@ import { buildRelatedRoleProfiles } from '../engine/roleProfileExploration'
 import { buildEditableRoleProfileEntries, buildRoleProfileCandidates, optimizeRoleProfile, type EditableRoleProfileEntry } from '../engine/roleProfileOptimizer'
 import { createRoleCardImage, getShareableRoleSet, roleCardFileName, type ShareResultsData } from '../engine/shareResults'
 import { roleLibrary } from '../taxonomy/roleLibrary'
+import * as capsuleTransport from '../capsules/capsuleTransport'
 
 const answers = { 'd-power-give': 'strong', 'd-position-give': 'strong', 'r-lead': 'strong', 'r-responsibility': 'strong' }
 const roleResults = matchRoles(calculateTraitScores(answers), answers)
@@ -85,6 +86,58 @@ async function searchResultFor(label: string) {
 }
 
 describe('Export & Share dialog', () => {
+  it('keeps encrypted disclosure separate and derives its privacy receipt from supported selections', () => {
+    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /Encrypted Disclosure/i }))
+
+    const choices = screen.getByRole('group', { name: 'Include in the encrypted disclosure' })
+    const roleSet = within(choices).getByRole('checkbox', { name: /Current Role Set/i })
+    const definitions = within(choices).getByRole('checkbox', { name: /Role definitions/i })
+    expect(roleSet).toBeChecked()
+    expect(definitions).toBeChecked()
+    expect(within(choices).queryByRole('checkbox', { name: /raw|answer|boundary|readiness/i })).not.toBeInTheDocument()
+
+    const receipt = screen.getByRole('heading', { name: 'Privacy receipt' }).closest('.privacy-receipt')!
+    expect(receipt).toHaveTextContent('Current Role Set')
+    expect(receipt).toHaveTextContent('Role definitions')
+    expect(receipt).toHaveTextContent('Raw assessment answers')
+
+    fireEvent.click(definitions)
+    expect(definitions).not.toBeChecked()
+    expect(receipt).toHaveTextContent('Not included')
+  })
+
+  it('creates encrypted link, text, file, and separate secret from the selected disclosure manifest', async () => {
+    const createDisclosure = vi.spyOn(capsuleTransport, 'createSharedDisclosureArtifact').mockResolvedValue({
+      link: 'https://example.test/capsule#capsule=encrypted-ciphertext',
+      fragment: '#capsule=encrypted-ciphertext',
+      serializedEnvelope: '{"ciphertext":"encrypted-ciphertext"}',
+      secret: 'KA1-separate.secret',
+      file: new File(['encrypted-ciphertext'], 'disclosure.kinkatlas-capsule'),
+    })
+    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /Encrypted Disclosure/i }))
+    expect(screen.queryByLabelText('Encrypted Capsule text')).not.toBeInTheDocument()
+
+    const choices = screen.getByRole('group', { name: 'Include in the encrypted disclosure' })
+    fireEvent.click(within(choices).getByRole('checkbox', { name: /Role definitions/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create encrypted disclosure' }))
+
+    const encryptedText = await screen.findByLabelText('Encrypted Capsule text') as HTMLTextAreaElement
+    const link = screen.getByLabelText('Encrypted Capsule link') as HTMLTextAreaElement
+    const secret = screen.getByLabelText(/Secret — never embedded in the link/i) as HTMLInputElement
+    expect(link.value).toMatch(/\/capsule#capsule=/)
+    expect(encryptedText.value).toBe('{"ciphertext":"encrypted-ciphertext"}')
+    expect(link.value).not.toContain(secret.value)
+    expect(screen.getByRole('button', { name: 'Download encrypted file' })).toBeVisible()
+
+    const payload = createDisclosure.mock.calls[0][0]
+    expect(payload.disclosureManifest.currentRoleSet).toBe(true)
+    expect(payload.disclosureManifest.roleDefinitions).toBe(false)
+    expect(payload.sections).toHaveProperty('currentRoleSet')
+    expect(payload.sections).not.toHaveProperty('roleDefinitions')
+  }, 30_000)
+
   it('uses canonical primary wording and a static role reference on an exported card without metrics', async () => {
     const drawnText: string[] = []
     mockImageExport(undefined, drawnText)

@@ -48,13 +48,13 @@ export type CapsuleJsonPrimitive = null | boolean | number | string
 export type CapsuleJsonValue = CapsuleJsonPrimitive | CapsuleJsonValue[] | { [key: string]: CapsuleJsonValue }
 export type CapsuleJsonObject = { [key: string]: CapsuleJsonValue }
 
-export interface SharedRoleReference {
+export type SharedRoleReference = CapsuleJsonObject & {
   roleId: string
   label: string
   primary: boolean
 }
 
-export interface SharedRoleDefinition {
+export type SharedRoleDefinition = CapsuleJsonObject & {
   roleId: string
   definition: string
 }

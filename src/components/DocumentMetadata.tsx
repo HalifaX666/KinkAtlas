@@ -84,6 +84,18 @@ const publicRoutes: Record<string, RouteMetadata> = {
     robots: "noindex, nofollow",
   },
 
+  "/capsule": {
+    title: "Open Encrypted Capsule | KinkAtlas",
+    description: "Open a private encrypted KinkAtlas disclosure locally in this browser.",
+    robots: "noindex, nofollow",
+  },
+
+  "/restore": {
+    title: "Private Restore | KinkAtlas",
+    description: "Create or open a private encrypted KinkAtlas assessment restore file locally in this browser.",
+    robots: "noindex, nofollow",
+  },
+
   "/roles": {
     title: "Role Library | KinkAtlas",
     description: "Browse kink and BDSM role vocabulary with reviewed definitions, related terms, and clear assessment boundaries.",

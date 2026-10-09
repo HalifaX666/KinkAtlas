@@ -6,6 +6,7 @@ import { applyRefinementAnswer, unansweredRefinementQuestions } from "../../src/
 import type { EditableRoleProfileEntry } from "../../src/engine/roleProfileOptimizer";
 import type { AssessmentNavigationState } from "../../src/context/AssessmentContext";
 import type { AssessmentAnswers, BoundaryValue } from "../../src/types";
+import { restoreRevisionStatus, validatePrivateRestoreState, type PrivateRestoreState, type ResultSnapshot } from "../../src/capsules/capsuleData";
 
 export const PERSONA_HARNESS_MARKER = "KINKATLAS_E2E_PERSONA_HARNESS_V1";
 
@@ -67,6 +68,8 @@ interface AssessmentContextValue {
   initializeCurrentRoleSet: (roles: EditableRoleProfileEntry[]) => void;
   completionRequested: boolean;
   markCompletionRequested: () => boolean;
+  historicalResultSnapshot: ResultSnapshot | null;
+  hydratePrivateRestoreState: (restore: PrivateRestoreState) => Promise<"full" | "historical-only">;
   hasMeaningfulSession: boolean;
   answerDiscovery: (questionId: string, answerId: string) => void;
   answerRefinement: (questionId: string, answerId: string) => void;
@@ -87,10 +90,11 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
   const [assessmentNavigation, updateAssessmentNavigation] = useState<AssessmentNavigationState>(emptyNavigation);
   const [currentRoleSet, setCurrentRoleSet] = useState<EditableRoleProfileEntry[] | null>(null);
   const [completionRequested, setCompletionRequested] = useState(false);
+  const [historicalResultSnapshot, setHistoricalResultSnapshot] = useState<ResultSnapshot | null>(null);
   const completionRequestedRef = useRef(false);
 
   const assessmentCompletion = useMemo(() => getAssessmentCompletion(answers), [answers]);
-  const hasMeaningfulSession = useMemo(() => hasAnswers(answers) || currentRoleSet !== null, [answers, currentRoleSet]);
+  const hasMeaningfulSession = useMemo(() => hasAnswers(answers) || currentRoleSet !== null || historicalResultSnapshot !== null, [answers, currentRoleSet, historicalResultSnapshot]);
 
   useEffect(() => {
     if (!hasMeaningfulSession) return;
@@ -115,12 +119,30 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
+  const hydratePrivateRestoreState = useCallback(async (restore: PrivateRestoreState) => {
+    validatePrivateRestoreState(restore);
+    const mode = restoreRevisionStatus(restore);
+    const snapshot = restore.resultSnapshot ? structuredClone(restore.resultSnapshot) : null;
+    if (mode === "historical-only") {
+      setHistoricalResultSnapshot(snapshot);
+      return mode;
+    }
+    completionRequestedRef.current = restore.completionRequested;
+    setAnswers(structuredClone(restore.answers));
+    updateAssessmentNavigation(structuredClone(restore.navigation));
+    setCurrentRoleSet(restore.currentRoleSet ? structuredClone(restore.currentRoleSet) : null);
+    setCompletionRequested(restore.completionRequested);
+    setHistoricalResultSnapshot(snapshot);
+    return mode;
+  }, []);
+
   const reset = useCallback(() => {
     completionRequestedRef.current = false;
     setAnswers(emptyAnswers());
     updateAssessmentNavigation(emptyNavigation());
     setCurrentRoleSet(null);
     setCompletionRequested(false);
+    setHistoricalResultSnapshot(null);
   }, []);
 
   const value = useMemo<AssessmentContextValue>(
@@ -134,6 +156,8 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
       initializeCurrentRoleSet,
       completionRequested,
       markCompletionRequested,
+      historicalResultSnapshot,
+      hydratePrivateRestoreState,
       hasMeaningfulSession,
 
       answerDiscovery: (questionId, answerId) =>
@@ -205,7 +229,7 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
 
       reset,
     }),
-    [answers, assessmentNavigation, assessmentCompletion, currentRoleSet, completionRequested, hasMeaningfulSession, initializeCurrentRoleSet, markCompletionRequested, reset],
+    [answers, assessmentNavigation, assessmentCompletion, currentRoleSet, completionRequested, historicalResultSnapshot, hasMeaningfulSession, initializeCurrentRoleSet, markCompletionRequested, hydratePrivateRestoreState, reset],
   );
 
   return <AssessmentContext.Provider value={value}>{children}</AssessmentContext.Provider>;

@@ -74,7 +74,7 @@ export function TermsPage() {
         <h2 id="terms-privacy-heading">6. Assessment privacy</h2>
         <p>KinkAtlas does not require an account to complete the assessment.</p>
         <p>Assessment answers and generated assessment results are processed in your browser and kept in browser memory for the current assessment session. They are not intentionally saved by KinkAtlas in localStorage, sessionStorage, cookies, IndexedDB, an account, or an assessment-results database.</p>
-        <p>Refreshing or closing the assessment page may clear your current assessment state.</p>
+        <p>Refreshing or closing the assessment page may clear your current assessment state. You may explicitly create an encrypted Private Restore file; that user-downloaded file and its separately displayed secret are not uploaded or retained by KinkAtlas.</p>
         <p>When you choose to view a completed assessment, KinkAtlas may send an empty same-origin request used to increment an aggregate completion counter. Assessment answers, results, roles, readiness information, boundaries, negotiation preferences, and other assessment content are not included in that request.</p>
         <p>The completion counter is intended to record only an aggregate number of completed assessments and should not be interpreted as a count of unique individuals.</p>
         <p>KinkAtlas infrastructure and third-party service providers may process limited technical information associated with normal website requests, such as IP addresses, browser or device information, request information, or security-related logs. Such processing does not mean that KinkAtlas stores your assessment answers or results.</p>

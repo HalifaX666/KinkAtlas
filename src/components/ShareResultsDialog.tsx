@@ -1,8 +1,10 @@
-import { Copy, Download, FileText, Images, Share2, X } from 'lucide-react'
+import { Copy, Download, FileLock2, FileText, Images, Share2, X } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { roleLibraryRoleForIdentity } from '../data/roleIdentity'
 import { BrandLogo } from './BrandLogo'
 import { RoleIdentityCard } from './RoleIdentityCard'
+import { buildSharedDisclosurePayload, privacyReceiptForPayload } from '../capsules/capsuleData'
+import { capsuleErrorMessage, createSharedDisclosureArtifact, downloadCapsuleFile, type SharedCapsuleArtifact } from '../capsules/capsuleTransport'
 import {
   buildFullReflection,
   buildQuickSummary,
@@ -16,7 +18,7 @@ import {
   type ShareResultsData,
 } from '../engine/shareResults'
 
-type ShareMode = 'cards' | 'quick' | 'full'
+type ShareMode = 'cards' | 'quick' | 'full' | 'capsule'
 
 const shareChoices: { key: keyof ShareOptions; label: string; detail: string; sensitive?: boolean }[] = [
   { key: 'roles', label: 'Your Role Set', detail: 'The current roles and order you chose.' },
@@ -32,6 +34,7 @@ const modes: { id: ShareMode; label: string; description: string; icon: typeof I
   { id: 'cards', label: 'Role Cards', description: 'Create individual images from your current role set.', icon: Images },
   { id: 'quick', label: 'Quick Summary', description: 'Copy a short version for a post or message.', icon: Copy },
   { id: 'full', label: 'Full Reflection', description: 'Copy a detailed, potentially sensitive report.', icon: FileText },
+  { id: 'capsule', label: 'Encrypted Disclosure', description: 'Create a private encrypted role disclosure.', icon: FileLock2 },
 ]
 
 export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; onClose: () => void }) {
@@ -42,6 +45,8 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
   const [options, setOptions] = useState<ShareOptions>(defaultShareOptions)
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
+  const [capsuleSections, setCapsuleSections] = useState({ currentRoleSet: true, roleDefinitions: true })
+  const [capsuleArtifact, setCapsuleArtifact] = useState<SharedCapsuleArtifact | null>(null)
   const titleId = useId()
   const descriptionId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -49,6 +54,8 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
   const selectedRoles = roleCards.filter((role) => selectedIds.has(role.id))
   const quickSummary = useMemo(() => buildQuickSummary(data), [data])
   const fullReflection = useMemo(() => buildFullReflection(data, options), [data, options])
+  const capsulePayload = useMemo(() => buildSharedDisclosurePayload(data.roleSet, capsuleSections), [data.roleSet, capsuleSections])
+  const capsuleReceipt = useMemo(() => privacyReceiptForPayload(capsulePayload), [capsulePayload])
 
   useEffect(() => setSelectedIds(new Set(roleCards.map((role) => role.id))), [roleCards])
 
@@ -134,6 +141,18 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
     }
   }
 
+  const createEncryptedDisclosure = async () => {
+    setBusy(true); setCapsuleArtifact(null); setStatus('')
+    try {
+      setCapsuleArtifact(await createSharedDisclosureArtifact(capsulePayload))
+      setStatus('Encrypted disclosure created locally. Share the Capsule and secret separately.')
+    } catch (error) {
+      setStatus(capsuleErrorMessage(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const cardCount = selectedRoles.length
   const exportLabel = cardCount === 1 ? 'Export card' : `Export ${cardCount} cards`
   const shareLabel = cardCount === 1 ? 'Share card' : `Share ${cardCount} cards`
@@ -170,6 +189,28 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
         const disabled = (choice.key === 'alignment' || choice.key === 'confidence') && !options.roles
         return <label key={choice.key} className={choice.sensitive ? 'sensitive-option' : ''}><input type="checkbox" checked={options[choice.key]} disabled={disabled} onChange={(event) => updateOption(choice.key, event.target.checked)} /><span><strong>{choice.label}</strong><small>{choice.detail}{choice.sensitive ? ' Off by default.' : ''}</small></span></label>
       })}</fieldset><details className="share-preview"><summary>Preview full reflection</summary><pre>{fullReflection}</pre></details><div className="share-actions"><button className="button primary" type="button" onClick={() => copy(fullReflection, 'Full reflection copied.')}><Copy size={17} />Copy Full Reflection</button></div></section>}
+
+      {mode === 'capsule' && <section className="share-mode-panel" aria-labelledby="encrypted-disclosure-heading">
+        <div className="share-panel-heading"><div><h3 id="encrypted-disclosure-heading">Create private encrypted disclosure</h3><p>This read-only Capsule contains only the sections listed below. Raw assessment answers, restore state, and navigation cannot be selected.</p></div></div>
+        <fieldset className="share-options"><legend>Include in the encrypted disclosure</legend>
+          <label><input type="checkbox" checked={capsuleSections.currentRoleSet} onChange={(event) => { setCapsuleSections((current) => ({ ...current, currentRoleSet: event.target.checked })); setCapsuleArtifact(null) }} /><span><strong>Current Role Set</strong><small>Your current labels, order, and primary role.</small></span></label>
+          <label><input type="checkbox" checked={capsuleSections.roleDefinitions} onChange={(event) => { setCapsuleSections((current) => ({ ...current, roleDefinitions: event.target.checked })); setCapsuleArtifact(null) }} /><span><strong>Role definitions</strong><small>Historical definition text for roles in your current set.</small></span></label>
+        </fieldset>
+        <div className="privacy-receipt"><h4>Privacy receipt</h4><div><strong>Included</strong><ul>{capsuleReceipt.included.map((item) => <li key={item}>{item}</li>)}</ul></div><div><strong>Not included</strong><ul>{capsuleReceipt.notIncluded.map((item) => <li key={item}>{item}</li>)}</ul></div></div>
+        <div className="share-actions"><button className="button primary" type="button" disabled={busy || (!capsuleSections.currentRoleSet && !capsuleSections.roleDefinitions)} onClick={createEncryptedDisclosure}><FileLock2 size={17} />Create encrypted disclosure</button></div>
+        {capsuleArtifact && <div className="capsule-artifact">
+          <p><strong>Both parts are required.</strong> For better privacy, send the Capsule link/file and secret through separate channels.</p>
+          <label><span>Encrypted Capsule link</span><textarea readOnly rows={4} value={capsuleArtifact.link} /></label>
+          <label><span>Encrypted Capsule text</span><textarea readOnly rows={4} value={capsuleArtifact.serializedEnvelope} /></label>
+          <label><span>Secret — never embedded in the link</span><input readOnly value={capsuleArtifact.secret} /></label>
+          <div className="share-actions">
+            <button className="button secondary" type="button" onClick={() => copy(capsuleArtifact.link, 'Encrypted Capsule link copied.')}><Copy size={17} />Copy Capsule link</button>
+            <button className="button secondary" type="button" onClick={() => copy(capsuleArtifact.serializedEnvelope, 'Encrypted Capsule text copied.')}><Copy size={17} />Copy encrypted text</button>
+            <button className="button secondary" type="button" onClick={() => copy(capsuleArtifact.secret, 'Capsule secret copied.')}><Copy size={17} />Copy secret</button>
+            <button className="button secondary" type="button" onClick={() => downloadCapsuleFile(capsuleArtifact.file)}><Download size={17} />Download encrypted file</button>
+          </div>
+        </div>}
+      </section>}
 
       <div className="share-disclaimer"><strong>Sharing is not consent.</strong><p>Sharing a result does not communicate consent, availability, boundaries, or agreement to any activity.</p>{mode === 'full' && options.boundaries && <p>Boundaries shown here reflect the selections made when this result was generated and should never replace direct communication.</p>}</div>
       <p className="share-status" role="status" aria-live="polite">{status}</p>

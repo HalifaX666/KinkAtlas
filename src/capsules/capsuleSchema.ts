@@ -120,19 +120,23 @@ function validateJsonValue(value: unknown, depth = 0, sharedDisclosure = false):
   }
 }
 
+export function canonicalJsonFromValidatedValue(value: CapsuleJsonValue): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value)
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalJsonFromValidatedValue(item)).join(',')}]`
+  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJsonFromValidatedValue(value[key])}`).join(',')}}`
+}
+
 export function canonicalJson(value: CapsuleJsonValue): string {
   validateJsonValue(value)
-  if (value === null || typeof value !== 'object') return JSON.stringify(value)
-  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item)).join(',')}]`
-  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(',')}}`
+  return canonicalJsonFromValidatedValue(value)
 }
 
 function validatePayloadContext(value: Record<string, unknown>): void {
   if (value.payloadVersion !== CAPSULE_PAYLOAD_VERSION) fail('unsupported-version')
   if (value.assessmentSchemaVersion !== ASSESSMENT_SCHEMA_VERSION) fail('unsupported-version')
-  if (value.engineRevision !== ASSESSMENT_ENGINE_REVISION) fail('unsupported-version')
   if (value.roleLibrarySchemaVersion !== ROLE_LIBRARY_SCHEMA_VERSION) fail('unsupported-version')
-  if (value.roleLibraryRevision !== ROLE_LIBRARY_REVISION) fail('unsupported-version')
+  requireNonEmptyBoundedString(value.engineRevision, 'payload-validation-failed')
+  requireNonEmptyBoundedString(value.roleLibraryRevision, 'payload-validation-failed')
 }
 
 function validateDisclosureManifest(value: unknown): asserts value is DisclosureManifest {

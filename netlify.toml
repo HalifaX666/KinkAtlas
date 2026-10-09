@@ -37,3 +37,13 @@
   for = "/results"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/capsule"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/restore"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

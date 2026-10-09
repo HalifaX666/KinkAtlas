@@ -173,11 +173,11 @@ export function AboutPage() {
         <h2 id="ai-heading">Does KinkAtlas use AI?</h2>
         <p><strong>No.</strong> KinkAtlas does not use AI to run the assessment, analyze answers, generate results, recommend roles, build a Suggested Role Set or Your Role Set, create conversation starters, identify reflection cues, interpret boundaries, or create export cards.</p>
         <p>No generative AI or language model receives assessment answers or results, and no AI decides someone’s identity. Results are calculated locally in the browser from deterministic application rules and curated KinkAtlas data. With the same inputs and the same version of those rules, results are reproducible.</p>
-        <p>Your assessment answers stay in browser memory for the current session. KinkAtlas does not send them to an AI service; you choose when to copy, export, or share information.</p>
+        <p>Your assessment answers stay in browser memory for the current session. KinkAtlas does not send them to an AI service; you choose when to copy, export, share, or save an encrypted Private Restore file.</p>
       </section>
       <section id="privacy" aria-labelledby="privacy-heading">
         <h2 id="privacy-heading">Privacy &amp; transparency</h2>
-        <p>No account is required. KinkAtlas keeps assessment answers and generated results in browser memory for the current assessment session, not in persistent browser storage or an assessment database. Refreshing or closing the assessment page may clear your current assessment state.</p>
+        <p>No account is required. KinkAtlas keeps assessment answers and generated results in browser memory for the current assessment session, not in persistent browser storage or an assessment database. Refreshing or closing the assessment page may clear your current assessment state unless you explicitly create an encrypted Private Restore file and keep its secret separately.</p>
         <p>Assessment answers and results are not saved in localStorage, sessionStorage, cookies, or IndexedDB. KinkAtlas does not maintain a questionnaire-data backend.</p>
         <p>Copying, downloading, exporting, or sharing a result is your choice. Copies you create may remain outside KinkAtlas after your assessment session ends.</p>
         <p>When you choose to view a completed assessment, your browser sends an empty same-origin request that increments an aggregate completion counter. The KinkAtlas application does not include assessment answers, results, roles, readiness information, boundaries, negotiation preferences, or other assessment content in that request.</p>
