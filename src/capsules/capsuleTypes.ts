@@ -1,0 +1,111 @@
+export const CAPSULE_MAGIC = 'kinkatlas-capsule' as const
+export const CAPSULE_ENVELOPE_VERSION = 1 as const
+export const CAPSULE_PAYLOAD_VERSION = 1 as const
+
+export const SECRET_CAPSULE_SUITE = 'PBKDF2-HMAC-SHA-256+A256GCM' as const
+export const SECRET_CAPSULE_KDF = 'PBKDF2-HMAC-SHA-256' as const
+
+export const DISCLOSURE_SECTION_IDS = [
+  'currentRoleSet',
+  'roleDefinitions',
+  'roleProvenance',
+  'alignment',
+  'confidence',
+  'evidenceBreadth',
+  'suggestedRoleSet',
+  'roleDiscovery',
+  'communicationProfile',
+  'negotiationPreferences',
+  'readiness',
+  'blindSpots',
+  'criticalFlags',
+  'boundaries',
+  'assessmentEvidence',
+] as const
+
+export type DisclosureSectionId = (typeof DISCLOSURE_SECTION_IDS)[number]
+export type DisclosureManifest = Record<DisclosureSectionId, boolean>
+
+export const SHARED_DISCLOSURE_DEFAULTS: Readonly<DisclosureManifest> = Object.freeze({
+  currentRoleSet: true,
+  roleDefinitions: true,
+  roleProvenance: false,
+  alignment: false,
+  confidence: false,
+  evidenceBreadth: false,
+  suggestedRoleSet: false,
+  roleDiscovery: false,
+  communicationProfile: false,
+  negotiationPreferences: false,
+  readiness: false,
+  blindSpots: false,
+  criticalFlags: false,
+  boundaries: false,
+  assessmentEvidence: false,
+})
+
+export type CapsuleJsonPrimitive = null | boolean | number | string
+export type CapsuleJsonValue = CapsuleJsonPrimitive | CapsuleJsonValue[] | { [key: string]: CapsuleJsonValue }
+export type CapsuleJsonObject = { [key: string]: CapsuleJsonValue }
+
+export interface SharedRoleReference {
+  roleId: string
+  label: string
+  primary: boolean
+}
+
+export interface SharedRoleDefinition {
+  roleId: string
+  definition: string
+}
+
+export type SharedDisclosureSections = Partial<Record<DisclosureSectionId, CapsuleJsonValue>> & {
+  currentRoleSet?: SharedRoleReference[]
+  roleDefinitions?: SharedRoleDefinition[]
+}
+
+interface CapsulePayloadContext {
+  payloadVersion: typeof CAPSULE_PAYLOAD_VERSION
+  assessmentSchemaVersion: number
+  engineRevision: string
+  roleLibrarySchemaVersion: number
+  roleLibraryRevision: string
+}
+
+export interface SharedDisclosurePayload extends CapsulePayloadContext {
+  payloadType: 'shared-disclosure'
+  disclosureManifest: DisclosureManifest
+  sections: SharedDisclosureSections
+}
+
+export interface PrivateRestorePayload extends CapsulePayloadContext {
+  payloadType: 'private-restore'
+  restore: CapsuleJsonObject
+}
+
+export type CapsulePayload = SharedDisclosurePayload | PrivateRestorePayload
+export type CapsuleCompression = 'gzip' | 'none'
+
+export interface SecretCapsuleEnvelope {
+  magic: typeof CAPSULE_MAGIC
+  envelopeVersion: typeof CAPSULE_ENVELOPE_VERSION
+  mode: 'secret'
+  suite: typeof SECRET_CAPSULE_SUITE
+  compression: CapsuleCompression
+  kdf: {
+    algorithm: typeof SECRET_CAPSULE_KDF
+    iterations: number
+  }
+  salt: string
+  iv: string
+  ciphertext: string
+}
+
+// Reserved for the separately reviewed Viewer-Locked slice. Secret-mode validation
+// rejects these fields today rather than silently interpreting future metadata.
+export interface FutureViewerEnvelopeFields {
+  recipientKeyId?: string
+  ephemeralPublicKey?: string
+}
+
+export type CapsuleEnvelopeTransport = 'fragment' | 'file'
