@@ -13,6 +13,8 @@ import { buildEditableRoleProfileEntries, buildRoleProfileCandidates, optimizeRo
 import { createRoleCardImage, getShareableRoleSet, roleCardFileName, type ShareResultsData } from '../engine/shareResults'
 import { roleLibrary } from '../taxonomy/roleLibrary'
 import * as capsuleTransport from '../capsules/capsuleTransport'
+import * as viewerTransport from '../capsules/viewerLockedTransport'
+import type { ViewerRequest } from '../capsules/capsuleTypes'
 
 const answers = { 'd-power-give': 'strong', 'd-position-give': 'strong', 'r-lead': 'strong', 'r-responsibility': 'strong' }
 const roleResults = matchRoles(calculateTraitScores(answers), answers)
@@ -137,6 +139,36 @@ describe('Export & Share dialog', () => {
     expect(payload.sections).toHaveProperty('currentRoleSet')
     expect(payload.sections).not.toHaveProperty('roleDefinitions')
   }, 30_000)
+
+  it('creates a Viewer-Locked disclosure from the same conservative payload without generating a secret', async () => {
+    const request = {
+      magic: 'kinkatlas-viewer-request', viewerRequestVersion: 1,
+      requestId: 'AAAAAAAAAAAAAAAAAAAAAA',
+      suite: 'ECDH-P256+HKDF-SHA-256+A256GCM',
+      recipientPublicKey: 'viewer-public-key',
+      keyprint: { version: 1, short: 'ABCD-EF01-234', checksum: '42', fingerprint: 'A'.repeat(64) },
+    } as ViewerRequest
+    vi.spyOn(viewerTransport, 'parseViewerRequestInput').mockResolvedValue(request)
+    const createDisclosure = vi.spyOn(viewerTransport, 'createViewerLockedDisclosureArtifact').mockResolvedValue({
+      link: 'https://example.test/capsule#capsule=viewer-locked-ciphertext',
+      fragment: '#capsule=viewer-locked-ciphertext',
+      serializedEnvelope: '{"mode":"viewer-locked","ciphertext":"encrypted"}',
+      file: new File(['viewer-locked'], 'viewer-locked.kinkatlas-capsule'),
+    })
+    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /Encrypted Disclosure/i }))
+    fireEvent.click(screen.getByRole('radio', { name: /Viewer-Locked Capsule/i }))
+    fireEvent.change(screen.getByLabelText('Recipient Viewer Request link or text'), { target: { value: 'public-request' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Validate Viewer Request' }))
+    expect(await screen.findByText(/ABCD-EF01-234/)).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Create Viewer-Locked Capsule' }))
+    expect((await screen.findByLabelText('Viewer-Locked Capsule link')) as HTMLTextAreaElement).toHaveValue(
+      'https://example.test/capsule#capsule=viewer-locked-ciphertext',
+    )
+    expect(screen.queryByLabelText(/Secret —/i)).not.toBeInTheDocument()
+    expect(createDisclosure.mock.calls[0][0].sections).toEqual(expect.objectContaining({ currentRoleSet: expect.any(Array), roleDefinitions: expect.any(Array) }))
+    expect(createDisclosure.mock.calls[0][1]).toBe(request)
+  })
 
   it('uses canonical primary wording and a static role reference on an exported card without metrics', async () => {
     const drawnText: string[] = []

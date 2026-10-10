@@ -6,6 +6,9 @@ import {
   DISCLOSURE_SECTION_IDS,
   SECRET_CAPSULE_KDF,
   SECRET_CAPSULE_SUITE,
+  VIEWER_LOCKED_KDF,
+  VIEWER_LOCKED_SUITE,
+  type CapsuleEnvelope,
   type CapsuleEnvelopeTransport,
   type CapsuleJsonValue,
   type CapsulePayload,
@@ -13,6 +16,7 @@ import {
   type DisclosureSectionId,
   type SecretCapsuleEnvelope,
   type SharedDisclosurePayload,
+  type ViewerLockedCapsuleEnvelope,
 } from './capsuleTypes'
 import {
   ASSESSMENT_ENGINE_REVISION,
@@ -37,6 +41,8 @@ export const CAPSULE_LIMITS = Object.freeze({
   saltBytes: 16,
   ivBytes: 12,
   authenticationTagBytes: 16,
+  p256PublicKeyBytes: 65,
+  requestIdBytes: 16,
   secretBytesMin: 16,
   secretBytesMax: 1024,
   pbkdf2IterationsMin: 100_000,
@@ -273,6 +279,45 @@ export function validateSecretEnvelope(value: unknown): SecretCapsuleEnvelope {
   if (ciphertext.byteLength < CAPSULE_LIMITS.authenticationTagBytes) fail('malformed-envelope')
   if (ciphertext.byteLength > CAPSULE_LIMITS.ciphertextBytes) fail('oversized-input')
   return envelope as unknown as SecretCapsuleEnvelope
+}
+
+export function validateViewerLockedEnvelope(value: unknown): ViewerLockedCapsuleEnvelope {
+  const envelope = requireRecord(value, 'malformed-envelope')
+  requireExactKeys(
+    envelope,
+    ['magic', 'envelopeVersion', 'mode', 'suite', 'compression', 'recipientKeyId', 'ephemeralPublicKey', 'kdf', 'salt', 'iv', 'ciphertext'],
+    [],
+    'malformed-envelope',
+  )
+  if (envelope.magic !== CAPSULE_MAGIC) fail('malformed-envelope')
+  if (envelope.envelopeVersion !== CAPSULE_ENVELOPE_VERSION) fail('unsupported-version')
+  if (envelope.mode !== 'viewer-locked' || envelope.suite !== VIEWER_LOCKED_SUITE) fail('unsupported-algorithm')
+  if (envelope.compression !== 'gzip' && envelope.compression !== 'none') fail('unsupported-algorithm')
+  const requestId = decodeBase64Url(envelope.recipientKeyId)
+  const ephemeralPublicKey = decodeBase64Url(envelope.ephemeralPublicKey)
+  const kdf = requireRecord(envelope.kdf, 'malformed-envelope')
+  requireExactKeys(kdf, ['algorithm'], [], 'malformed-envelope')
+  if (kdf.algorithm !== VIEWER_LOCKED_KDF) fail('unsupported-algorithm')
+  const salt = decodeBase64Url(envelope.salt)
+  const iv = decodeBase64Url(envelope.iv)
+  const ciphertext = decodeBase64Url(envelope.ciphertext)
+  if (requestId.byteLength !== CAPSULE_LIMITS.requestIdBytes
+    || ephemeralPublicKey.byteLength !== CAPSULE_LIMITS.p256PublicKeyBytes
+    || salt.byteLength !== CAPSULE_LIMITS.saltBytes
+    || iv.byteLength !== CAPSULE_LIMITS.ivBytes) {
+    fail('malformed-envelope')
+  }
+  if (ephemeralPublicKey[0] !== 0x04) fail('malformed-envelope')
+  if (ciphertext.byteLength < CAPSULE_LIMITS.authenticationTagBytes) fail('malformed-envelope')
+  if (ciphertext.byteLength > CAPSULE_LIMITS.ciphertextBytes) fail('oversized-input')
+  return envelope as unknown as ViewerLockedCapsuleEnvelope
+}
+
+export function validateCapsuleEnvelope(value: unknown): CapsuleEnvelope {
+  if (!isRecord(value)) fail('malformed-envelope')
+  if (value.mode === 'secret') return validateSecretEnvelope(value)
+  if (value.mode === 'viewer-locked') return validateViewerLockedEnvelope(value)
+  fail('unsupported-algorithm')
 }
 
 export function transportByteLimit(transport: CapsuleEnvelopeTransport): number {

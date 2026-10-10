@@ -96,6 +96,12 @@ const publicRoutes: Record<string, RouteMetadata> = {
     robots: "noindex, nofollow",
   },
 
+  "/viewer-request": {
+    title: "Viewer Request | KinkAtlas",
+    description: "Create and manage local Viewer Request keys for recipient-bound encrypted KinkAtlas disclosures.",
+    robots: "noindex, nofollow",
+  },
+
   "/roles": {
     title: "Role Library | KinkAtlas",
     description: "Browse kink and BDSM role vocabulary with reviewed definitions, related terms, and clear assessment boundaries.",

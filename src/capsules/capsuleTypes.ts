@@ -4,6 +4,11 @@ export const CAPSULE_PAYLOAD_VERSION = 1 as const
 
 export const SECRET_CAPSULE_SUITE = 'PBKDF2-HMAC-SHA-256+A256GCM' as const
 export const SECRET_CAPSULE_KDF = 'PBKDF2-HMAC-SHA-256' as const
+export const VIEWER_REQUEST_MAGIC = 'kinkatlas-viewer-request' as const
+export const VIEWER_REQUEST_VERSION = 1 as const
+export const VIEWER_KEYPRINT_VERSION = 1 as const
+export const VIEWER_LOCKED_SUITE = 'ECDH-P256+HKDF-SHA-256+A256GCM' as const
+export const VIEWER_LOCKED_KDF = 'HKDF-SHA-256' as const
 
 export const DISCLOSURE_SECTION_IDS = [
   'currentRoleSet',
@@ -101,11 +106,38 @@ export interface SecretCapsuleEnvelope {
   ciphertext: string
 }
 
-// Reserved for the separately reviewed Viewer-Locked slice. Secret-mode validation
-// rejects these fields today rather than silently interpreting future metadata.
-export interface FutureViewerEnvelopeFields {
-  recipientKeyId?: string
-  ephemeralPublicKey?: string
+export interface ViewerKeyprint {
+  version: typeof VIEWER_KEYPRINT_VERSION
+  short: string
+  checksum: string
+  fingerprint: string
 }
+
+export interface ViewerRequest {
+  magic: typeof VIEWER_REQUEST_MAGIC
+  viewerRequestVersion: typeof VIEWER_REQUEST_VERSION
+  requestId: string
+  suite: typeof VIEWER_LOCKED_SUITE
+  recipientPublicKey: string
+  keyprint: ViewerKeyprint
+}
+
+export interface ViewerLockedCapsuleEnvelope {
+  magic: typeof CAPSULE_MAGIC
+  envelopeVersion: typeof CAPSULE_ENVELOPE_VERSION
+  mode: 'viewer-locked'
+  suite: typeof VIEWER_LOCKED_SUITE
+  compression: CapsuleCompression
+  recipientKeyId: string
+  ephemeralPublicKey: string
+  kdf: {
+    algorithm: typeof VIEWER_LOCKED_KDF
+  }
+  salt: string
+  iv: string
+  ciphertext: string
+}
+
+export type CapsuleEnvelope = SecretCapsuleEnvelope | ViewerLockedCapsuleEnvelope
 
 export type CapsuleEnvelopeTransport = 'fragment' | 'file'

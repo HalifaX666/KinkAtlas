@@ -9,6 +9,7 @@ import {
   encodeBase64Url,
   isSharedDisclosurePayload,
   transportByteLimit,
+  validateCapsuleEnvelope,
   validateCapsulePayload,
   validateSecretEnvelope,
 } from './capsuleSchema'
@@ -18,6 +19,7 @@ import {
   SECRET_CAPSULE_KDF,
   SECRET_CAPSULE_SUITE,
   type CapsuleEnvelopeTransport,
+  type CapsuleEnvelope,
   type CapsuleJsonValue,
   type CapsulePayload,
   type SecretCapsuleEnvelope,
@@ -76,10 +78,10 @@ export function parseCapsulePayload(bytes: Uint8Array): CapsulePayload {
 }
 
 export function serializeCapsuleEnvelope(
-  envelopeValue: SecretCapsuleEnvelope,
+  envelopeValue: CapsuleEnvelope,
   transport: CapsuleEnvelopeTransport = 'fragment',
 ): string {
-  const envelope = validateSecretEnvelope(envelopeValue)
+  const envelope = validateCapsuleEnvelope(envelopeValue)
   const serialized = canonicalJsonFromValidatedValue(envelope as unknown as CapsuleJsonValue)
   if (textEncoder.encode(serialized).byteLength > transportByteLimit(transport)) {
     throw new CapsuleError('oversized-input')
@@ -90,7 +92,7 @@ export function serializeCapsuleEnvelope(
 export function parseCapsuleEnvelope(
   serialized: string,
   transport: CapsuleEnvelopeTransport = 'fragment',
-): SecretCapsuleEnvelope {
+): CapsuleEnvelope {
   if (typeof serialized !== 'string' || textEncoder.encode(serialized).byteLength > transportByteLimit(transport)) {
     throw new CapsuleError('oversized-input')
   }
@@ -100,7 +102,7 @@ export function parseCapsuleEnvelope(
   } catch {
     throw new CapsuleError('malformed-envelope')
   }
-  return validateSecretEnvelope(value)
+  return validateCapsuleEnvelope(value)
 }
 
 export async function createSecretCapsule(
@@ -161,5 +163,7 @@ export async function decodeSecretCapsule(
   secret: string,
   transport: CapsuleEnvelopeTransport = 'fragment',
 ): Promise<CapsulePayload> {
-  return openSecretCapsule(parseCapsuleEnvelope(serialized, transport), secret)
+  const envelope = parseCapsuleEnvelope(serialized, transport)
+  if (envelope.mode !== 'secret') throw new CapsuleError('unsupported-algorithm')
+  return openSecretCapsule(envelope, secret)
 }

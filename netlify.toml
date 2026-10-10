@@ -47,3 +47,8 @@
   for = "/restore"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/viewer-request"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

@@ -1,7 +1,7 @@
 import { createSecretCapsule, decodeSecretCapsule, serializeCapsuleEnvelope } from './capsuleCodec'
 import { CapsuleError, type CapsuleErrorCode } from './capsuleError'
 import { CAPSULE_LIMITS, decodeBase64Url, encodeBase64Url } from './capsuleSchema'
-import type { CapsulePayload, SecretCapsuleEnvelope, SharedDisclosurePayload } from './capsuleTypes'
+import type { CapsuleEnvelope, CapsuleEnvelopeTransport, CapsulePayload, SharedDisclosurePayload } from './capsuleTypes'
 import { privateRestorePayload, validatePrivateRestoreState, type PrivateRestoreState } from './capsuleData'
 
 export const PRIVATE_RESTORE_EXTENSION = '.kinkatlas-restore'
@@ -81,7 +81,7 @@ export function parseSharedCapsuleFragment(hash: string): string {
   try {
     envelope = JSON.parse(serialized)
     if (!envelope || typeof envelope !== 'object') throw new CapsuleError('malformed-envelope')
-    serializeCapsuleEnvelope(envelope as SecretCapsuleEnvelope, 'fragment')
+    serializeCapsuleEnvelope(envelope as CapsuleEnvelope, 'fragment')
   } catch (error) {
     if (error instanceof CapsuleError) throw error
     throw new CapsuleError('malformed-envelope')
@@ -95,7 +95,7 @@ export async function readCapsuleFile(file: File): Promise<string> {
   // The outer envelope is validated before the secret is requested or used.
   try {
     const envelope = JSON.parse(serialized) as unknown
-    serializeCapsuleEnvelope(envelope as SecretCapsuleEnvelope, 'file')
+    serializeCapsuleEnvelope(envelope as CapsuleEnvelope, 'file')
   } catch (error) {
     if (error instanceof CapsuleError) throw error
     throw new CapsuleError('malformed-envelope')
@@ -110,8 +110,12 @@ export async function decryptPrivateRestore(serializedEnvelope: string, secret: 
   return payload.restore
 }
 
-export async function decryptSharedDisclosure(serializedEnvelope: string, secret: string): Promise<SharedDisclosurePayload> {
-  const payload: CapsulePayload = await decodeSecretCapsule(serializedEnvelope, secret, 'fragment')
+export async function decryptSharedDisclosure(
+  serializedEnvelope: string,
+  secret: string,
+  transport: CapsuleEnvelopeTransport = 'fragment',
+): Promise<SharedDisclosurePayload> {
+  const payload: CapsulePayload = await decodeSecretCapsule(serializedEnvelope, secret, transport)
   if (payload.payloadType !== 'shared-disclosure') throw new CapsuleError('payload-validation-failed')
   return payload
 }
@@ -119,6 +123,9 @@ export async function decryptSharedDisclosure(serializedEnvelope: string, secret
 export function capsuleErrorMessage(error: unknown): string {
   const code: CapsuleErrorCode | undefined = error instanceof CapsuleError ? error.code : undefined
   if (code === 'authentication-failed' || code === 'invalid-secret') return 'This Capsule could not be unlocked. Check the secret and try again.'
+  if (code === 'missing-recipient-key') return 'This Capsule is locked to a Viewer Request that is not available in this browser profile.'
+  if (code === 'key-storage-unavailable') return 'Secure Viewer Request key storage is unavailable in this browser context.'
+  if (code === 'viewer-request-invalid') return 'This Viewer Request appears incomplete or invalid.'
   if (code === 'unsupported-version' || code === 'unsupported-algorithm') return 'This Capsule was created by a KinkAtlas version this browser cannot open.'
   if (code === 'oversized-input') return 'This Capsule exceeds KinkAtlas safety limits.'
   if (code === 'malformed-envelope' || code === 'compression-failed' || code === 'payload-validation-failed') return 'This Capsule appears incomplete or damaged.'

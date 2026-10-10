@@ -9,6 +9,11 @@ import { RestorePage } from '../pages/RestorePage'
 import { assessmentPersonas } from './fixtures/assessmentPersonas'
 import { evaluateAssessmentPersona } from './helpers/assessmentPersonaRunner'
 
+vi.mock('../capsules/capsuleCodec', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../capsules/capsuleCodec')>()
+  return { ...actual, parseCapsuleEnvelope: vi.fn(() => ({ mode: 'secret' })) }
+})
+
 vi.mock('../capsules/capsuleTransport', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../capsules/capsuleTransport')>()
   return {
