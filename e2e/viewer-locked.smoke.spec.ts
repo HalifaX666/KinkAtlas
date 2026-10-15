@@ -19,8 +19,13 @@ test('Viewer-Locked Capsule requires the recipient browser key and stops opening
   await recipientPage.getByLabel('Optional local label').fill('Recipient test request')
   await recipientPage.getByRole('button', { name: 'Create Viewer Request' }).click()
   const viewerRequestText = await recipientPage.getByLabel('Viewer Request text').inputValue()
+  const viewerRequestLink = await recipientPage.getByLabel('Viewer Request link').inputValue()
   const keyprint = await recipientPage.locator('.viewer-keyprint > strong').first().innerText()
   expect(viewerRequestText).not.toContain('privateKey')
+  expect(viewerRequestText).not.toContain('Recipient test request')
+  expect(viewerRequestLink).not.toContain('Recipient%20test%20request')
+  await recipientPage.getByRole('button', { name: 'Copy comparison code' }).first().click()
+  await expect(recipientPage.getByRole('status')).toContainText(/Comparison code copied|Copy is unavailable/)
   const storedShape = await recipientPage.evaluate(async () => {
     const database = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open('kinkatlas-viewer-requests')
@@ -64,11 +69,15 @@ test('Viewer-Locked Capsule requires the recipient browser key and stops opening
   await dialog.getByLabel('Recipient Viewer Request link or text').fill(viewerRequestText)
   await dialog.getByRole('button', { name: 'Validate Viewer Request' }).click()
   await expect(dialog.getByText(keyprint)).toBeVisible()
+  await senderPage.setViewportSize({ width: 320, height: 800 })
+  await expect.poll(() => senderPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+  await expect(dialog.getByRole('button', { name: 'Create Viewer-Locked Capsule' })).toBeVisible()
   await dialog.getByRole('button', { name: 'Create Viewer-Locked Capsule' }).click()
   const capsuleLink = await dialog.getByLabel('Viewer-Locked Capsule link').inputValue()
   const capsuleText = await dialog.getByLabel('Viewer-Locked Capsule text').inputValue()
   expect(capsuleLink).not.toContain(viewerRequestText)
   expect(capsuleText).not.toContain(expectedRoles[0])
+  expect(capsuleText).not.toContain('Recipient test request')
   await expect(dialog.getByLabel(/never embedded in the link/i)).toHaveCount(0)
 
   const cleanRequests: string[] = []
@@ -77,6 +86,9 @@ test('Viewer-Locked Capsule requires the recipient browser key and stops opening
   await expect(cleanPage).toHaveURL(/\/capsule$/)
   expect(new URL(cleanRequests.at(-1)!).hash).toBe('')
   await expect(cleanPage.getByRole('status')).toContainText(/not available in this browser profile/i)
+  await expect(cleanPage.getByText(/Try the device, browser, and browser profile/i)).toBeVisible()
+  await expect(cleanPage.getByText(/Secret Capsule instead/i)).toBeVisible()
+  await expect(cleanPage.getByRole('link', { name: 'Create a new Viewer Request' })).toBeVisible()
   await expect(cleanPage.getByRole('heading', { name: 'Shared Role Set' })).toHaveCount(0)
   await expect(cleanPage.getByLabel('Separately shared secret')).toHaveCount(0)
 
@@ -130,4 +142,63 @@ test('Viewer Request storage failures stay explicit and never use a persistence 
     await expect(page.getByRole('heading', { name: 'Open a private KinkAtlas Capsule' })).toBeVisible()
     await context.close()
   }
+})
+
+test('Viewer Request lifecycle remains usable at narrow mobile widths', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 320, height: 760 } })
+  const page = await context.newPage()
+  const guards = await installBrowserGuards(page)
+  await page.goto('/viewer-request')
+  await page.getByLabel('Optional local label').fill('A deliberately long local-only request label for mobile layout review')
+  await page.getByRole('button', { name: 'Create Viewer Request' }).click()
+  await expect(page.getByRole('heading', { name: 'Send this Viewer Request' })).toBeFocused()
+
+  for (const width of [320, 375, 430]) {
+    await page.setViewportSize({ width, height: 800 })
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+    await expect(page.getByRole('button', { name: 'Copy comparison code' }).first()).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Download request file' })).toBeVisible()
+  }
+
+  const request = page.getByRole('listitem').filter({ hasText: 'deliberately long local-only' })
+  await request.getByRole('button', { name: 'Delete this Viewer Request' }).click()
+  await expect(request).toContainText('KinkAtlas cannot recover it')
+  await expect(request).toContainText('does not revoke copies already opened')
+  await request.getByRole('button', { name: 'Permanently delete key' }).click()
+  await expect(page.getByRole('button', { name: 'Create Viewer Request' })).toBeFocused()
+  await expect(request).toHaveCount(0)
+  await guards.assertClean()
+  await context.close()
+})
+
+test('malformed stored Viewer Request records fail closed', async ({ browser }) => {
+  const context = await browser.newContext()
+  const page = await context.newPage()
+  await page.goto('/viewer-request')
+  await page.getByRole('button', { name: 'Create Viewer Request' }).click()
+  await page.evaluate(async () => {
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('kinkatlas-viewer-requests')
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error)
+    })
+    const transaction = database.transaction('viewer-requests', 'readwrite')
+    const store = transaction.objectStore('viewer-requests')
+    const record = await new Promise<Record<string, unknown>>((resolve, reject) => {
+      const request = store.getAll()
+      request.onsuccess = () => resolve(request.result[0] as Record<string, unknown>)
+      request.onerror = () => reject(request.error)
+    })
+    store.put({ ...record, unexpectedSensitiveField: 'must not be accepted' })
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = () => reject(transaction.error)
+      transaction.onabort = () => reject(transaction.error)
+    })
+    database.close()
+  })
+  await page.reload()
+  await expect(page.getByRole('status')).toContainText(/key storage is unavailable/i)
+  await expect(page.getByText('must not be accepted')).toHaveCount(0)
+  await context.close()
 })

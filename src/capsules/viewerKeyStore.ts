@@ -80,17 +80,27 @@ function validPrivateKey(value: unknown): value is CryptoKey {
 
 async function validateStoredRecord(value: unknown): Promise<StoredViewerRequest> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) throw storageError()
+  const allowedFields = new Set<string>(viewerRequestStorageRecordFields)
+  if (Object.keys(value).some((key) => !allowedFields.has(key))) throw storageError()
   const record = value as Partial<StoredViewerRequest>
   if (typeof record.requestId !== 'string'
     || typeof record.createdAt !== 'string'
-    || (record.label !== undefined && (typeof record.label !== 'string' || record.label.length > LABEL_LIMIT))
+    || Number.isNaN(Date.parse(record.createdAt))
+    || new Date(record.createdAt).toISOString() !== record.createdAt
+    || (record.label !== undefined && (typeof record.label !== 'string' || record.label.length > LABEL_LIMIT || !record.label || record.label.trim() !== record.label))
     || !record.request
     || !validPrivateKey(record.privateKey)) {
     throw storageError()
   }
   const request = await validateViewerRequest(record.request)
   if (record.requestId !== request.requestId) throw storageError()
-  return { ...record, request } as StoredViewerRequest
+  return {
+    requestId: record.requestId,
+    createdAt: record.createdAt,
+    ...(record.label === undefined ? {} : { label: record.label }),
+    request,
+    privateKey: record.privateKey,
+  }
 }
 
 function cleanLabel(label?: string): string | undefined {

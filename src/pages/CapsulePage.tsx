@@ -1,5 +1,5 @@
 import { FileLock2, KeyRound, LockKeyhole } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { parseCapsuleEnvelope } from '../capsules/capsuleCodec'
 import { privacyReceiptForPayload } from '../capsules/capsuleData'
@@ -19,7 +19,12 @@ export function CapsulePage() {
   const [status, setStatus] = useState('')
   const [missingKey, setMissingKey] = useState(false)
   const [busy, setBusy] = useState(false)
+  const disclosureHeadingRef = useRef<HTMLHeadingElement>(null)
   const receipt = useMemo(() => payload ? privacyReceiptForPayload(payload) : null, [payload])
+
+  useEffect(() => {
+    if (payload) disclosureHeadingRef.current?.focus()
+  }, [payload])
 
   const unlockViewerLocked = async (serialized: string, source: CapsuleEnvelopeTransport) => {
     setBusy(true); setPayload(null); setMissingKey(false)
@@ -70,6 +75,7 @@ export function CapsulePage() {
     setBusy(true); setPayload(null); setStatus('')
     try {
       setPayload(await decryptSharedDisclosure(serializedEnvelope, secret, transport))
+      setSecret('')
       setStatus('Capsule unlocked locally. No content was uploaded or stored.')
     } catch (error) {
       setStatus(capsuleErrorMessage(error))
@@ -104,14 +110,15 @@ export function CapsulePage() {
       {mode === 'viewer-locked' && !missingKey && <p>The matching local Viewer Request key is required. No password or secret fallback exists.</p>}
       {missingKey && <div className="capsule-warning">
         <p><strong>This Capsule is locked to a Viewer Request that is not available in this browser profile.</strong></p>
-        <p>It may have been opened on another device or browser, browser storage may have been cleared, or the Viewer Request may have been deleted. KinkAtlas cannot recover the key.</p>
-        <Link className="button secondary" to="/viewer-request">Manage Viewer Requests</Link>
+        <p>Try the device, browser, and browser profile where the Viewer Request was created. Clearing site data or deleting the request permanently removes the local key, and KinkAtlas cannot recover it.</p>
+        <p>If that key is gone, ask the sender to create a new Capsule for a new Viewer Request. For future sharing, the sender can choose a Secret Capsule instead.</p>
+        <Link className="button secondary" to="/viewer-request">Create a new Viewer Request</Link>
       </div>}
     </section>}
 
     {payload && <section className="capsule-preview" aria-labelledby="disclosure-heading">
       <span className="eyebrow">Read-only disclosure</span>
-      <h2 id="disclosure-heading">Shared Role Set</h2>
+      <h2 id="disclosure-heading" ref={disclosureHeadingRef} tabIndex={-1}>Shared Role Set</h2>
       {payload.sections.currentRoleSet?.length ? <ol className="historical-role-list">
         {payload.sections.currentRoleSet.map((role) => <li key={role.roleId}>
           <strong>{role.label}</strong>{role.primary && <span>Shared primary</span>}

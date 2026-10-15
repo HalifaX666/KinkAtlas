@@ -29,6 +29,18 @@ test('high-value application states have no WCAG A/AA axe violations', async ({ 
   await expect(page.locator('[data-emblem-key="kinkatlas-emblem:role:kinkster-fbb59ce7"]')).toBeVisible()
   await expectNoAxeViolations(page, 'Library role detail')
 
+  await page.goto('/viewer-request')
+  await expect(page.getByRole('heading', { name: 'Create a Viewer Request' })).toBeVisible()
+  await expectNoAxeViolations(page, 'Viewer Request')
+
+  await page.goto('/capsule')
+  await expect(page.getByRole('heading', { name: 'Open a private KinkAtlas Capsule' })).toBeVisible()
+  await expectNoAxeViolations(page, 'Capsule viewer')
+
+  await page.goto('/restore')
+  await expect(page.getByRole('heading', { name: 'Back up or restore your private session' })).toBeVisible()
+  await expectNoAxeViolations(page, 'Private Restore')
+
   await openPersonaResults(page, 'balanced-authority-pattern')
   await expectNoAxeViolations(page, 'Results')
 

@@ -14,6 +14,7 @@ import { createRoleCardImage, getShareableRoleSet, roleCardFileName, type ShareR
 import { roleLibrary } from '../taxonomy/roleLibrary'
 import * as capsuleTransport from '../capsules/capsuleTransport'
 import * as viewerTransport from '../capsules/viewerLockedTransport'
+import { CapsuleError } from '../capsules/capsuleError'
 import type { ViewerRequest } from '../capsules/capsuleTypes'
 
 const answers = { 'd-power-give': 'strong', 'd-position-give': 'strong', 'r-lead': 'strong', 'r-responsibility': 'strong' }
@@ -168,6 +169,19 @@ describe('Export & Share dialog', () => {
     expect(screen.queryByLabelText(/Secret —/i)).not.toBeInTheDocument()
     expect(createDisclosure.mock.calls[0][0].sections).toEqual(expect.objectContaining({ currentRoleSet: expect.any(Array), roleDefinitions: expect.any(Array) }))
     expect(createDisclosure.mock.calls[0][1]).toBe(request)
+  })
+
+  it('keeps invalid Viewer Request input editable and distinguishes unsupported versions', async () => {
+    vi.spyOn(viewerTransport, 'parseViewerRequestInput').mockRejectedValue(new CapsuleError('unsupported-version'))
+    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /Encrypted Disclosure/i }))
+    fireEvent.click(screen.getByRole('radio', { name: /Viewer-Locked Capsule/i }))
+    const input = screen.getByLabelText('Recipient Viewer Request link or text')
+    fireEvent.change(input, { target: { value: 'request-that-needs-replacing' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Validate Viewer Request' }))
+
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/version this browser cannot use/i))
+    expect(input).toHaveValue('request-that-needs-replacing')
   })
 
   it('uses canonical primary wording and a static role reference on an exported card without metrics', async () => {
@@ -604,6 +618,31 @@ describe('Export & Share dialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Copy Quick Summary' }))
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
     expect(screen.getByRole('status')).toHaveTextContent('Summary copied.')
+  })
+
+  it('provides manual-copy guidance when clipboard access fails', async () => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: vi.fn().mockRejectedValue(new DOMException('denied', 'NotAllowedError')) } })
+    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /quick summary/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Copy Quick Summary' }))
+
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/select the preview text manually/i))
+  })
+
+  it('revokes Capsule download URLs and reports unavailable download primitives', async () => {
+    const revoke = vi.fn()
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:capsule-download') })
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revoke })
+    const file = new File(['encrypted'], 'test.kinkatlas-capsule', { type: 'application/vnd.kinkatlas.capsule' })
+
+    capsuleTransport.downloadCapsuleFile(file)
+    capsuleTransport.downloadCapsuleFile(file)
+    expect(click).toHaveBeenCalledTimes(2)
+    await waitFor(() => expect(revoke).toHaveBeenCalledTimes(2))
+
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => { throw new Error('unavailable') }) })
+    expect(() => capsuleTransport.downloadCapsuleFile(file)).toThrow('Download unavailable')
   })
 
   it('keeps sensitive Full Reflection options off until selected', () => {

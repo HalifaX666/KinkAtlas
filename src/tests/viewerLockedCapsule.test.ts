@@ -6,6 +6,8 @@ import { decodeBase64Url, encodeBase64Url, validateViewerLockedEnvelope } from '
 import type { ViewerLockedCapsuleEnvelope } from '../capsules/capsuleTypes'
 import { createViewerLockedCapsule, deriveViewerContentKey, openViewerLockedCapsule, VIEWER_LOCKED_HKDF_INFO } from '../capsules/viewerLockedCodec'
 import { createStoredViewerRequest, listStoredViewerRequests, viewerRequestStorageRecordFields } from '../capsules/viewerKeyStore'
+import { viewerRequestErrorMessage } from '../capsules/capsuleTransport'
+import { CapsuleError } from '../capsules/capsuleError'
 import {
   deriveViewerKeyprint,
   fingerprintViewerPublicKey,
@@ -28,6 +30,12 @@ function changedBytes(length: number, fill: number): string {
 }
 
 describe('Viewer Request cryptography and validation', () => {
+  it('distinguishes malformed requests from unsupported request versions without exposing internals', () => {
+    expect(viewerRequestErrorMessage(new CapsuleError('viewer-request-invalid'))).toMatch(/incomplete or invalid/i)
+    expect(viewerRequestErrorMessage(new CapsuleError('unsupported-version'))).toMatch(/version this browser cannot use/i)
+    expect(viewerRequestErrorMessage(new Error('internal implementation detail'))).not.toContain('internal implementation detail')
+  })
+
   it('limits IndexedDB records to key material and minimal public metadata', async () => {
     expect(viewerRequestStorageRecordFields).toEqual(['requestId', 'createdAt', 'label', 'request', 'privateKey'])
     expect(viewerRequestStorageRecordFields.join(' ')).not.toMatch(/answer|result|boundary|readiness|negotiation|restore|secret|disclosure/i)

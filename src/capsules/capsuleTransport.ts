@@ -132,13 +132,30 @@ export function capsuleErrorMessage(error: unknown): string {
   return 'This Capsule could not be opened.'
 }
 
+export function viewerRequestErrorMessage(error: unknown): string {
+  const code: CapsuleErrorCode | undefined = error instanceof CapsuleError ? error.code : undefined
+  if (code === 'unsupported-version') return 'This Viewer Request was created by a KinkAtlas version this browser cannot use.'
+  if (code === 'unsupported-algorithm') return 'This Viewer Request uses a protection format this browser cannot use.'
+  if (code === 'oversized-input') return 'This Viewer Request exceeds KinkAtlas safety limits.'
+  if (code === 'viewer-request-invalid' || code === 'malformed-envelope') return 'This Viewer Request appears incomplete or invalid. Check the complete link, text, or file and try again.'
+  return capsuleErrorMessage(error)
+}
+
 export function downloadCapsuleFile(file: File): void {
-  const url = URL.createObjectURL(file)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = file.name
-  document.body.append(anchor)
-  anchor.click()
-  anchor.remove()
-  URL.revokeObjectURL(url)
+  let url = ''
+  let anchor: HTMLAnchorElement | null = null
+  try {
+    if (!URL.createObjectURL || !URL.revokeObjectURL) throw new Error('Object URL unavailable')
+    url = URL.createObjectURL(file)
+    anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = file.name
+    document.body.append(anchor)
+    anchor.click()
+  } catch {
+    throw new Error('Download unavailable')
+  } finally {
+    anchor?.remove()
+    if (url) window.setTimeout(() => URL.revokeObjectURL(url), 0)
+  }
 }

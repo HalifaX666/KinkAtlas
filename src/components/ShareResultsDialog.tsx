@@ -4,7 +4,7 @@ import { roleLibraryRoleForIdentity } from '../data/roleIdentity'
 import { BrandLogo } from './BrandLogo'
 import { RoleIdentityCard } from './RoleIdentityCard'
 import { buildSharedDisclosurePayload, privacyReceiptForPayload } from '../capsules/capsuleData'
-import { capsuleErrorMessage, createSharedDisclosureArtifact, downloadCapsuleFile, type SharedCapsuleArtifact } from '../capsules/capsuleTransport'
+import { capsuleErrorMessage, createSharedDisclosureArtifact, downloadCapsuleFile, viewerRequestErrorMessage, type SharedCapsuleArtifact } from '../capsules/capsuleTransport'
 import type { ViewerRequest } from '../capsules/capsuleTypes'
 import type { ViewerLockedArtifact } from '../capsules/viewerLockedTransport'
 import {
@@ -112,6 +112,15 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
     }
   }
 
+  const download = (file: File, alternative: string) => {
+    try {
+      downloadCapsuleFile(file)
+      setStatus(`${file.name} download started.`)
+    } catch {
+      setStatus(`Download is unavailable. ${alternative}`)
+    }
+  }
+
   const exportCards = async () => {
     setBusy(true)
     try {
@@ -152,7 +161,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
     setBusy(true); setCapsuleArtifact(null); setStatus('')
     try {
       setCapsuleArtifact(await createSharedDisclosureArtifact(capsulePayload))
-      setStatus('Encrypted disclosure created locally. Share the Capsule and secret separately.')
+      setStatus('Secret Capsule created locally. Share the encrypted Capsule and secret separately.')
     } catch (error) {
       setStatus(capsuleErrorMessage(error))
     } finally {
@@ -166,9 +175,9 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
       const { parseViewerRequestInput } = await import('../capsules/viewerLockedTransport')
       const request = await parseViewerRequestInput(input)
       setViewerRequest(request)
-      setStatus('Viewer Request validated locally. Compare the Keyprint through a separate trusted channel when substitution matters.')
+      setStatus('Viewer Request validated locally. Compare the comparison code through a separate trusted channel when substitution matters.')
     } catch (error) {
-      setStatus(capsuleErrorMessage(error))
+      setStatus(viewerRequestErrorMessage(error))
     } finally {
       setBusy(false)
     }
@@ -196,9 +205,9 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
       const artifact = await createViewerRequestArtifact(request)
       setViewerRequestInput(artifact.serializedRequest)
       setViewerRequest(request)
-      setStatus('Viewer Request file validated locally. Compare the Keyprint through a separate trusted channel when substitution matters.')
+      setStatus('Viewer Request file validated locally. Compare the comparison code through a separate trusted channel when substitution matters.')
     } catch (error) {
-      setStatus(capsuleErrorMessage(error))
+      setStatus(viewerRequestErrorMessage(error))
     } finally {
       setBusy(false)
     }
@@ -251,7 +260,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
           <label><span>Recipient Viewer Request link or text</span><textarea rows={5} value={viewerRequestInput} onChange={(event) => { setViewerRequestInput(event.target.value); setViewerRequest(null); setViewerArtifact(null) }} /></label>
           <label className="capsule-file-input"><span>Or choose a Viewer Request file</span><input type="file" accept=".kinkatlas-viewer-request,application/vnd.kinkatlas.viewer-request" onChange={(event) => { const file = event.target.files?.[0]; if (file) void loadRecipientRequestFile(file) }} /></label>
           <button className="button secondary" type="button" disabled={!viewerRequestInput.trim() || busy} onClick={() => void validateRecipientRequest()}><KeyRound size={17} />Validate Viewer Request</button>
-          {viewerRequest && <div className="viewer-keyprint"><span>Recipient Keyprint</span><strong>{viewerRequest.keyprint.short} · {viewerRequest.keyprint.checksum}</strong><details><summary>Advanced fingerprint</summary><code>{viewerRequest.keyprint.fingerprint}</code></details><p>Compare this with the intended recipient through another trusted channel. A Keyprint reduces substitution risk but does not prove identity by itself.</p></div>}
+          {viewerRequest && <div className="viewer-keyprint"><span>Recipient comparison code</span><strong aria-label={`Recipient comparison code ${viewerRequest.keyprint.short}, checksum ${viewerRequest.keyprint.checksum}`}>{viewerRequest.keyprint.short} · {viewerRequest.keyprint.checksum}</strong><button className="quiet-button viewer-keyprint-copy" type="button" onClick={() => void copy(`${viewerRequest.keyprint.short} · ${viewerRequest.keyprint.checksum}`, 'Comparison code copied.')}><Copy size={15} />Copy comparison code</button><details><summary>Advanced fingerprint</summary><code>{viewerRequest.keyprint.fingerprint}</code></details><p>Compare this with the intended recipient through another trusted channel. A matching code reduces substitution risk but does not prove anyone’s real-world identity.</p></div>}
         </div>}
         <fieldset className="share-options"><legend>Include in the encrypted disclosure</legend>
           <label><input type="checkbox" checked={capsuleSections.currentRoleSet} onChange={(event) => { setCapsuleSections((current) => ({ ...current, currentRoleSet: event.target.checked })); setCapsuleArtifact(null); setViewerArtifact(null) }} /><span><strong>Current Role Set</strong><small>Your current labels, order, and primary role.</small></span></label>
@@ -263,7 +272,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
           : <button className="button primary" type="button" disabled={busy || !viewerRequest || (!capsuleSections.currentRoleSet && !capsuleSections.roleDefinitions)} onClick={createViewerLockedDisclosure}><KeyRound size={17} />Create Viewer-Locked Capsule</button>}
         </div>
         {capsuleLockMode === 'secret' && capsuleArtifact && <div className="capsule-artifact">
-          <p><strong>Both parts are required.</strong> For better privacy, send the Capsule link/file and secret through separate channels.</p>
+          <p><strong>Both parts are required.</strong> Send the encrypted Capsule and secret through separate channels when practical; sending both together weakens that separation.</p>
           <label><span>Encrypted Capsule link</span><textarea readOnly rows={4} value={capsuleArtifact.link} /></label>
           <label><span>Encrypted Capsule text</span><textarea readOnly rows={4} value={capsuleArtifact.serializedEnvelope} /></label>
           <label><span>Secret — never embedded in the link</span><input readOnly value={capsuleArtifact.secret} /></label>
@@ -271,7 +280,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
             <button className="button secondary" type="button" onClick={() => copy(capsuleArtifact.link, 'Encrypted Capsule link copied.')}><Copy size={17} />Copy Capsule link</button>
             <button className="button secondary" type="button" onClick={() => copy(capsuleArtifact.serializedEnvelope, 'Encrypted Capsule text copied.')}><Copy size={17} />Copy encrypted text</button>
             <button className="button secondary" type="button" onClick={() => copy(capsuleArtifact.secret, 'Capsule secret copied.')}><Copy size={17} />Copy secret</button>
-            <button className="button secondary" type="button" onClick={() => downloadCapsuleFile(capsuleArtifact.file)}><Download size={17} />Download encrypted file</button>
+            <button className="button secondary" type="button" onClick={() => download(capsuleArtifact.file, 'Copy the Capsule link or encrypted text instead.')}><Download size={17} />Download encrypted file</button>
           </div>
         </div>}
         {capsuleLockMode === 'viewer-locked' && viewerArtifact && <div className="capsule-artifact">
@@ -281,7 +290,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
           <div className="share-actions">
             <button className="button secondary" type="button" onClick={() => copy(viewerArtifact.link, 'Viewer-Locked Capsule link copied.')}><Copy size={17} />Copy Capsule link</button>
             <button className="button secondary" type="button" onClick={() => copy(viewerArtifact.serializedEnvelope, 'Viewer-Locked Capsule text copied.')}><Copy size={17} />Copy encrypted text</button>
-            <button className="button secondary" type="button" onClick={() => downloadCapsuleFile(viewerArtifact.file)}><Download size={17} />Download encrypted file</button>
+            <button className="button secondary" type="button" onClick={() => download(viewerArtifact.file, 'Copy the Capsule link or encrypted text instead.')}><Download size={17} />Download encrypted file</button>
           </div>
           <p>This protects against link possession but does not authenticate the sender or prove who supplied a Viewer Request.</p>
         </div>}

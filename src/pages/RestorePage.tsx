@@ -36,6 +36,8 @@ export function RestorePage() {
   const [busy, setBusy] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const previewHeadingRef = useRef<HTMLHeadingElement>(null)
+  const statusRef = useRef<HTMLParagraphElement>(null)
+  const focusAfterRestoreRef = useRef(false)
 
   const preview = useMemo(() => pendingRestore ? {
     answers: Object.values(pendingRestore.answers).reduce((sum, section) => sum + Object.keys(section).length, 0),
@@ -47,6 +49,13 @@ export function RestorePage() {
   useEffect(() => {
     if (pendingRestore) previewHeadingRef.current?.focus()
   }, [pendingRestore])
+
+  useEffect(() => {
+    if (!busy && focusAfterRestoreRef.current) {
+      focusAfterRestoreRef.current = false
+      statusRef.current?.focus()
+    }
+  }, [busy])
 
   const createBackup = async () => {
     setBusy(true); setStatus('')
@@ -68,7 +77,7 @@ export function RestorePage() {
   }
 
   const selectFile = async (file?: File) => {
-    setPendingRestore(null); setSelectedEnvelope(''); setSelectedFileName(''); setStatus('')
+    setPendingRestore(null); setSelectedEnvelope(''); setSelectedFileName(''); setSecret(''); setStatus('')
     if (!file) return
     try {
       setSelectedEnvelope(await readCapsuleFile(file))
@@ -84,11 +93,21 @@ export function RestorePage() {
     try {
       const restored = await decryptPrivateRestore(selectedEnvelope, secret)
       setPendingRestore(restored)
+      setSecret('')
       setStatus('Restore preview unlocked locally. Nothing has been replaced yet.')
     } catch (error) {
       setStatus(capsuleErrorMessage(error))
     } finally {
       setBusy(false)
+    }
+  }
+
+  const download = (file: File) => {
+    try {
+      downloadCapsuleFile(file)
+      setStatus(`${file.name} download started.`)
+    } catch {
+      setStatus('Download is unavailable. Keep this page open and try again in a supported browser.')
     }
   }
 
@@ -101,6 +120,7 @@ export function RestorePage() {
       setStatus(mode === 'full'
         ? 'Restore complete. The saved assessment replaced the previous in-memory session.'
         : 'Historical result restored. Its older revisions were not silently rescored or loaded into the current assessment engine.')
+      focusAfterRestoreRef.current = true
     } catch (error) {
       setStatus(capsuleErrorMessage(error))
     } finally {
@@ -128,7 +148,7 @@ export function RestorePage() {
           <p>KinkAtlas cannot recover a lost secret. Anyone with both the file and secret can read its contents.</p>
           <div className="share-actions">
             <button className="button secondary" type="button" onClick={() => void copyText(artifact.secret).then(() => setStatus('Restore secret copied.')).catch(() => setStatus('Copy is unavailable; select the secret manually.'))}><Copy size={17} />Copy secret</button>
-            <button className="button secondary" type="button" onClick={() => downloadCapsuleFile(artifact.file)}><Download size={17} />Download restore file</button>
+            <button className="button secondary" type="button" onClick={() => download(artifact.file)}><Download size={17} />Download restore file</button>
           </div>
         </div>}
       </section>
@@ -152,7 +172,7 @@ export function RestorePage() {
       <div className="share-actions"><button className="button primary" type="button" disabled={busy} onClick={() => void confirmRestore()}>Confirm restore</button><button className="button secondary" type="button" disabled={busy} onClick={() => { setPendingRestore(null); setSecret(''); setStatus('Restore cancelled. Current in-memory work was not changed.'); fileInputRef.current?.focus() }}>Cancel</button></div>
     </section>}
 
-    <p className="share-status" role="status" aria-live="polite">{status}</p>
+    <p className="share-status" role="status" aria-live="polite" ref={statusRef} tabIndex={-1}>{status}</p>
     {historicalResultSnapshot && <HistoricalResultView snapshot={historicalResultSnapshot} />}
   </div>
 }

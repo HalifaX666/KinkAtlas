@@ -48,7 +48,15 @@ test('Secret Shared Disclosure stays in the fragment, removes it after capture, 
   await expect(page.locator('.historical-role-list > li > p')).toHaveCount(expectedRoles.length)
   await expect(page.getByRole('heading', { name: 'Privacy receipt' })).toBeVisible()
   await expect(page.getByText('Raw assessment answers')).toBeVisible()
+  for (const width of [320, 375, 430]) {
+    await page.setViewportSize({ width, height: 800 })
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+  }
   await expectNoAxeViolations(page, 'Unlocked Secret Shared Disclosure')
+  await page.goBack()
+  await page.goForward()
+  await expect(page).toHaveURL(/\/capsule$/)
+  expect(new URL(page.url()).hash).toBe('')
   await guards.assertClean()
 })
 
@@ -88,6 +96,10 @@ test('Private Restore export requires file, secret, preview, and explicit confir
   await importPage.getByLabel('Restore secret').fill(secret)
   await importPage.getByRole('button', { name: 'Unlock preview' }).click()
   await expect(importPage.getByRole('heading', { name: 'Restore preview' })).toBeFocused()
+  for (const width of [320, 375, 430]) {
+    await importPage.setViewportSize({ width, height: 800 })
+    await expect.poll(() => importPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+  }
   await expectNoAxeViolations(importPage, 'Private Restore confirmation preview')
   await expect(importPage.getByText(/Historical result included/)).toBeVisible()
   await expect(importPage.getByRole('heading', { name: 'Your saved KinkAtlas result' })).toHaveCount(0)
@@ -103,7 +115,8 @@ test('Private Restore export requires file, secret, preview, and explicit confir
   await importPage.getByRole('button', { name: 'Unlock preview' }).click()
   await expect(importPage.getByRole('heading', { name: 'Restore preview' })).toBeFocused()
   await importPage.getByRole('button', { name: 'Confirm restore' }).click()
-  await expect(importPage.getByText(/Restore complete/)).toBeVisible()
+  await expect(importPage.getByRole('status')).toContainText(/Restore complete/)
+  await expect(importPage.getByRole('status')).toBeFocused()
   await expect(importPage.getByRole('heading', { name: 'Your saved KinkAtlas result' })).toBeVisible()
   expect(await importPage.locator('.historical-role-list > li > strong').allTextContents()).toEqual(exportedRoles)
   await expect(importPage.locator('link[rel="canonical"]')).toHaveCount(0)
