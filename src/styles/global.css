@@ -4306,6 +4306,13 @@ summary:focus-visible {
 }
 
 .private-capsule-page { max-width: 1080px; }
+.revisit-link-section { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 1.25rem; margin-top: 1.5rem; margin-bottom: 1.5rem; padding-top: 1.5rem; padding-bottom: 1.5rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.revisit-link-section > *,
+.revisit-link-output,
+.revisit-link-output textarea { min-width: 0; }
+.revisit-link-output textarea { max-width: 100%; overflow-wrap: anywhere; word-break: break-all; }
+.revisit-link-section > .share-status { grid-column: 1 / -1; margin: 0; }
+.revisit-page .historical-result { margin-top: 1.5rem; }
 .capsule-panel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .capsule-panel,
 .capsule-preview,
@@ -4336,9 +4343,11 @@ summary:focus-visible {
 .capsule-revision-list div { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: 0.75rem; }
 .capsule-revision-list dd { margin: 0; overflow-wrap: anywhere; color: var(--muted); }
 .historical-role-list,
+.historical-suggested-role-list,
 .historical-discovery-grid,
 .historical-section-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 0.8rem; padding: 0; list-style: none; }
 .historical-role-list li,
+.historical-suggested-role-list li,
 .historical-discovery-grid article,
 .historical-section-grid section { padding: 1rem; border: 1px solid var(--line); border-radius: 10px; }
 .historical-result details { margin-top: 1rem; border-top: 1px solid var(--line); padding-top: 1rem; }
@@ -4375,6 +4384,7 @@ summary:focus-visible {
 
 @media (max-width: 640px) {
   .share-mode-grid,
+  .revisit-link-section,
   .capsule-panel-grid,
   .capsule-lock-options,
   .privacy-receipt { grid-template-columns: 1fr; }

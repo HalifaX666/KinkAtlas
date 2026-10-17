@@ -1,8 +1,9 @@
 import { ArrowLeft, ArrowRight, BookOpen, Eye, HeartHandshake, LockKeyhole, MessageCircle, Share2, ShieldCheck } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { RoleCard } from "../components/RoleCard";
 import { ShareResultsDialog } from "../components/ShareResultsDialog";
+import { RevisitLinkCreator } from "../components/RevisitLinkCreator";
 import { RoleProfileBuilderLauncher } from "../components/RoleProfileBuilderLauncher";
 import { RoleSetIdentityGallery } from "../components/RoleSetIdentityGallery";
 import { boundaryItems, boundaryOptions } from "../data/boundaries";
@@ -11,6 +12,7 @@ import { negotiationQuestions } from "../data/negotiation";
 import { competencyDefinitions } from "../data/readiness";
 import { traitById } from "../data/traits";
 import { useAssessment } from "../context/AssessmentContext";
+import { buildResultSnapshot } from "../capsules/capsuleData";
 import { calculateTraitScores } from "../engine/discoveryScoring";
 import { activityRecommendations } from "../engine/activityRecommendations";
 import { generateRecommendations } from "../engine/recommendations";
@@ -39,6 +41,7 @@ export function ResultsPage() {
   const establishedCompetencies = readiness.competencies.filter((item) => item.band === "strong");
   const developingCompetencies = readiness.competencies.filter((item) => item.band !== "strong");
   const conversationStarters = negotiationQuestions.filter((question) => answers.negotiation[question.id]).slice(0, 8);
+  const createRevisitSnapshot = useCallback(() => buildResultSnapshot(answers, visibleRoleSet), [answers, visibleRoleSet]);
 
   useEffect(() => {
     if (assessmentCompletion.complete) initializeCurrentRoleSet(suggestedRoleSet);
@@ -116,6 +119,8 @@ export function ResultsPage() {
         </button>
         <Link className="quiet-button" to="/restore">Create a Private Restore backup</Link>
       </section>
+
+      <RevisitLinkCreator createSnapshot={createRevisitSnapshot} available={currentRoleSet !== null} />
 
       <section className="section page-width">
         <div className="section-heading">

@@ -364,14 +364,18 @@ function validateRoleEntry(value: unknown): void {
   if (role.assessmentRoleId !== undefined) text(role.assessmentRoleId)
 }
 
-function validateSnapshot(value: unknown): asserts value is ResultSnapshot {
+function validateSnapshot(value: unknown, allowHistoricalRevisions = false): asserts value is ResultSnapshot {
   const snapshot = record(value)
   exact(snapshot, [
     'snapshotVersion', 'assessmentSchemaVersion', 'engineRevision', 'roleLibrarySchemaVersion', 'roleLibraryRevision',
     'strongestDimensions', 'suggestedRoleSet', 'currentRoleSet', 'roleDiscovery', 'readiness', 'blindSpots',
     'criticalFlags', 'boundaries', 'conversationStatements', 'learningRecommendations',
   ], ['suggestedPrimaryRoleId', 'chosenPrimaryRoleId'])
-  if (snapshot.snapshotVersion !== RESULT_SNAPSHOT_VERSION || snapshot.assessmentSchemaVersion !== ASSESSMENT_SCHEMA_VERSION || snapshot.roleLibrarySchemaVersion !== ROLE_LIBRARY_SCHEMA_VERSION) fail()
+  if (snapshot.snapshotVersion !== RESULT_SNAPSHOT_VERSION) fail()
+  if (allowHistoricalRevisions) {
+    if (!Number.isSafeInteger(snapshot.assessmentSchemaVersion) || (snapshot.assessmentSchemaVersion as number) < 1) fail()
+    if (!Number.isSafeInteger(snapshot.roleLibrarySchemaVersion) || (snapshot.roleLibrarySchemaVersion as number) < 1) fail()
+  } else if (snapshot.assessmentSchemaVersion !== ASSESSMENT_SCHEMA_VERSION || snapshot.roleLibrarySchemaVersion !== ROLE_LIBRARY_SCHEMA_VERSION) fail()
   text(snapshot.engineRevision); text(snapshot.roleLibraryRevision)
   if (snapshot.suggestedPrimaryRoleId !== undefined) text(snapshot.suggestedPrimaryRoleId)
   if (snapshot.chosenPrimaryRoleId !== undefined) text(snapshot.chosenPrimaryRoleId)
@@ -436,6 +440,13 @@ function validateSnapshot(value: unknown): asserts value is ResultSnapshot {
     const recommendation = record(item); exact(recommendation, ['title', 'description'])
     text(recommendation.title); text(recommendation.description)
   })
+}
+
+export function validateResultSnapshot(
+  value: unknown,
+  options: { allowHistoricalRevisions?: boolean } = {},
+): asserts value is ResultSnapshot {
+  validateSnapshot(value, options.allowHistoricalRevisions ?? false)
 }
 
 export function validatePrivateRestoreState(value: unknown): asserts value is PrivateRestoreState {

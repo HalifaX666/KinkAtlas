@@ -24,6 +24,17 @@ export function HistoricalResultView({ snapshot }: { snapshot: ResultSnapshot })
     </section>
 
     <details>
+      <summary>Saved Suggested Role Set</summary>
+      {snapshot.suggestedRoleSet.length ? <ol className="historical-suggested-role-list">
+        {snapshot.suggestedRoleSet.map((role) => <li key={role.roleId}>
+          <strong>{role.label}</strong>
+          {role.definition && <p>{role.definition}</p>}
+          <small>{role.roleId === snapshot.suggestedPrimaryRoleId ? 'Saved suggested primary' : 'Suggested by assessment'}</small>
+        </li>)}
+      </ol> : <p>The saved assessment did not suggest a role set.</p>}
+    </details>
+
+    <details>
       <summary>Saved strongest dimensions</summary>
       <ol>{snapshot.strongestDimensions.map((item) => <li key={item.traitId}><strong>{item.label}</strong> · {item.evidence} responses</li>)}</ol>
     </details>
@@ -43,6 +54,7 @@ export function HistoricalResultView({ snapshot }: { snapshot: ResultSnapshot })
       <div className="historical-section-grid">
         <section><h3>Reflection</h3>{snapshot.readiness.map((item) => <p key={item.competency}><strong>{item.label}:</strong> {item.band}</p>)}</section>
         <section><h3>Potential blind spots</h3>{snapshot.blindSpots.length ? snapshot.blindSpots.map((item) => <p key={item.id}><strong>{item.title}:</strong> {item.description}</p>) : <p>None were displayed.</p>}</section>
+        <section><h3>Critical flags</h3>{snapshot.criticalFlags.length ? snapshot.criticalFlags.map((item) => <p key={item.id}><strong>{item.title}:</strong> {item.description}</p>) : <p>None were displayed.</p>}</section>
         <section><h3>Wants &amp; boundaries</h3>{snapshot.boundaries.length ? snapshot.boundaries.map((item) => <p key={item.id}><strong>{item.label}:</strong> {item.responseLabel}. {item.message}</p>) : <p>No boundary guidance was displayed.</p>}</section>
         <section><h3>Conversation starters</h3>{snapshot.conversationStatements.length ? snapshot.conversationStatements.map((item) => <p key={item.questionId}><strong>{item.domain}:</strong> {item.statement}</p>) : <p>None were displayed.</p>}</section>
         <section><h3>Learning path</h3>{snapshot.learningRecommendations.map((item) => <p key={item.title}><strong>{item.title}:</strong> {item.description}</p>)}</section>

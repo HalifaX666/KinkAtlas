@@ -96,6 +96,12 @@ const publicRoutes: Record<string, RouteMetadata> = {
     robots: "noindex, nofollow",
   },
 
+  "/revisit": {
+    title: "Saved Result | KinkAtlas",
+    description: "Open a read-only historical KinkAtlas result encoded locally in a Revisit Link.",
+    robots: "noindex, nofollow",
+  },
+
   "/viewer-request": {
     title: "Viewer Request | KinkAtlas",
     description: "Create and manage local Viewer Request keys for recipient-bound encrypted KinkAtlas disclosures.",
