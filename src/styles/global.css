@@ -3279,6 +3279,36 @@ summary:focus-visible {
 .role-set-export-section + .section {
   padding-top: 3rem;
 }
+.portability-guide {
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.018);
+}
+.portability-guide summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+.portability-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.portability-guide-grid > div {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.portability-guide-grid span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
 
 .footer-meta p {
   margin: 0;

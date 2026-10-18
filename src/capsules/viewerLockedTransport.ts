@@ -63,8 +63,8 @@ export async function createViewerRequestArtifact(
 }
 
 export async function parseViewerRequestInput(input: string): Promise<ViewerRequest> {
+  if (input.startsWith('{')) return parseViewerRequest(input)
   const trimmed = input.trim()
-  if (trimmed.startsWith('{')) return parseViewerRequest(trimmed)
   let hash = trimmed
   try {
     const url = new URL(trimmed)

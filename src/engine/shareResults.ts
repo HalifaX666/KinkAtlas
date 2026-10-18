@@ -381,7 +381,7 @@ export function downloadFiles(files: File[]): void {
     document.body.appendChild(anchor)
     anchor.click()
     anchor.remove()
-    URL.revokeObjectURL(url)
+    window.setTimeout(() => URL.revokeObjectURL(url), 0)
   })
 }
 

@@ -114,6 +114,19 @@ describe('Private Capsule routes', () => {
     await screen.findByText(/could not be opened/)
     expect(replaceState).not.toHaveBeenCalled()
   })
+
+  it('clears a stale secret when the encrypted artifact changes', async () => {
+    render(<MemoryRouter initialEntries={['/capsule']}><CapsulePage /></MemoryRouter>)
+    const encryptedText = screen.getByLabelText('Encrypted Capsule text')
+    fireEvent.change(encryptedText, { target: { value: 'first-envelope' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Check Capsule' }))
+    await waitFor(() => expect(screen.getByLabelText('Separately shared secret')).toBeVisible())
+    fireEvent.change(screen.getByLabelText('Separately shared secret'), { target: { value: 'stale-secret' } })
+
+    fireEvent.change(encryptedText, { target: { value: 'second-envelope' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Check Capsule' }))
+    await waitFor(() => expect(screen.getByLabelText('Separately shared secret')).toHaveValue(''))
+  })
 })
 
 afterEach(() => {

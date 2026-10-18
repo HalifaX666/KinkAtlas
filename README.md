@@ -28,9 +28,13 @@ Assessment answers and results stay in browser memory for the current session. K
 
 Exports and shares are created locally only when the user requests them. Anything copied, downloaded, or shared can remain outside KinkAtlas after the session ends.
 
+KinkAtlas keeps its portability modes distinct: Public Cards are public images; a Revisit Link is an unencrypted bearer link to a read-only historical result; Secret Capsules need an encrypted artifact plus a separate secret; Viewer-Locked Capsules need the matching browser key; and Private Restore is an encrypted full-session backup that intentionally includes answer maps. Revisit Links and Capsules have no remote expiry or revocation. Historical snapshots render the saved result and are not silently rescored.
+
 Encrypted Capsules are created and opened locally. Secret Capsules require both the encrypted artifact and a separate secret. Viewer-Locked Capsules require a request-specific private key stored only in the recipient's browser profile; clearing site data or deleting that Viewer Request can permanently remove local access. Deleting a key does not remotely revoke a Capsule or erase a copy someone already opened. Viewer-Locked encryption controls access but does not authenticate real-world identity, prevent recipients from copying visible content, or imply consent.
 
 Viewer Request private keys are non-exportable browser `CryptoKey` objects. This prevents straightforward key export, but it does not make a key untouchable: malicious JavaScript running under KinkAtlas's same origin could potentially invoke it. The production policy therefore permits scripts only from the site's own origin, uses no analytics or remote runtime scripts, and keeps the public-surface and production-boundary checks in CI. KinkAtlas does not provide remote key backup, recovery, expiry, or revocation.
+
+See [docs/portability-security.md](docs/portability-security.md) for the complete Phase I mode comparison, threat model, data-minimization matrix, format policy, and browser/network limits.
 
 The Contact form is separate from the assessment. It submits only the fields entered into that form to the same Netlify site through Netlify Forms. Assessment answers, results, readiness information, boundaries, and role selections are never attached automatically. Netlify processes and stores submitted contact messages according to the site's Netlify configuration.
 

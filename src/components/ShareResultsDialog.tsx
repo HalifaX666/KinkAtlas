@@ -34,10 +34,10 @@ const shareChoices: { key: keyof ShareOptions; label: string; detail: string; se
 ]
 
 const modes: { id: ShareMode; label: string; description: string; icon: typeof Images }[] = [
-  { id: 'cards', label: 'Role Cards', description: 'Create individual images from your current role set.', icon: Images },
+  { id: 'cards', label: 'Public Card', description: 'Create public, shareable images from your current role set.', icon: Images },
   { id: 'quick', label: 'Quick Summary', description: 'Copy a short version for a post or message.', icon: Copy },
   { id: 'full', label: 'Full Reflection', description: 'Copy a detailed, potentially sensitive report.', icon: FileText },
-  { id: 'capsule', label: 'Encrypted Disclosure', description: 'Create a private encrypted role disclosure.', icon: FileLock2 },
+  { id: 'capsule', label: 'Encrypted Capsule', description: 'Create a Secret Capsule or Viewer-Locked Capsule.', icon: FileLock2 },
 ]
 
 export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; onClose: () => void }) {
@@ -222,7 +222,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
   return <div className="share-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
     <div className="share-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} ref={dialogRef}>
       <header><BrandLogo size="footer" /><button className="quiet-button share-close" type="button" onClick={onClose} aria-label="Close export and sharing dialog" ref={closeRef}><X /></button></header>
-      <div className="share-heading"><span className="eyebrow">Private by design</span><h2 id={titleId}>Export & Share</h2><p id={descriptionId}>Create images from your current role set to save privately, share with someone you trust, or manually post to FetLife. Everything is generated locally; KinkAtlas never connects to or posts to a FetLife profile.</p></div>
+      <div className="share-heading"><span className="eyebrow">Choose what leaves this tab</span><h2 id={titleId}>Export & Share</h2><p id={descriptionId}>Create images from your current role set to save, share, or manually post to FetLife; copy a summary; or make an encrypted Capsule. Everything is generated locally; KinkAtlas never connects to or posts to a FetLife profile.</p></div>
 
       <div className="share-mode-grid" aria-label="What would you like to share?">{modes.map((item) => {
         const Icon = item.icon
@@ -230,7 +230,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
       })}</div>
 
       {mode === 'cards' && <section className="share-mode-panel" aria-labelledby="role-cards-heading">
-        <div className="share-panel-heading"><div><h3 id="role-cards-heading">Select roles to export</h3><p>These roles follow the current order of Your Role Set. Each selection becomes its own 1080 × 1350 PNG card.</p></div><div className="selection-actions"><button type="button" className="quiet-button" onClick={() => setSelectedIds(new Set(roleCards.map((role) => role.id)))}>Select all</button><button type="button" className="quiet-button" onClick={() => setSelectedIds(new Set())}>Clear all</button></div></div>
+        <div className="share-panel-heading"><div><h3 id="role-cards-heading">Select roles for Public Cards</h3><p>Public Cards are not confidential. These roles follow the current order of Your Role Set, and each selection becomes its own 1080 × 1350 PNG card.</p></div><div className="selection-actions"><button type="button" className="quiet-button" onClick={() => setSelectedIds(new Set(roleCards.map((role) => role.id)))}>Select all</button><button type="button" className="quiet-button" onClick={() => setSelectedIds(new Set())}>Clear all</button></div></div>
         <p className="selection-count" aria-live="polite">{cardCount} of {roleCards.length} roles selected</p>
         <fieldset className="role-card-options"><legend className="sr-only">Roles to export</legend>{roleCards.map((role) => {
           const libraryRole = roleLibraryRoleForIdentity(role.roleId)
@@ -251,7 +251,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
       })}</fieldset><details className="share-preview"><summary>Preview full reflection</summary><pre>{fullReflection}</pre></details><div className="share-actions"><button className="button primary" type="button" onClick={() => copy(fullReflection, 'Full reflection copied.')}><Copy size={17} />Copy Full Reflection</button></div></section>}
 
       {mode === 'capsule' && <section className="share-mode-panel" aria-labelledby="encrypted-disclosure-heading">
-        <div className="share-panel-heading"><div><h3 id="encrypted-disclosure-heading">Create private encrypted disclosure</h3><p>This read-only Capsule contains only the sections listed below. Raw assessment answers, restore state, and navigation cannot be selected.</p></div></div>
+        <div className="share-panel-heading"><div><h3 id="encrypted-disclosure-heading">Create an encrypted disclosure</h3><p>This read-only Capsule contains only the sections listed below. Raw assessment answers, restore state, and navigation cannot be selected.</p></div></div>
         <fieldset className="capsule-lock-options"><legend>Choose how the Capsule is unlocked</legend>
           <label><input type="radio" name="capsule-lock-mode" value="secret" checked={capsuleLockMode === 'secret'} onChange={() => { setCapsuleLockMode('secret'); setViewerArtifact(null); setStatus('') }} /><span><FileLock2 aria-hidden="true" /><strong>Secret Capsule</strong><small>Share the encrypted Capsule and a separate secret.</small></span></label>
           <label><input type="radio" name="capsule-lock-mode" value="viewer-locked" checked={capsuleLockMode === 'viewer-locked'} onChange={() => { setCapsuleLockMode('viewer-locked'); setCapsuleArtifact(null); setStatus('') }} /><span><KeyRound aria-hidden="true" /><strong>Viewer-Locked Capsule</strong><small>Lock it to a recipient’s public Viewer Request. No decryption secret is created.</small></span></label>
@@ -260,7 +260,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
           <label><span>Recipient Viewer Request link or text</span><textarea rows={5} value={viewerRequestInput} onChange={(event) => { setViewerRequestInput(event.target.value); setViewerRequest(null); setViewerArtifact(null) }} /></label>
           <label className="capsule-file-input"><span>Or choose a Viewer Request file</span><input type="file" accept=".kinkatlas-viewer-request,application/vnd.kinkatlas.viewer-request" onChange={(event) => { const file = event.target.files?.[0]; if (file) void loadRecipientRequestFile(file) }} /></label>
           <button className="button secondary" type="button" disabled={!viewerRequestInput.trim() || busy} onClick={() => void validateRecipientRequest()}><KeyRound size={17} />Validate Viewer Request</button>
-          {viewerRequest && <div className="viewer-keyprint"><span>Recipient comparison code</span><strong aria-label={`Recipient comparison code ${viewerRequest.keyprint.short}, checksum ${viewerRequest.keyprint.checksum}`}>{viewerRequest.keyprint.short} · {viewerRequest.keyprint.checksum}</strong><button className="quiet-button viewer-keyprint-copy" type="button" onClick={() => void copy(`${viewerRequest.keyprint.short} · ${viewerRequest.keyprint.checksum}`, 'Comparison code copied.')}><Copy size={15} />Copy comparison code</button><details><summary>Advanced fingerprint</summary><code>{viewerRequest.keyprint.fingerprint}</code></details><p>Compare this with the intended recipient through another trusted channel. A matching code reduces substitution risk but does not prove anyone’s real-world identity.</p></div>}
+          {viewerRequest && <div className="viewer-keyprint"><span>Recipient comparison code</span><strong aria-label={`Recipient comparison code ${viewerRequest.keyprint.short}, checksum ${viewerRequest.keyprint.checksum}`}>{viewerRequest.keyprint.short} · {viewerRequest.keyprint.checksum}</strong><button className="quiet-button viewer-keyprint-copy" type="button" onClick={() => void copy(`${viewerRequest.keyprint.short} · ${viewerRequest.keyprint.checksum}`, 'Comparison code copied.')}><Copy size={15} />Copy comparison code</button><details><summary>Full fingerprint</summary><code>{viewerRequest.keyprint.fingerprint}</code></details><p>Compare this with the intended recipient through another trusted channel. A matching code reduces substitution risk but does not prove anyone’s real-world identity.</p></div>}
         </div>}
         <fieldset className="share-options"><legend>Include in the encrypted disclosure</legend>
           <label><input type="checkbox" checked={capsuleSections.currentRoleSet} onChange={(event) => { setCapsuleSections((current) => ({ ...current, currentRoleSet: event.target.checked })); setCapsuleArtifact(null); setViewerArtifact(null) }} /><span><strong>Current Role Set</strong><small>Your current labels, order, and primary role.</small></span></label>

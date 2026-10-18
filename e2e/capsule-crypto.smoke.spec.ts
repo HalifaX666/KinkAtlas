@@ -37,6 +37,19 @@ test('Secret Capsule primitives round trip in the browser', async ({ page }) => 
     } catch (error) {
       wrongSecretError = error && typeof error === 'object' && 'code' in error ? String(error.code) : undefined
     }
+    const serializedEnvelope = codec.serializeCapsuleEnvelope(envelopes[0])
+    const invalidEnvelopeErrors = []
+    for (const serialized of [
+      ` ${serializedEnvelope}`,
+      serializedEnvelope.replace('"mode":"secret"', '"mode":"secret","mode":"secret"'),
+      '{',
+    ]) {
+      try {
+        codec.parseCapsuleEnvelope(serialized)
+      } catch (error) {
+        invalidEnvelopeErrors.push(error && typeof error === 'object' && 'code' in error ? String(error.code) : undefined)
+      }
+    }
     return {
       cryptoAvailable: Boolean(globalThis.crypto?.subtle),
       compressionAvailable: typeof CompressionStream !== 'undefined' && typeof DecompressionStream !== 'undefined',
@@ -47,6 +60,7 @@ test('Secret Capsule primitives round trip in the browser', async ({ page }) => 
       suite: envelopes[0].suite,
       kdf: envelopes[0].kdf.algorithm,
       wrongSecretError,
+      invalidEnvelopeErrors,
     }
   })
 
@@ -59,5 +73,6 @@ test('Secret Capsule primitives round trip in the browser', async ({ page }) => 
   expect(result.suite).toBe('PBKDF2-HMAC-SHA-256+A256GCM')
   expect(result.kdf).toBe('PBKDF2-HMAC-SHA-256')
   expect(result.wrongSecretError).toBe('authentication-failed')
+  expect(result.invalidEnvelopeErrors).toEqual(['malformed-envelope', 'malformed-envelope', 'malformed-envelope'])
   await guards.assertClean()
 })

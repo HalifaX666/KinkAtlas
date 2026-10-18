@@ -86,13 +86,13 @@ const publicRoutes: Record<string, RouteMetadata> = {
 
   "/capsule": {
     title: "Open Encrypted Capsule | KinkAtlas",
-    description: "Open a private encrypted KinkAtlas disclosure locally in this browser.",
+    description: "Open an encrypted KinkAtlas disclosure locally in this browser.",
     robots: "noindex, nofollow",
   },
 
   "/restore": {
     title: "Private Restore | KinkAtlas",
-    description: "Create or open a private encrypted KinkAtlas assessment restore file locally in this browser.",
+    description: "Create or open an encrypted KinkAtlas Private Restore file locally in this browser.",
     robots: "noindex, nofollow",
   },
 

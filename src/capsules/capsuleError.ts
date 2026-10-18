@@ -15,7 +15,7 @@ const safeMessages: Record<CapsuleErrorCode, string> = {
   'authentication-failed': 'The Capsule could not be authenticated.',
   'compression-failed': 'The Capsule content could not be decompressed.',
   'invalid-secret': 'The Capsule secret is invalid.',
-  'key-storage-unavailable': 'Secure Viewer Request key storage is unavailable.',
+  'key-storage-unavailable': 'Local Viewer Request key storage is unavailable.',
   'malformed-envelope': 'The Capsule envelope is malformed.',
   'missing-recipient-key': 'The matching Viewer Request key is not available.',
   'oversized-input': 'The Capsule exceeds a supported size limit.',

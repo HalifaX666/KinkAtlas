@@ -17,6 +17,7 @@ import {
   serializeViewerRequest,
   validateViewerRequest,
 } from '../capsules/viewerRequest'
+import { parseViewerRequestInput, readViewerRequestFile } from '../capsules/viewerLockedTransport'
 
 const payload = buildSharedDisclosurePayload([{
   roleId: 'role:test-viewer',
@@ -53,6 +54,13 @@ describe('Viewer Request cryptography and validation', () => {
     expect(first.request.requestId).not.toBe(second.request.requestId)
     expect(first.request.recipientPublicKey).not.toBe(second.request.recipientPublicKey)
     expect(await parseViewerRequest(await serializeViewerRequest(first.request))).toEqual(first.request)
+    const serialized = await serializeViewerRequest(first.request)
+    const duplicate = serialized.replace(
+      `"requestId":"${first.request.requestId}"`,
+      `"requestId":"${first.request.requestId}","requestId":"${first.request.requestId}"`,
+    )
+    await expect(parseViewerRequest(` ${serialized}`)).rejects.toMatchObject({ code: 'viewer-request-invalid' })
+    await expect(parseViewerRequest(duplicate)).rejects.toMatchObject({ code: 'viewer-request-invalid' })
     await expect(validateViewerRequest({ ...first.request, unexpected: true })).rejects.toMatchObject({ code: 'viewer-request-invalid' })
     await expect(validateViewerRequest({ ...first.request, magic: 'other' })).rejects.toMatchObject({ code: 'viewer-request-invalid' })
     await expect(validateViewerRequest({ ...first.request, viewerRequestVersion: 2 })).rejects.toMatchObject({ code: 'unsupported-version' })
@@ -72,6 +80,17 @@ describe('Viewer Request cryptography and validation', () => {
     const p384 = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-384' }, true, ['deriveBits'])
     const p384Raw = new Uint8Array(await crypto.subtle.exportKey('raw', p384.publicKey))
     await expect(validateViewerRequest({ ...generated.request, recipientPublicKey: encodeBase64Url(p384Raw) })).rejects.toMatchObject({ code: 'viewer-request-invalid' })
+  })
+
+  it('applies the same canonical Viewer Request parser to text, link, and file input', async () => {
+    const generated = await generateViewerRequestKeyPair()
+    const serialized = await serializeViewerRequest(generated.request)
+    const noncanonical = ` ${serialized}`
+    const encoded = encodeBase64Url(new TextEncoder().encode(noncanonical))
+
+    await expect(parseViewerRequestInput(noncanonical)).rejects.toMatchObject({ code: 'viewer-request-invalid' })
+    await expect(parseViewerRequestInput(`https://example.test/viewer-request#request=${encoded}`)).rejects.toMatchObject({ code: 'viewer-request-invalid' })
+    await expect(readViewerRequestFile(new File([noncanonical], 'invalid.kinkatlas-viewer-request'))).rejects.toMatchObject({ code: 'viewer-request-invalid' })
   })
 
   it('derives deterministic versioned Keyprints and detects key changes', async () => {

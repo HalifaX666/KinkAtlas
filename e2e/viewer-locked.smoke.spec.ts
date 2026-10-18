@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { expectNoAxeViolations } from './support/accessibility'
 import { installBrowserGuards, openPersonaResults } from './support/browserGuards'
 
 test('Viewer-Locked Capsule requires the recipient browser key and stops opening after deletion', async ({ browser }) => {
@@ -56,6 +57,7 @@ test('Viewer-Locked Capsule requires the recipient browser key and stops opening
   })
   await recipientPage.getByLabel('Optional local label').fill('Unrelated test request')
   await recipientPage.getByRole('button', { name: 'Create Viewer Request' }).click()
+  await expect(recipientPage.getByRole('status')).toContainText('Viewer Request created')
   await recipientPage.reload()
   await expect(recipientPage.getByText('Recipient test request')).toBeVisible()
   await expect(recipientPage.getByText('Unrelated test request')).toBeVisible()
@@ -64,7 +66,7 @@ test('Viewer-Locked Capsule requires the recipient browser key and stops opening
   const expectedRoles = await senderPage.locator('.current-role-cards-grid h3').allTextContents()
   await senderPage.getByRole('button', { name: 'Create my role cards' }).click()
   const dialog = senderPage.getByRole('dialog', { name: 'Export & Share' })
-  await dialog.getByRole('button', { name: /Encrypted Disclosure/i }).click()
+  await dialog.getByRole('button', { name: /Encrypted Capsule/i }).click()
   await dialog.getByRole('radio', { name: /Viewer-Locked Capsule/i }).check()
   await dialog.getByLabel('Recipient Viewer Request link or text').fill(viewerRequestText)
   await dialog.getByRole('button', { name: 'Validate Viewer Request' }).click()
@@ -91,11 +93,13 @@ test('Viewer-Locked Capsule requires the recipient browser key and stops opening
   await expect(cleanPage.getByRole('link', { name: 'Create a new Viewer Request' })).toBeVisible()
   await expect(cleanPage.getByRole('heading', { name: 'Shared Role Set' })).toHaveCount(0)
   await expect(cleanPage.getByLabel('Separately shared secret')).toHaveCount(0)
+  await expectNoAxeViolations(cleanPage, 'Viewer-Locked missing-key state')
 
   await recipientPage.goto(capsuleLink)
   await expect(recipientPage).toHaveURL(/\/capsule$/)
   await expect(recipientPage.getByRole('heading', { name: 'Shared Role Set' })).toBeVisible()
   expect(await recipientPage.locator('.historical-role-list > li > strong').allTextContents()).toEqual(expectedRoles)
+  await expectNoAxeViolations(recipientPage, 'Unlocked Viewer-Locked disclosure')
 
   await recipientPage.goto('/viewer-request')
   const targetRequest = recipientPage.getByRole('listitem').filter({ hasText: 'Recipient test request' })
@@ -139,7 +143,7 @@ test('Viewer Request storage failures stay explicit and never use a persistence 
     })
     expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 })
     await page.goto('/capsule')
-    await expect(page.getByRole('heading', { name: 'Open a private KinkAtlas Capsule' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Open an encrypted KinkAtlas Capsule' })).toBeVisible()
     await context.close()
   }
 })

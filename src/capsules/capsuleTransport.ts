@@ -1,7 +1,7 @@
-import { createSecretCapsule, decodeSecretCapsule, serializeCapsuleEnvelope } from './capsuleCodec'
+import { createSecretCapsule, decodeSecretCapsule, parseCapsuleEnvelope, serializeCapsuleEnvelope } from './capsuleCodec'
 import { CapsuleError, type CapsuleErrorCode } from './capsuleError'
 import { CAPSULE_LIMITS, decodeBase64Url, encodeBase64Url } from './capsuleSchema'
-import type { CapsuleEnvelope, CapsuleEnvelopeTransport, CapsulePayload, SharedDisclosurePayload } from './capsuleTypes'
+import type { CapsuleEnvelopeTransport, CapsulePayload, SharedDisclosurePayload } from './capsuleTypes'
 import { privateRestorePayload, validatePrivateRestoreState, type PrivateRestoreState } from './capsuleData'
 
 export const PRIVATE_RESTORE_EXTENSION = '.kinkatlas-restore'
@@ -76,30 +76,16 @@ export function parseSharedCapsuleFragment(hash: string): string {
     if (error instanceof CapsuleError) throw error
     throw new CapsuleError('malformed-envelope')
   }
-  // Parsing validates the complete outer envelope before a caller removes the fragment.
-  let envelope: unknown
-  try {
-    envelope = JSON.parse(serialized)
-    if (!envelope || typeof envelope !== 'object') throw new CapsuleError('malformed-envelope')
-    serializeCapsuleEnvelope(envelope as CapsuleEnvelope, 'fragment')
-  } catch (error) {
-    if (error instanceof CapsuleError) throw error
-    throw new CapsuleError('malformed-envelope')
-  }
+  // The shared parser validates the complete canonical envelope before a caller removes the fragment.
+  parseCapsuleEnvelope(serialized, 'fragment')
   return serialized
 }
 
 export async function readCapsuleFile(file: File): Promise<string> {
   if (file.size > CAPSULE_LIMITS.fileBytes) throw new CapsuleError('oversized-input')
   const serialized = await file.text()
-  // The outer envelope is validated before the secret is requested or used.
-  try {
-    const envelope = JSON.parse(serialized) as unknown
-    serializeCapsuleEnvelope(envelope as CapsuleEnvelope, 'file')
-  } catch (error) {
-    if (error instanceof CapsuleError) throw error
-    throw new CapsuleError('malformed-envelope')
-  }
+  // The shared parser validates the complete canonical envelope before the secret is requested or used.
+  parseCapsuleEnvelope(serialized, 'file')
   return serialized
 }
 
@@ -124,7 +110,7 @@ export function capsuleErrorMessage(error: unknown): string {
   const code: CapsuleErrorCode | undefined = error instanceof CapsuleError ? error.code : undefined
   if (code === 'authentication-failed' || code === 'invalid-secret') return 'This Capsule could not be unlocked. Check the secret and try again.'
   if (code === 'missing-recipient-key') return 'This Capsule is locked to a Viewer Request that is not available in this browser profile.'
-  if (code === 'key-storage-unavailable') return 'Secure Viewer Request key storage is unavailable in this browser context.'
+  if (code === 'key-storage-unavailable') return 'Local Viewer Request key storage is unavailable in this browser context.'
   if (code === 'viewer-request-invalid') return 'This Viewer Request appears incomplete or invalid.'
   if (code === 'unsupported-version' || code === 'unsupported-algorithm') return 'This Capsule was created by a KinkAtlas version this browser cannot open.'
   if (code === 'oversized-input') return 'This Capsule exceeds KinkAtlas safety limits.'

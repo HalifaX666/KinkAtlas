@@ -210,6 +210,17 @@ describe('Capsule schema and deterministic serialization', () => {
     unsupportedSection.sections.alignment = { display: 'synthetic' }
     expectCapsuleError(() => validateCapsulePayload(unsupportedSection), 'payload-validation-failed')
   })
+
+  it('rejects noncanonical, duplicate-field, and invalid UTF-8 payload encodings', () => {
+    const serialized = serializeCapsulePayload(sharedPayload())
+    const duplicate = serialized.replace(
+      '"payloadType":"shared-disclosure"',
+      '"payloadType":"shared-disclosure","payloadType":"shared-disclosure"',
+    )
+    expectCapsuleError(() => parseCapsulePayload(encoder.encode(` ${serialized}`)), 'payload-validation-failed')
+    expectCapsuleError(() => parseCapsulePayload(encoder.encode(duplicate)), 'payload-validation-failed')
+    expectCapsuleError(() => parseCapsulePayload(Uint8Array.from([0xff])), 'payload-validation-failed')
+  })
 })
 
 describe('Capsule compression', () => {
@@ -307,6 +318,14 @@ describe('hostile envelope handling', () => {
     expectCapsuleError(() => validateSecretEnvelope({ ...envelope, suite: 'unknown' }), 'unsupported-algorithm')
     expectCapsuleError(() => validateSecretEnvelope({ ...envelope, recipientKeyId: 'future-field' }), 'malformed-envelope')
     expectCapsuleError(() => validateSecretEnvelope({ ...envelope, iv: '***' }), 'malformed-envelope')
+  })
+
+  it('requires canonical envelope bytes and rejects duplicate fields', async () => {
+    const envelope = await createSecretCapsule(sharedPayload(), testSecret, { iterations: testIterations })
+    const serialized = serializeCapsuleEnvelope(envelope)
+    const duplicate = serialized.replace('"mode":"secret"', '"mode":"secret","mode":"secret"')
+    expectCapsuleError(() => parseCapsuleEnvelope(`\n${serialized}`), 'malformed-envelope')
+    expectCapsuleError(() => parseCapsuleEnvelope(duplicate), 'malformed-envelope')
   })
 
   it('rejects oversized ciphertext and extreme PBKDF2 work factors before crypto', async () => {

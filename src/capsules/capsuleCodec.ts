@@ -67,13 +67,18 @@ export function serializeCapsulePayload(payload: CapsulePayload): string {
 }
 
 export function parseCapsulePayload(bytes: Uint8Array): CapsulePayload {
+  let serialized: string
   let value: unknown
   try {
-    value = JSON.parse(textDecoder.decode(bytes))
+    serialized = textDecoder.decode(bytes)
+    value = JSON.parse(serialized)
   } catch {
     throw new CapsuleError('payload-validation-failed')
   }
   validateCapsulePayload(value)
+  if (canonicalJsonFromValidatedValue(value as unknown as CapsuleJsonValue) !== serialized) {
+    throw new CapsuleError('payload-validation-failed')
+  }
   return value
 }
 
@@ -102,7 +107,11 @@ export function parseCapsuleEnvelope(
   } catch {
     throw new CapsuleError('malformed-envelope')
   }
-  return validateCapsuleEnvelope(value)
+  const envelope = validateCapsuleEnvelope(value)
+  if (canonicalJsonFromValidatedValue(envelope as unknown as CapsuleJsonValue) !== serialized) {
+    throw new CapsuleError('malformed-envelope')
+  }
+  return envelope
 }
 
 export async function createSecretCapsule(

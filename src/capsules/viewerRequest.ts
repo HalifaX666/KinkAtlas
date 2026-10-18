@@ -154,5 +154,9 @@ export async function parseViewerRequest(serialized: string): Promise<ViewerRequ
   } catch {
     throw new CapsuleError('viewer-request-invalid')
   }
-  return validateViewerRequest(value)
+  const request = await validateViewerRequest(value)
+  if (canonicalJson(request as unknown as CapsuleJsonValue) !== serialized) {
+    throw new CapsuleError('viewer-request-invalid')
+  }
+  return request
 }

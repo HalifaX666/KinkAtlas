@@ -1,4 +1,5 @@
 import { chromium, expect, firefox, test, webkit, type BrowserType } from '@playwright/test'
+import { expectNoAxeViolations } from './support/accessibility'
 import { expectNoHorizontalOverflow, installBrowserGuards, openPersonaResults } from './support/browserGuards'
 
 const baseURL = 'http://127.0.0.1:4178'
@@ -152,6 +153,7 @@ test('Revisit bearer link opens read-only in a clean context without transmittin
   await expect(page.getByRole('heading', { name: 'Your saved KinkAtlas result' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Your Role Set' })).toBeVisible()
   expect(page.url()).toBe(created.link)
+  await expectNoAxeViolations(page, 'Revisit historical result')
 
   const documentRequest = requests.find(({ type }) => type === 'document')
   expect(documentRequest?.url).toBe(`${baseURL}/revisit`)
@@ -194,6 +196,7 @@ test('malformed Revisit links fail closed without removing the bearer fragment',
   await expect(error).toBeFocused()
   expect(page.url()).toBe(link)
   await expect(page.getByRole('heading', { name: 'Your saved KinkAtlas result' })).toHaveCount(0)
+  await expectNoAxeViolations(page, 'Malformed Revisit link')
   await guards.assertClean()
   await context.close()
   await browser.close()

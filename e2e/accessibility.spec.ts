@@ -34,7 +34,7 @@ test('high-value application states have no WCAG A/AA axe violations', async ({ 
   await expectNoAxeViolations(page, 'Viewer Request')
 
   await page.goto('/capsule')
-  await expect(page.getByRole('heading', { name: 'Open a private KinkAtlas Capsule' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Open an encrypted KinkAtlas Capsule' })).toBeVisible()
   await expectNoAxeViolations(page, 'Capsule viewer')
 
   await page.goto('/restore')

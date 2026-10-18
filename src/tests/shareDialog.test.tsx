@@ -91,7 +91,7 @@ async function searchResultFor(label: string) {
 describe('Export & Share dialog', () => {
   it('keeps encrypted disclosure separate and derives its privacy receipt from supported selections', () => {
     render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
-    fireEvent.click(screen.getByRole('button', { name: /Encrypted Disclosure/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
 
     const choices = screen.getByRole('group', { name: 'Include in the encrypted disclosure' })
     const roleSet = within(choices).getByRole('checkbox', { name: /Current Role Set/i })
@@ -119,7 +119,7 @@ describe('Export & Share dialog', () => {
       file: new File(['encrypted-ciphertext'], 'disclosure.kinkatlas-capsule'),
     })
     render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
-    fireEvent.click(screen.getByRole('button', { name: /Encrypted Disclosure/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
     expect(screen.queryByLabelText('Encrypted Capsule text')).not.toBeInTheDocument()
 
     const choices = screen.getByRole('group', { name: 'Include in the encrypted disclosure' })
@@ -157,7 +157,7 @@ describe('Export & Share dialog', () => {
       file: new File(['viewer-locked'], 'viewer-locked.kinkatlas-capsule'),
     })
     render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
-    fireEvent.click(screen.getByRole('button', { name: /Encrypted Disclosure/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
     fireEvent.click(screen.getByRole('radio', { name: /Viewer-Locked Capsule/i }))
     fireEvent.change(screen.getByLabelText('Recipient Viewer Request link or text'), { target: { value: 'public-request' } })
     fireEvent.click(screen.getByRole('button', { name: 'Validate Viewer Request' }))
@@ -174,7 +174,7 @@ describe('Export & Share dialog', () => {
   it('keeps invalid Viewer Request input editable and distinguishes unsupported versions', async () => {
     vi.spyOn(viewerTransport, 'parseViewerRequestInput').mockRejectedValue(new CapsuleError('unsupported-version'))
     render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
-    fireEvent.click(screen.getByRole('button', { name: /Encrypted Disclosure/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
     fireEvent.click(screen.getByRole('radio', { name: /Viewer-Locked Capsule/i }))
     const input = screen.getByLabelText('Recipient Viewer Request link or text')
     fireEvent.change(input, { target: { value: 'request-that-needs-replacing' } })
@@ -496,7 +496,8 @@ describe('Export & Share dialog', () => {
   it('starts with every role in the current role set selected and labelled', () => {
     const { container } = render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
 
-    expect(screen.getByRole('button', { name: /role cards/i })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: /public card/i })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('Public Cards are not confidential.', { exact: false })).toBeInTheDocument()
     const roleChoices = within(screen.getByRole('group', { name: 'Roles to export' })).getAllByRole('checkbox')
     expect(roleChoices).toHaveLength(5)
     roleChoices.forEach((choice) => expect(choice).toBeChecked())
@@ -643,6 +644,24 @@ describe('Export & Share dialog', () => {
 
     Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => { throw new Error('unavailable') }) })
     expect(() => capsuleTransport.downloadCapsuleFile(file)).toThrow('Download unavailable')
+  })
+
+  it('releases each Public Card download URL after the click task', async () => {
+    const revoke = vi.fn()
+    const created = ['blob:public-card-1', 'blob:public-card-2']
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => created.shift()) })
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revoke })
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+
+    const { downloadFiles } = await import('../engine/shareResults')
+    downloadFiles([
+      new File(['one'], 'first.png', { type: 'image/png' }),
+      new File(['two'], 'second.png', { type: 'image/png' }),
+    ])
+
+    expect(click).toHaveBeenCalledTimes(2)
+    expect(revoke).not.toHaveBeenCalled()
+    await waitFor(() => expect(revoke.mock.calls.map(([url]) => url)).toEqual(['blob:public-card-1', 'blob:public-card-2']))
   })
 
   it('keeps sensitive Full Reflection options off until selected', () => {

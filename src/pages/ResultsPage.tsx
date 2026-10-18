@@ -120,6 +120,17 @@ export function ResultsPage() {
         <Link className="quiet-button" to="/restore">Create a Private Restore backup</Link>
       </section>
 
+      <details className="page-width portability-guide">
+        <summary>Which sharing or backup option fits?</summary>
+        <div className="portability-guide-grid">
+          <div><strong>Public Card</strong><span>A public image for saving or sharing. It is not confidential.</span></div>
+          <div><strong>Revisit Link</strong><span>A read-only historical result. Anyone with the complete bearer link can open it.</span></div>
+          <div><strong>Secret Capsule</strong><span>An encrypted disclosure that needs both the artifact and its separate secret.</span></div>
+          <div><strong>Viewer-Locked Capsule</strong><span>An encrypted disclosure for a recipient browser key. It does not verify human identity.</span></div>
+          <div><strong>Private Restore</strong><span>An encrypted full assessment backup, including answers, for restoring your own session.</span></div>
+        </div>
+      </details>
+
       <RevisitLinkCreator createSnapshot={createRevisitSnapshot} available={currentRoleSet !== null} />
 
       <section className="section page-width">

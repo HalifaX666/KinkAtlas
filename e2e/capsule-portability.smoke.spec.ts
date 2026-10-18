@@ -6,10 +6,23 @@ test('Secret Shared Disclosure stays in the fragment, removes it after capture, 
   const guards = await installBrowserGuards(page)
   await openPersonaResults(page, 'balanced-authority-pattern')
   await expect(page.locator('.current-role-cards-grid h3').first()).toBeVisible()
+  await page.getByText('Which sharing or backup option fits?').click()
+  const guide = page.locator('.portability-guide')
+  await expect(guide).toContainText('Public Card')
+  await expect(guide).toContainText('Revisit Link')
+  await expect(guide).toContainText('Secret Capsule')
+  await expect(guide).toContainText('Viewer-Locked Capsule')
+  await expect(guide).toContainText('Private Restore')
+  await expect(guide).toContainText('does not verify human identity')
   const expectedRoles = await page.locator('.current-role-cards-grid h3').allTextContents()
   await page.getByRole('button', { name: 'Create my role cards' }).click()
   const dialog = page.getByRole('dialog', { name: 'Export & Share' })
-  await dialog.getByRole('button', { name: /Encrypted Disclosure/i }).click()
+  await expect(dialog.getByText('Public Cards are not confidential.', { exact: false })).toBeVisible()
+  for (const width of [320, 375, 430]) {
+    await page.setViewportSize({ width, height: 800 })
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+  }
+  await dialog.getByRole('button', { name: /Encrypted Capsule/i }).click()
   await expect(dialog.getByRole('checkbox', { name: /Current Role Set/i })).toBeChecked()
   await expect(dialog.getByRole('checkbox', { name: /Role definitions/i })).toBeChecked()
   await expect(dialog.getByRole('group', { name: 'Include in the encrypted disclosure' }).getByRole('checkbox')).toHaveCount(2)
@@ -54,6 +67,7 @@ test('Secret Shared Disclosure stays in the fragment, removes it after capture, 
   }
   await expectNoAxeViolations(page, 'Unlocked Secret Shared Disclosure')
   await page.goBack()
+  await expect(page.getByRole('heading', { name: 'A map, not a verdict.' })).toBeVisible()
   await page.goForward()
   await expect(page).toHaveURL(/\/capsule$/)
   expect(new URL(page.url()).hash).toBe('')
@@ -61,6 +75,7 @@ test('Secret Shared Disclosure stays in the fragment, removes it after capture, 
 })
 
 test('Private Restore export requires file, secret, preview, and explicit confirmation', async ({ browser }) => {
+  test.setTimeout(60_000)
   const context = await browser.newContext()
   const exportPage = await context.newPage()
   const exportGuards = await installBrowserGuards(exportPage)

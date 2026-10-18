@@ -16,8 +16,9 @@ import {
   decryptSharedDisclosure,
   generateCapsuleSecret,
   parseSharedCapsuleFragment,
+  readCapsuleFile,
 } from '../capsules/capsuleTransport'
-import { CAPSULE_LIMITS, canonicalJson } from '../capsules/capsuleSchema'
+import { CAPSULE_LIMITS, canonicalJson, encodeBase64Url } from '../capsules/capsuleSchema'
 import type { CapsuleJsonValue } from '../capsules/capsuleTypes'
 import { assessmentPersonas } from './fixtures/assessmentPersonas'
 import { evaluateAssessmentPersona } from './helpers/assessmentPersonaRunner'
@@ -61,6 +62,29 @@ describe('Phase I.2 Capsule DTOs', () => {
     expect(state.currentRoleSet).toEqual(evaluation.yourRoleSet)
     expect(state.resultSnapshot?.roleDiscovery).toHaveLength(12)
     expect(state.completionRequested).toBe(true)
+  })
+
+  it('keeps the portability data models distinct and excludes raw answers from sharing modes', () => {
+    const snapshot = buildResultSnapshot(evaluation.persona.answers, evaluation.yourRoleSet)
+    const disclosure = buildSharedDisclosurePayload(evaluation.yourRoleSet)
+    const restore = buildPrivateRestoreState({
+      answers: evaluation.persona.answers,
+      navigation,
+      currentRoleSet: evaluation.yourRoleSet,
+      historicalResultSnapshot: snapshot,
+      completionRequested: true,
+    })
+
+    expect(snapshot).not.toHaveProperty('answers')
+    expect(snapshot).not.toHaveProperty('navigation')
+    expect(snapshot).not.toHaveProperty('restore')
+    expect(disclosure.sections).not.toHaveProperty('answers')
+    expect(disclosure.sections).not.toHaveProperty('navigation')
+    expect(disclosure.sections).not.toHaveProperty('restore')
+    expect(disclosure.disclosureManifest.assessmentEvidence).toBe(false)
+    expect(restore.answers).toEqual(evaluation.persona.answers)
+    expect(restore.navigation).toEqual(navigation)
+    expect(restore.resultSnapshot).toEqual(snapshot)
   })
 
   it('keeps shared disclosures conservative and derives the receipt from the serialized manifest', () => {
@@ -147,6 +171,17 @@ describe('Phase I.2 Capsule DTOs', () => {
       expect.objectContaining({ code: 'oversized-input' }),
     )
   })
+
+  it('rejects the same noncanonical Capsule envelope through text, link, and file transports', async () => {
+    const disclosure = await createSharedDisclosureArtifact(buildSharedDisclosurePayload(evaluation.yourRoleSet), 'https://example.test')
+    const noncanonical = ` ${disclosure.serializedEnvelope}`
+    const fragment = `#capsule=${encodeBase64Url(new TextEncoder().encode(noncanonical))}`
+    const file = new File([noncanonical], 'invalid.kinkatlas-capsule', { type: 'application/vnd.kinkatlas.capsule' })
+
+    await expect(decryptSharedDisclosure(noncanonical, disclosure.secret)).rejects.toMatchObject({ code: 'malformed-envelope' })
+    expect(() => parseSharedCapsuleFragment(fragment)).toThrowError(expect.objectContaining({ code: 'malformed-envelope' }))
+    await expect(readCapsuleFile(file)).rejects.toMatchObject({ code: 'malformed-envelope' })
+  }, 30_000)
 
   it('treats semantic revision drift as historical-only instead of silently rescoring', () => {
     const state = buildPrivateRestoreState({

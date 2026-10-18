@@ -158,6 +158,6 @@ function ComparisonCode({ request, onCopy }: { request?: ViewerRequest | null; o
     <span>Comparison code</span>
     <strong aria-label={`Comparison code ${request.keyprint.short}, checksum ${request.keyprint.checksum}`}>{request.keyprint.short} · {request.keyprint.checksum}</strong>
     <button className="quiet-button viewer-keyprint-copy" type="button" onClick={() => void onCopy(`${request.keyprint.short} · ${request.keyprint.checksum}`, 'Comparison code copied.')}><Copy size={15} />Copy comparison code</button>
-    <details><summary>Advanced fingerprint</summary><code>{request.keyprint.fingerprint}</code></details>
+    <details><summary>Full fingerprint</summary><code>{request.keyprint.fingerprint}</code></details>
   </div>
 }

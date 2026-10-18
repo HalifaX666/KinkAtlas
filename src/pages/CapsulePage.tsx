@@ -41,7 +41,7 @@ export function CapsulePage() {
   }
 
   const inspectEnvelope = async (serialized: string, source: CapsuleEnvelopeTransport, removeFragment = false) => {
-    setPayload(null); setMissingKey(false); setStatus('')
+    setPayload(null); setMissingKey(false); setSecret(''); setStatus('')
     try {
       const envelope = parseCapsuleEnvelope(serialized, source)
       if (envelope.mode === 'viewer-locked') {
@@ -89,14 +89,14 @@ export function CapsulePage() {
   return <div className="section page-width private-capsule-page">
     <div className="section-heading">
       <span className="eyebrow">Encrypted disclosure</span>
-      <h1>Open a private KinkAtlas Capsule</h1>
+      <h1>Open an encrypted KinkAtlas Capsule</h1>
       <p>Secret Capsules use a separately shared secret. Viewer-Locked Capsules require the matching private key stored in the recipient’s browser profile. KinkAtlas does not receive either one.</p>
     </div>
 
     {!payload && <section className="capsule-panel capsule-unlock" aria-labelledby="capsule-unlock-heading">
       {mode === 'viewer-locked' ? <KeyRound aria-hidden="true" /> : <FileLock2 aria-hidden="true" />}
       <h2 id="capsule-unlock-heading">{mode === 'viewer-locked' ? 'Viewer-Locked disclosure' : 'Unlock disclosure'}</h2>
-      <label><span>Encrypted Capsule text</span><textarea value={serializedEnvelope} rows={5} onChange={(event) => { setSerializedEnvelope(event.target.value.trim()); setMode(null); setPayload(null); setMissingKey(false) }} /></label>
+      <label><span>Encrypted Capsule text</span><textarea value={serializedEnvelope} rows={5} onChange={(event) => { setSerializedEnvelope(event.target.value); setMode(null); setPayload(null); setMissingKey(false); setSecret(''); setStatus('') }} /></label>
       <label className="capsule-file-input"><span>Or choose an encrypted Capsule file</span><input type="file" accept=".kinkatlas-capsule,application/vnd.kinkatlas.capsule" onChange={(event) => {
         const file = event.target.files?.[0]
         if (!file) return
