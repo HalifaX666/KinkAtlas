@@ -162,6 +162,11 @@ describe('Export & Share dialog', () => {
     fireEvent.change(screen.getByLabelText('Recipient Viewer Request link or text'), { target: { value: 'public-request' } })
     fireEvent.click(screen.getByRole('button', { name: 'Validate Viewer Request' }))
     expect(await screen.findByText(/ABCD-EF01-234/)).toBeVisible()
+    expect(screen.getByText('primary fetch primary fetch')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Copy Four-Word Keyprint' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Copy comparison code' })).toBeVisible()
+    fireEvent.click(screen.getByText('Full fingerprint'))
+    expect(screen.getByRole('button', { name: 'Copy full fingerprint' })).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Create Viewer-Locked Capsule' }))
     expect((await screen.findByLabelText('Viewer-Locked Capsule link')) as HTMLTextAreaElement).toHaveValue(
       'https://example.test/capsule#capsule=viewer-locked-ciphertext',
@@ -182,6 +187,8 @@ describe('Export & Share dialog', () => {
 
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/version this browser cannot use/i))
     expect(input).toHaveValue('request-that-needs-replacing')
+    expect(screen.queryByText('Recipient Four-Word Keyprint')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Copy Four-Word Keyprint' })).not.toBeInTheDocument()
   })
 
   it('uses canonical primary wording and a static role reference on an exported card without metrics', async () => {

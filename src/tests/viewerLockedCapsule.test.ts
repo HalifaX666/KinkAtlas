@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { buildSharedDisclosurePayload } from '../capsules/capsuleData'
-import { decodeBase64Url, encodeBase64Url, validateViewerLockedEnvelope } from '../capsules/capsuleSchema'
+import { CAPSULE_LIMITS, decodeBase64Url, encodeBase64Url, validateViewerLockedEnvelope } from '../capsules/capsuleSchema'
 import type { ViewerLockedCapsuleEnvelope } from '../capsules/capsuleTypes'
 import { createViewerLockedCapsule, deriveViewerContentKey, openViewerLockedCapsule, VIEWER_LOCKED_HKDF_INFO } from '../capsules/viewerLockedCodec'
 import { createStoredViewerRequest, listStoredViewerRequests, viewerRequestStorageRecordFields } from '../capsules/viewerKeyStore'
@@ -65,7 +65,11 @@ describe('Viewer Request cryptography and validation', () => {
     await expect(validateViewerRequest({ ...first.request, magic: 'other' })).rejects.toMatchObject({ code: 'viewer-request-invalid' })
     await expect(validateViewerRequest({ ...first.request, viewerRequestVersion: 2 })).rejects.toMatchObject({ code: 'unsupported-version' })
     await expect(validateViewerRequest({ ...first.request, suite: 'ECDH-P384+HKDF-SHA-256+A256GCM' })).rejects.toMatchObject({ code: 'unsupported-algorithm' })
+    await expect(validateViewerRequest({ ...first.request, keyprint: { ...first.request.keyprint, version: 2 } })).rejects.toMatchObject({ code: 'viewer-request-invalid' })
     await expect(validateViewerRequest({ ...first.request, requestId: changedBytes(17, 1) })).rejects.toMatchObject({ code: 'viewer-request-invalid' })
+    await expect(validateViewerRequest({ ...first.request, requestId: 'not+base64url' })).rejects.toMatchObject({ code: 'viewer-request-invalid' })
+    await expect(validateViewerRequest({ ...first.request, recipientPublicKey: 'not+base64url' })).rejects.toMatchObject({ code: 'viewer-request-invalid' })
+    await expect(parseViewerRequest('x'.repeat(CAPSULE_LIMITS.userVisibleStringBytes + 1))).rejects.toMatchObject({ code: 'oversized-input' })
     const pollutedRequest = { ...first.request } as Record<string, unknown>
     Object.defineProperty(pollutedRequest, '__proto__', { value: true, enumerable: true })
     await expect(validateViewerRequest(pollutedRequest)).rejects.toMatchObject({ code: 'viewer-request-invalid' })

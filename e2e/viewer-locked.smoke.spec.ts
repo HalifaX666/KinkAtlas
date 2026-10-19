@@ -21,12 +21,14 @@ test('Viewer-Locked Capsule requires the recipient browser key and stops opening
   await recipientPage.getByRole('button', { name: 'Create Viewer Request' }).click()
   const viewerRequestText = await recipientPage.getByLabel('Viewer Request text').inputValue()
   const viewerRequestLink = await recipientPage.getByLabel('Viewer Request link').inputValue()
-  const keyprint = await recipientPage.locator('.viewer-keyprint > strong').first().innerText()
+  const wordKeyprint = await recipientPage.locator('.viewer-word-keyprint').first().innerText()
   expect(viewerRequestText).not.toContain('privateKey')
   expect(viewerRequestText).not.toContain('Recipient test request')
   expect(viewerRequestLink).not.toContain('Recipient%20test%20request')
   await recipientPage.getByRole('button', { name: 'Copy comparison code' }).first().click()
   await expect(recipientPage.getByRole('status')).toContainText(/Comparison code copied|Copy is unavailable/)
+  await recipientPage.getByRole('button', { name: 'Copy Four-Word Keyprint' }).first().click()
+  await expect(recipientPage.getByRole('status')).toContainText(/Four-Word Keyprint copied|Copy is unavailable/)
   const storedShape = await recipientPage.evaluate(async () => {
     const database = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open('kinkatlas-viewer-requests')
@@ -61,6 +63,8 @@ test('Viewer-Locked Capsule requires the recipient browser key and stops opening
   await recipientPage.reload()
   await expect(recipientPage.getByText('Recipient test request')).toBeVisible()
   await expect(recipientPage.getByText('Unrelated test request')).toBeVisible()
+  const originalStoredRequest = recipientPage.getByRole('listitem').filter({ hasText: 'Recipient test request' })
+  await expect(originalStoredRequest.locator('.viewer-word-keyprint')).toHaveText(wordKeyprint)
 
   await openPersonaResults(senderPage, 'balanced-authority-pattern')
   const expectedRoles = await senderPage.locator('.current-role-cards-grid h3').allTextContents()
@@ -70,10 +74,13 @@ test('Viewer-Locked Capsule requires the recipient browser key and stops opening
   await dialog.getByRole('radio', { name: /Viewer-Locked Capsule/i }).check()
   await dialog.getByLabel('Recipient Viewer Request link or text').fill(viewerRequestText)
   await dialog.getByRole('button', { name: 'Validate Viewer Request' }).click()
-  await expect(dialog.getByText(keyprint)).toBeVisible()
-  await senderPage.setViewportSize({ width: 320, height: 800 })
-  await expect.poll(() => senderPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
-  await expect(dialog.getByRole('button', { name: 'Create Viewer-Locked Capsule' })).toBeVisible()
+  await expect(dialog.getByText(wordKeyprint)).toBeVisible()
+  for (const width of [320, 375, 430]) {
+    await senderPage.setViewportSize({ width, height: 800 })
+    await expect.poll(() => senderPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+    await expect(dialog.getByText(wordKeyprint)).toBeVisible()
+    await expect(dialog.getByRole('button', { name: 'Create Viewer-Locked Capsule' })).toBeVisible()
+  }
   await dialog.getByRole('button', { name: 'Create Viewer-Locked Capsule' }).click()
   const capsuleLink = await dialog.getByLabel('Viewer-Locked Capsule link').inputValue()
   const capsuleText = await dialog.getByLabel('Viewer-Locked Capsule text').inputValue()
@@ -160,6 +167,8 @@ test('Viewer Request lifecycle remains usable at narrow mobile widths', async ({
   for (const width of [320, 375, 430]) {
     await page.setViewportSize({ width, height: 800 })
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+    await expect(page.locator('.viewer-word-keyprint').first()).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Copy Four-Word Keyprint' }).first()).toBeVisible()
     await expect(page.getByRole('button', { name: 'Copy comparison code' }).first()).toBeVisible()
     await expect(page.getByRole('button', { name: 'Download request file' })).toBeVisible()
   }

@@ -3,6 +3,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { roleLibraryRoleForIdentity } from '../data/roleIdentity'
 import { BrandLogo } from './BrandLogo'
 import { RoleIdentityCard } from './RoleIdentityCard'
+import { ViewerKeyprintPanel } from './ViewerKeyprintPanel'
 import { buildSharedDisclosurePayload, privacyReceiptForPayload } from '../capsules/capsuleData'
 import { capsuleErrorMessage, createSharedDisclosureArtifact, downloadCapsuleFile, viewerRequestErrorMessage, type SharedCapsuleArtifact } from '../capsules/capsuleTransport'
 import type { ViewerRequest } from '../capsules/capsuleTypes'
@@ -175,7 +176,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
       const { parseViewerRequestInput } = await import('../capsules/viewerLockedTransport')
       const request = await parseViewerRequestInput(input)
       setViewerRequest(request)
-      setStatus('Viewer Request validated locally. Compare the comparison code through a separate trusted channel when substitution matters.')
+      setStatus('Viewer Request validated locally. Compare the Four-Word Keyprint through a separate trusted channel when substitution matters.')
     } catch (error) {
       setStatus(viewerRequestErrorMessage(error))
     } finally {
@@ -205,7 +206,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
       const artifact = await createViewerRequestArtifact(request)
       setViewerRequestInput(artifact.serializedRequest)
       setViewerRequest(request)
-      setStatus('Viewer Request file validated locally. Compare the comparison code through a separate trusted channel when substitution matters.')
+      setStatus('Viewer Request file validated locally. Compare the Four-Word Keyprint through a separate trusted channel when substitution matters.')
     } catch (error) {
       setStatus(viewerRequestErrorMessage(error))
     } finally {
@@ -260,7 +261,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
           <label><span>Recipient Viewer Request link or text</span><textarea rows={5} value={viewerRequestInput} onChange={(event) => { setViewerRequestInput(event.target.value); setViewerRequest(null); setViewerArtifact(null) }} /></label>
           <label className="capsule-file-input"><span>Or choose a Viewer Request file</span><input type="file" accept=".kinkatlas-viewer-request,application/vnd.kinkatlas.viewer-request" onChange={(event) => { const file = event.target.files?.[0]; if (file) void loadRecipientRequestFile(file) }} /></label>
           <button className="button secondary" type="button" disabled={!viewerRequestInput.trim() || busy} onClick={() => void validateRecipientRequest()}><KeyRound size={17} />Validate Viewer Request</button>
-          {viewerRequest && <div className="viewer-keyprint"><span>Recipient comparison code</span><strong aria-label={`Recipient comparison code ${viewerRequest.keyprint.short}, checksum ${viewerRequest.keyprint.checksum}`}>{viewerRequest.keyprint.short} · {viewerRequest.keyprint.checksum}</strong><button className="quiet-button viewer-keyprint-copy" type="button" onClick={() => void copy(`${viewerRequest.keyprint.short} · ${viewerRequest.keyprint.checksum}`, 'Comparison code copied.')}><Copy size={15} />Copy comparison code</button><details><summary>Full fingerprint</summary><code>{viewerRequest.keyprint.fingerprint}</code></details><p>Compare this with the intended recipient through another trusted channel. A matching code reduces substitution risk but does not prove anyone’s real-world identity.</p></div>}
+          {viewerRequest && <ViewerKeyprintPanel request={viewerRequest} onCopy={copy} recipient />}
         </div>}
         <fieldset className="share-options"><legend>Include in the encrypted disclosure</legend>
           <label><input type="checkbox" checked={capsuleSections.currentRoleSet} onChange={(event) => { setCapsuleSections((current) => ({ ...current, currentRoleSet: event.target.checked })); setCapsuleArtifact(null); setViewerArtifact(null) }} /><span><strong>Current Role Set</strong><small>Your current labels, order, and primary role.</small></span></label>

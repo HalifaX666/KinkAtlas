@@ -4397,9 +4397,13 @@ summary:focus-visible {
 .viewer-keyprint { display: grid; gap: 0.4rem; margin-top: 1rem; padding: 0.9rem; border-left: 3px solid var(--gold); background: rgba(215, 168, 95, 0.05); }
 .viewer-keyprint > span,
 .viewer-request-list small { color: var(--muted); font-size: 0.75rem; }
-.viewer-keyprint > strong { color: var(--gold-soft); font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; letter-spacing: 0.08em; overflow-wrap: anywhere; }
+.viewer-word-keyprint { color: var(--gold-soft); font-family: inherit; font-size: clamp(1.15rem, 4.5vw, 1.55rem); letter-spacing: 0.02em; line-height: 1.35; overflow-wrap: normal; word-spacing: 0.35em; }
+.viewer-comparison-code { display: grid; gap: 0.35rem; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--line); }
+.viewer-comparison-code > span { color: var(--muted); font-size: 0.75rem; }
+.viewer-comparison-code > strong { color: var(--gold-soft); font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; letter-spacing: 0.08em; overflow-wrap: anywhere; }
 .viewer-keyprint-copy { justify-self: start; }
-.viewer-keyprint details code { display: block; margin-top: 0.5rem; overflow-wrap: anywhere; color: var(--muted); font-size: 0.72rem; }
+.viewer-keyprint details code { display: block; margin: 0.5rem 0; overflow-wrap: anywhere; color: var(--muted); font-size: 0.72rem; }
+.viewer-keyprint > p { max-width: 62ch; margin: 0.45rem 0 0; color: var(--muted); font-size: 0.84rem; }
 .viewer-request-list { display: grid; gap: 0.8rem; padding: 0; list-style: none; }
 .viewer-request-list > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; align-items: start; padding: 1rem; border: 1px solid var(--line); border-radius: 10px; }
 .viewer-request-list > li > div:first-child { display: grid; gap: 0.3rem; }
