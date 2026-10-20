@@ -70,6 +70,8 @@ async function createLink(type: BrowserType, locale: string) {
   await page.getByRole('button', { name: 'Create revisit link' }).click()
   const output = page.getByRole('textbox', { name: 'Revisit link' })
   await expect(output).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Show QR' })).toHaveCount(0)
+  await expect(page.getByText(/Anyone with the complete link can view this saved result/i)).toBeVisible()
   const first = await output.inputValue()
 
   await page.getByRole('button', { name: 'Create revisit link' }).click()

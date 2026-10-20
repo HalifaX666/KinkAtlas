@@ -12,6 +12,8 @@ This document describes the guarantees and limits of KinkAtlas portability featu
 | Viewer-Locked Capsule | No; the matching browser key is required | Yes | Yes, to a browser key—not a human identity | No | No |
 | Private Restore | No; the file and separate secret are required | Yes | No | Yes | Yes |
 
+QR is an optional local presentation of supported existing links, not a separate privacy mode. KinkAtlas generates QR codes in the browser without sending their content to a QR service. Viewer Requests currently fit the conservative single-code limit. Even the smallest current Secret and Viewer-Locked Capsule links do not, so those modes stay on their existing copy and file transports. Revisit QR is deferred because realistic links can be too dense for dependable mobile scanning, and Private Restore remains file-first. KinkAtlas does not include a camera scanner or multipart QR.
+
 ## Consolidated threat model
 
 | Mode | Protected asset and access | Local state | Server and history visibility | Loss, expiry, and revocation | Identity and forwarding limits |
@@ -70,6 +72,7 @@ Parsers reject input before expensive work where practical:
 - Array items: 256
 - Object fields: 256
 - Visible string: 4 KiB
+- QR transport text: 624 UTF-8 bytes, ECC M, byte mode, maximum QR version 19, four-module quiet zone
 - Object key: 256 bytes
 - Current roles and role definitions: 5 each
 - Viewer Request ID: 16 random bytes
@@ -100,6 +103,7 @@ Equivalent link, text, and file transports converge on the same strict parsers. 
 - The site sends `Referrer-Policy: no-referrer`. Private payloads use fragments or local files, not paths or queries.
 - Secret and Viewer-Locked Capsule fragments are captured and removed from the address bar. Viewer Request fragments are public request material and are also removed. Revisit fragments intentionally remain because the complete URL is the saved result.
 - Portability flows do not POST or PUT user content. The unrelated completion counter sends only an empty same-origin increment request.
+- QR generation and SVG download are local-only and lazy-loaded. A QR contains the exact existing link: Viewer Request QR is public request material; Secret Capsule QR contains encrypted material but never its secret; Viewer-Locked QR remains bound to the matching browser key. Screenshots and downloaded QR images can be copied indefinitely.
 - Long links, secrets, fingerprints, and encrypted text wrap within their containers. Four-Word Keyprints wrap between complete lowercase words and are exposed as ordinary readable text. Native controls, focus management, live status regions, labelled inputs, and keyboard-operable dialogs/disclosures are preserved.
 
 The supported browser matrix is Chromium, Firefox, and WebKit. The local-key feature additionally requires IndexedDB and non-exportable Web Crypto keys in the active browser profile.
@@ -107,6 +111,8 @@ The supported browser matrix is Chromium, Firefox, and WebKit. The local-key fea
 ## Consent boundary
 
 Sharing a role, kink, preference, boundary, interest, reflection, or readiness result is not consent to an activity. A Four-Word Keyprint or comparison code is not identity proof. Encryption controls access to bytes before opening; it cannot prevent a recipient from copying, forwarding, photographing, or screenshotting visible content.
+
+Scanning or sharing a QR code does not communicate consent. QR inherits the underlying artifact's access rules and adds no remote expiry, revocation, deletion from screenshots, or control after sharing. A Viewer Request QR does not replace Keyprint comparison, and a Viewer-Locked QR does not prove the human recipient's identity.
 
 ## Threat-question answers
 

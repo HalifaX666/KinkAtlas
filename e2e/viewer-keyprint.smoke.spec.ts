@@ -7,6 +7,7 @@ const FIXED_FIRST_44_BITS = '564E1828919'
 const FIXED_INDEXES = [690, 902, 81, 281] as const
 const FIXED_PHRASE = 'film ignore any case'
 const FIXED_COMPARISON_CODE = '564E-1828-919 · 39'
+const FIXED_QR_MATRIX_SHA256 = '0686b750ba21f3c09ae3d1c44d8114e7986f53ab9ca041bfa074e355d6f21768'
 const FIXED_REQUEST = JSON.stringify({
   keyprint: { checksum: '39', fingerprint: FIXED_FINGERPRINT, short: '564E-1828-919', version: 1 },
   magic: 'kinkatlas-viewer-request',
@@ -37,6 +38,19 @@ test('fixed Viewer Request renders one deterministic Four-Word Keyprint', async 
   }, { fingerprint: FIXED_FINGERPRINT, expectedIndexes: FIXED_INDEXES })
   expect(computed).toEqual({ first44Bits: FIXED_FIRST_44_BITS, packed: FIXED_FIRST_44_BITS })
 
+  const fixedRequestLink = `https://kinkatlas.ca/viewer-request#request=${encodedRequest}`
+  const fixedQr = await page.evaluate(async (link) => {
+    const qrTransportPath = '/src/qr/qrTransport.ts'
+    const { createQrTransport } = await import(qrTransportPath)
+    const qr = createQrTransport(link, 'viewer-request')
+    const matrixBits = qr.matrix.map((row: boolean[]) => row.map((module: boolean) => module ? '1' : '0').join('')).join('')
+    const digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(matrixBits))))
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('')
+    return { byteCount: qr.byteCount, version: qr.version, modules: qr.matrixModules, digest }
+  }, fixedRequestLink)
+  expect(fixedQr).toEqual({ byteCount: 572, version: 19, modules: 101, digest: FIXED_QR_MATRIX_SHA256 })
+
   for (const action of ['Copy Four-Word Keyprint', 'Copy comparison code', 'Copy full fingerprint']) {
     await panel.getByRole('button', { name: action }).click()
     await expect(page.getByRole('status')).toContainText(/copied|Copy is unavailable/i)
@@ -49,7 +63,7 @@ test('fixed Viewer Request renders one deterministic Four-Word Keyprint', async 
   }
 
   await test.info().attach(`keyprint-${browserName}.json`, {
-    body: JSON.stringify({ fingerprint: FIXED_FINGERPRINT, first44Bits: FIXED_FIRST_44_BITS, indexes: FIXED_INDEXES, phrase: FIXED_PHRASE, comparisonCode: FIXED_COMPARISON_CODE }),
+    body: JSON.stringify({ fingerprint: FIXED_FINGERPRINT, first44Bits: FIXED_FIRST_44_BITS, indexes: FIXED_INDEXES, phrase: FIXED_PHRASE, comparisonCode: FIXED_COMPARISON_CODE, qr: fixedQr }),
     contentType: 'application/json',
   })
   await guards.assertClean()

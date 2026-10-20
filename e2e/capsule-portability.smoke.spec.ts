@@ -32,6 +32,8 @@ test('Secret Shared Disclosure stays in the fragment, removes it after capture, 
     serializedEnvelope: await dialog.getByLabel('Encrypted Capsule text').inputValue(),
     secret: await dialog.getByLabel(/Secret — never embedded in the link/i).inputValue(),
   }
+  await expect(dialog.getByText(/too large for a reliable single QR code/i)).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'Show QR' })).toHaveCount(0)
   await expectNoAxeViolations(page, 'Secret Shared Disclosure output')
 
   expect(artifact.link).not.toContain(artifact.secret)
@@ -87,6 +89,7 @@ test('Private Restore export requires file, secret, preview, and explicit confir
   await expect(exportPage).toHaveURL(/\/restore$/)
   await expect(exportPage.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
   await exportPage.getByRole('button', { name: 'Create encrypted restore' }).click()
+  await expect(exportPage.getByRole('button', { name: 'Show QR' })).toHaveCount(0)
   const secret = await exportPage.getByLabel('Generated restore secret').locator('code').innerText()
   const downloadPromise = exportPage.waitForEvent('download')
   await exportPage.getByRole('button', { name: 'Download restore file' }).click()

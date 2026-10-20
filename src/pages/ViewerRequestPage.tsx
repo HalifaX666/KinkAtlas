@@ -6,6 +6,7 @@ import type { ViewerRequest } from '../capsules/capsuleTypes'
 import { createStoredViewerRequest, deleteStoredViewerRequest, listStoredViewerRequests, type StoredViewerRequest } from '../capsules/viewerKeyStore'
 import { createViewerRequestArtifact, parseViewerRequestInput, type ViewerRequestArtifact } from '../capsules/viewerLockedTransport'
 import { ViewerKeyprintPanel } from '../components/ViewerKeyprintPanel'
+import { QrTransport } from '../components/QrTransport'
 
 export function ViewerRequestPage() {
   const location = useLocation()
@@ -128,6 +129,13 @@ export function ViewerRequestPage() {
         <button className="button secondary" type="button" onClick={() => copy(artifact.serializedRequest, 'Viewer Request text copied.')}><Copy size={17} />Copy request text</button>
         <button className="button secondary" type="button" onClick={() => download(artifact.file)}><Download size={17} />Download request file</button>
       </div>
+      <QrTransport
+        transportText={artifact.link}
+        artifactType="viewer-request"
+        accessibleLabel="QR code for Viewer Request"
+        description="This QR contains the same public Viewer Request link shown above. It contains no local label or private key. The Four-Word Keyprint remains the comparison step."
+        downloadName="kinkatlas-viewer-request-qr.svg"
+      />
     </section>}
 
     {receivedRequest && <section className="capsule-preview" aria-labelledby="received-viewer-request-heading">

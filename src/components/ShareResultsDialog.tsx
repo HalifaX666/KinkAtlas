@@ -4,6 +4,7 @@ import { roleLibraryRoleForIdentity } from '../data/roleIdentity'
 import { BrandLogo } from './BrandLogo'
 import { RoleIdentityCard } from './RoleIdentityCard'
 import { ViewerKeyprintPanel } from './ViewerKeyprintPanel'
+import { QrTransport } from './QrTransport'
 import { buildSharedDisclosurePayload, privacyReceiptForPayload } from '../capsules/capsuleData'
 import { capsuleErrorMessage, createSharedDisclosureArtifact, downloadCapsuleFile, viewerRequestErrorMessage, type SharedCapsuleArtifact } from '../capsules/capsuleTransport'
 import type { ViewerRequest } from '../capsules/capsuleTypes'
@@ -283,6 +284,13 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
             <button className="button secondary" type="button" onClick={() => copy(capsuleArtifact.secret, 'Capsule secret copied.')}><Copy size={17} />Copy secret</button>
             <button className="button secondary" type="button" onClick={() => download(capsuleArtifact.file, 'Copy the Capsule link or encrypted text instead.')}><Download size={17} />Download encrypted file</button>
           </div>
+          <QrTransport
+            transportText={capsuleArtifact.link}
+            artifactType="secret-capsule"
+            accessibleLabel="QR code for encrypted Secret Capsule"
+            description="This QR contains only the encrypted Capsule link. It does not include the secret; share the secret separately."
+            downloadName="kinkatlas-encrypted-capsule-qr.svg"
+          />
         </div>}
         {capsuleLockMode === 'viewer-locked' && viewerArtifact && <div className="capsule-artifact">
           <p><strong>Locked to the validated Viewer Request.</strong> The matching non-exportable private key must be present in the recipient’s browser profile. The link alone is not enough.</p>
@@ -293,6 +301,13 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
             <button className="button secondary" type="button" onClick={() => copy(viewerArtifact.serializedEnvelope, 'Viewer-Locked Capsule text copied.')}><Copy size={17} />Copy encrypted text</button>
             <button className="button secondary" type="button" onClick={() => download(viewerArtifact.file, 'Copy the Capsule link or encrypted text instead.')}><Download size={17} />Download encrypted file</button>
           </div>
+          <QrTransport
+            transportText={viewerArtifact.link}
+            artifactType="viewer-locked-capsule"
+            accessibleLabel="QR code for Viewer-Locked Capsule"
+            description="This QR contains the encrypted Viewer-Locked Capsule link. The matching private key is still required, and the QR does not prove who supplied the Viewer Request."
+            downloadName="kinkatlas-viewer-locked-capsule-qr.svg"
+          />
           <p>This protects against link possession but does not authenticate the sender or prove who supplied a Viewer Request.</p>
         </div>}
       </section>}

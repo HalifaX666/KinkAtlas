@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { expectNoAxeViolations } from './support/accessibility'
 import { installBrowserGuards, openPersonaResults } from './support/browserGuards'
+import { expectQrRoundTrip } from './support/qr'
 
 test('Viewer-Locked Capsule requires the recipient browser key and stops opening after deletion', async ({ browser }) => {
   test.setTimeout(60_000)
@@ -25,6 +26,30 @@ test('Viewer-Locked Capsule requires the recipient browser key and stops opening
   expect(viewerRequestText).not.toContain('privateKey')
   expect(viewerRequestText).not.toContain('Recipient test request')
   expect(viewerRequestLink).not.toContain('Recipient%20test%20request')
+  await recipientPage.getByRole('button', { name: 'Show QR' }).click()
+  const requestQr = recipientPage.getByRole('img', { name: 'QR code for Viewer Request' })
+  const requestQrMetrics = await expectQrRoundTrip(requestQr, viewerRequestLink)
+  expect(requestQrMetrics).toEqual(expect.objectContaining({ version: 19, modules: 101 }))
+  await expect(recipientPage.locator('.viewer-word-keyprint').first()).toBeVisible()
+  const mobileQrMeasurements: Array<{ viewport: number; displayedPixels: number; pixelsPerModule: number }> = []
+  for (const width of [320, 375, 430]) {
+    await recipientPage.setViewportSize({ width, height: 800 })
+    const box = await requestQr.boundingBox()
+    expect(box).not.toBeNull()
+    expect(Math.abs(box!.width - box!.height)).toBeLessThan(1)
+    expect(box!.width / requestQrMetrics.modules).toBeGreaterThanOrEqual(2.4)
+    mobileQrMeasurements.push({
+      viewport: width,
+      displayedPixels: box!.width,
+      pixelsPerModule: box!.width / requestQrMetrics.modules,
+    })
+    await expect.poll(() => recipientPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+  }
+  console.log(`Viewer Request QR mobile measurements: ${JSON.stringify(mobileQrMeasurements)}`)
+  await expectNoAxeViolations(recipientPage, 'Viewer Request QR')
+  const qrDownload = recipientPage.waitForEvent('download')
+  await recipientPage.getByRole('button', { name: 'Download QR as SVG' }).click()
+  expect((await qrDownload).suggestedFilename()).toBe('kinkatlas-viewer-request-qr.svg')
   await recipientPage.getByRole('button', { name: 'Copy comparison code' }).first().click()
   await expect(recipientPage.getByRole('status')).toContainText(/Comparison code copied|Copy is unavailable/)
   await recipientPage.getByRole('button', { name: 'Copy Four-Word Keyprint' }).first().click()
@@ -88,6 +113,8 @@ test('Viewer-Locked Capsule requires the recipient browser key and stops opening
   expect(capsuleText).not.toContain(expectedRoles[0])
   expect(capsuleText).not.toContain('Recipient test request')
   await expect(dialog.getByLabel(/never embedded in the link/i)).toHaveCount(0)
+  await expect(dialog.getByText(/too large for a reliable single QR code/i)).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'Show QR' })).toHaveCount(0)
 
   const cleanRequests: string[] = []
   cleanPage.on('request', (request) => { if (request.isNavigationRequest()) cleanRequests.push(request.url()) })
