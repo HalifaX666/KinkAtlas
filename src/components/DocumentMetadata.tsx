@@ -108,6 +108,12 @@ const publicRoutes: Record<string, RouteMetadata> = {
     robots: "noindex, nofollow",
   },
 
+  "/reveal-request": {
+    title: "Reveal Request | KinkAtlas",
+    description: "Create or review an optional local request for selected KinkAtlas disclosure sections.",
+    robots: "noindex, nofollow",
+  },
+
   "/roles": {
     title: "Role Library | KinkAtlas",
     description: "Browse kink and BDSM role vocabulary with reviewed definitions, related terms, and clear assessment boundaries.",

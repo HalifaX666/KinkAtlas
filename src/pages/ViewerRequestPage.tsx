@@ -1,6 +1,6 @@
 import { Copy, Download, KeyRound, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { capsuleErrorMessage, downloadCapsuleFile, viewerRequestErrorMessage } from '../capsules/capsuleTransport'
 import type { ViewerRequest } from '../capsules/capsuleTypes'
 import { createStoredViewerRequest, deleteStoredViewerRequest, listStoredViewerRequests, type StoredViewerRequest } from '../capsules/viewerKeyStore'
@@ -154,6 +154,7 @@ export function ViewerRequestPage() {
           ? <div className="capsule-danger-zone"><p><strong>This cannot be undone.</strong> This removes the local private key, and KinkAtlas cannot recover it. Old Capsules locked to this request will stop opening here. Deletion does not revoke copies already opened or keys held in another browser profile.</p><button className="button danger" type="button" disabled={busy} onClick={() => void deleteRequest(request.requestId)}>Permanently delete key</button><button className="button secondary" type="button" onClick={() => setPendingDelete(null)}>Cancel</button></div>
           : <button className="button secondary" type="button" onClick={() => setPendingDelete(request.requestId)}><Trash2 size={17} />Delete this Viewer Request</button>}
       </li>)}</ul>
+      {requests.length > 0 && <p><Link className="button secondary" to="/reveal-request">Create a Reveal Request</Link></p>}
     </section>
 
     <p className="share-status" role="status" aria-live="polite">{status}</p>

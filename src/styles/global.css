@@ -4394,6 +4394,13 @@ summary:focus-visible {
 .viewer-request-import { margin-bottom: 1.2rem; padding: 1rem; border: 1px solid var(--line); border-radius: 10px; }
 .viewer-request-import > label { display: grid; gap: 0.4rem; margin-bottom: 0.8rem; color: var(--muted); font-size: 0.78rem; font-weight: 700; }
 .viewer-request-import textarea { width: 100%; min-width: 0; padding: 0.8rem; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; background: #121011; font: inherit; resize: vertical; overflow-wrap: anywhere; }
+.reveal-request-import > summary { cursor: pointer; font-weight: 800; }
+.reveal-request-import[open] > summary { margin-bottom: 0.8rem; }
+.reveal-request-review h4 { margin: 0.35rem 0; font-size: 1.08rem; }
+.reveal-request-review ul { margin: 0.45rem 0 0; padding-left: 1.2rem; color: var(--muted); }
+.reveal-request-receipt { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.reveal-request-receipt p { margin: 0.5rem 0 0; color: var(--muted); font-size: 0.75rem; }
+.share-options label:has(input:disabled) { cursor: not-allowed; opacity: 0.55; }
 .viewer-keyprint { display: grid; gap: 0.4rem; margin-top: 1rem; padding: 0.9rem; border-left: 3px solid var(--gold); background: rgba(215, 168, 95, 0.05); }
 .viewer-keyprint > span,
 .viewer-request-list small { color: var(--muted); font-size: 0.75rem; }

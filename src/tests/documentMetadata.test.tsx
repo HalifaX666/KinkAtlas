@@ -42,6 +42,7 @@ describe("route document metadata", () => {
     ["/restore", "Private Restore | KinkAtlas", "noindex, nofollow"],
     ["/revisit", "Saved Result | KinkAtlas", "noindex, nofollow"],
     ["/viewer-request", "Viewer Request | KinkAtlas", "noindex, nofollow"],
+    ["/reveal-request", "Reveal Request | KinkAtlas", "noindex, nofollow"],
     ["/roles", "Role Library | KinkAtlas", "index, follow"],
   ])("sets safe metadata for %s", (path, title, robots) => {
     renderMetadata(path);
@@ -151,7 +152,7 @@ describe("route document metadata", () => {
     expect(document.querySelector('meta[property="og:url"]')).not.toBeInTheDocument();
   });
 
-  it.each(["/capsule", "/restore", "/revisit", "/viewer-request"])("keeps the private Capsule route %s out of the index without a canonical URL", (path) => {
+  it.each(["/capsule", "/restore", "/revisit", "/viewer-request", "/reveal-request"])("keeps the private Capsule route %s out of the index without a canonical URL", (path) => {
     renderMetadata(path);
     expect(document.querySelector('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
     expect(document.querySelector('link[rel="canonical"]')).not.toBeInTheDocument();

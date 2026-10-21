@@ -57,3 +57,8 @@
   for = "/viewer-request"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/reveal-request"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

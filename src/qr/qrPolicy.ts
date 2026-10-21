@@ -6,7 +6,7 @@ export const QR_MAX_VERSION = 19
 export const QR_MAX_INPUT_BYTES = 624
 export const QR_RENDER_MODULE_PIXELS = 4
 
-export type QrArtifactType = 'viewer-request' | 'secret-capsule' | 'viewer-locked-capsule' | 'revisit'
+export type QrArtifactType = 'viewer-request' | 'reveal-request' | 'secret-capsule' | 'viewer-locked-capsule' | 'revisit'
 
 export type QrAvailability =
   | { available: true; byteCount: number }

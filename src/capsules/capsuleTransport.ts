@@ -127,6 +127,17 @@ export function viewerRequestErrorMessage(error: unknown): string {
   return capsuleErrorMessage(error)
 }
 
+export function revealRequestErrorMessage(error: unknown): string {
+  const code: CapsuleErrorCode | undefined = error instanceof CapsuleError ? error.code : undefined
+  if (code === 'unsupported-version') return 'This Reveal Request was created by a KinkAtlas version this browser cannot use.'
+  if (code === 'unsupported-algorithm') return 'This Reveal Request has an invalid or unsupported recipient binding.'
+  if (code === 'oversized-input') return 'This Reveal Request exceeds KinkAtlas safety limits.'
+  if (code === 'reveal-request-invalid' || code === 'viewer-request-invalid' || code === 'malformed-envelope') {
+    return 'This Reveal Request appears incomplete or invalid. Check the complete link, text, or file and try again.'
+  }
+  return 'This Reveal Request could not be opened.'
+}
+
 export function downloadCapsuleFile(file: File): void {
   let url = ''
   let anchor: HTMLAnchorElement | null = null

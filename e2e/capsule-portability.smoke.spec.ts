@@ -76,7 +76,7 @@ test('Secret Shared Disclosure stays in the fragment, removes it after capture, 
   await guards.assertClean()
 })
 
-test('Private Restore export requires file, secret, preview, and explicit confirmation', async ({ browser }) => {
+test('Private Restore export requires file, secret, preview, and explicit confirmation', async ({ browser }, testInfo) => {
   test.setTimeout(60_000)
   const context = await browser.newContext()
   const exportPage = await context.newPage()
@@ -97,6 +97,8 @@ test('Private Restore export requires file, secret, preview, and explicit confir
   expect(download.suggestedFilename()).toBe('kinkatlas-private-restore.kinkatlas-restore')
   const restorePath = await download.path()
   expect(restorePath).toBeTruthy()
+  const restoreFile = testInfo.outputPath(download.suggestedFilename())
+  await download.saveAs(restoreFile)
   await exportGuards.assertClean()
 
   const importPage = await context.newPage()
@@ -105,7 +107,7 @@ test('Private Restore export requires file, secret, preview, and explicit confir
   await expect(importPage.locator('.current-role-cards-grid h3').first()).toBeVisible()
   const existingRoles = await importPage.locator('.current-role-cards-grid h3').allTextContents()
   await importPage.getByRole('link', { name: 'Create a Private Restore backup' }).click()
-  await importPage.getByRole('button', { name: 'Private Restore file', exact: true }).setInputFiles(restorePath!)
+  await importPage.getByRole('button', { name: 'Private Restore file', exact: true }).setInputFiles(restoreFile)
   await expect(importPage.getByText(/Encrypted file validated/)).toBeVisible()
   await importPage.getByLabel('Restore secret').fill('KA1-wrong.secret')
   await importPage.getByRole('button', { name: 'Unlock preview' }).click()
@@ -128,7 +130,7 @@ test('Private Restore export requires file, secret, preview, and explicit confir
   expect(await importPage.locator('.current-role-cards-grid h3').allTextContents()).toEqual(existingRoles)
 
   await importPage.getByRole('link', { name: 'Create a Private Restore backup' }).click()
-  await importPage.getByRole('button', { name: 'Private Restore file', exact: true }).setInputFiles(restorePath!)
+  await importPage.getByRole('button', { name: 'Private Restore file', exact: true }).setInputFiles(restoreFile)
   await importPage.getByLabel('Restore secret').fill(secret)
   await importPage.getByRole('button', { name: 'Unlock preview' }).click()
   await expect(importPage.getByRole('heading', { name: 'Restore preview' })).toBeFocused()

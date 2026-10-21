@@ -1,4 +1,4 @@
-import { Copy, Download, FileLock2, FileText, Images, KeyRound, Share2, X } from 'lucide-react'
+import { Copy, Download, Eye, FileLock2, FileText, Images, KeyRound, Share2, X } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { roleLibraryRoleForIdentity } from '../data/roleIdentity'
 import { BrandLogo } from './BrandLogo'
@@ -6,8 +6,9 @@ import { RoleIdentityCard } from './RoleIdentityCard'
 import { ViewerKeyprintPanel } from './ViewerKeyprintPanel'
 import { QrTransport } from './QrTransport'
 import { buildSharedDisclosurePayload, privacyReceiptForPayload } from '../capsules/capsuleData'
-import { capsuleErrorMessage, createSharedDisclosureArtifact, downloadCapsuleFile, viewerRequestErrorMessage, type SharedCapsuleArtifact } from '../capsules/capsuleTransport'
-import type { ViewerRequest } from '../capsules/capsuleTypes'
+import { capsuleErrorMessage, createSharedDisclosureArtifact, downloadCapsuleFile, revealRequestErrorMessage, viewerRequestErrorMessage, type SharedCapsuleArtifact } from '../capsules/capsuleTransport'
+import { buildRevealRequestDisclosure, revealRequestPrivacyReceipt, revealRequestSectionLabels } from '../capsules/revealRequestDecision'
+import type { RevealRequest, RevealRequestSectionId, ViewerRequest } from '../capsules/capsuleTypes'
 import type { ViewerLockedArtifact } from '../capsules/viewerLockedTransport'
 import {
   buildFullReflection,
@@ -56,17 +57,46 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
   const [viewerRequestInput, setViewerRequestInput] = useState('')
   const [viewerRequest, setViewerRequest] = useState<ViewerRequest | null>(null)
   const [viewerArtifact, setViewerArtifact] = useState<ViewerLockedArtifact | null>(null)
+  const [revealRequestInput, setRevealRequestInput] = useState('')
+  const [revealRequest, setRevealRequest] = useState<RevealRequest | null>(null)
   const titleId = useId()
   const descriptionId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
+  const revealInputRef = useRef<HTMLTextAreaElement>(null)
+  const revealReviewRef = useRef<HTMLHeadingElement>(null)
+  const revealResponseRef = useRef<HTMLHeadingElement>(null)
+  const hadRevealRequestRef = useRef(false)
   const selectedRoles = roleCards.filter((role) => selectedIds.has(role.id))
   const quickSummary = useMemo(() => buildQuickSummary(data), [data])
   const fullReflection = useMemo(() => buildFullReflection(data, options), [data, options])
-  const capsulePayload = useMemo(() => buildSharedDisclosurePayload(data.roleSet, capsuleSections), [data.roleSet, capsuleSections])
+  const selectedRevealSections = useMemo(() => (['currentRoleSet', 'roleDefinitions'] as const)
+    .filter((section) => capsuleSections[section]), [capsuleSections])
+  const capsulePayload = useMemo(() => revealRequest
+    ? buildRevealRequestDisclosure(data.roleSet, revealRequest, selectedRevealSections)
+    : buildSharedDisclosurePayload(data.roleSet, capsuleSections), [data.roleSet, capsuleSections, revealRequest, selectedRevealSections])
   const capsuleReceipt = useMemo(() => privacyReceiptForPayload(capsulePayload), [capsulePayload])
+  const revealReceipt = useMemo(() => revealRequest
+    ? revealRequestPrivacyReceipt(revealRequest, capsulePayload)
+    : null, [capsulePayload, revealRequest])
 
   useEffect(() => setSelectedIds(new Set(roleCards.map((role) => role.id))), [roleCards])
+
+  useEffect(() => {
+    if (revealRequest) {
+      hadRevealRequestRef.current = true
+      revealReviewRef.current?.focus()
+      return
+    }
+    if (hadRevealRequestRef.current) {
+      hadRevealRequestRef.current = false
+      revealInputRef.current?.focus()
+    }
+  }, [revealRequest])
+
+  useEffect(() => {
+    if (revealRequest && viewerArtifact) revealResponseRef.current?.focus()
+  }, [revealRequest, viewerArtifact])
 
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null
@@ -215,6 +245,60 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
     }
   }
 
+  const applyRevealRequest = (request: RevealRequest, serialized: string) => {
+    const requested = new Set<RevealRequestSectionId>(request.requestedSections)
+    setRevealRequestInput(serialized)
+    setRevealRequest(request)
+    setCapsuleLockMode('viewer-locked')
+    setViewerRequestInput('')
+    setViewerRequest(request.recipientViewerRequest)
+    setCapsuleSections({
+      currentRoleSet: requested.has('currentRoleSet'),
+      roleDefinitions: requested.has('roleDefinitions'),
+    })
+    setCapsuleArtifact(null)
+    setViewerArtifact(null)
+    setStatus('Reveal Request validated locally. Review the requested sections and choose what, if anything, to share.')
+  }
+
+  const validateRevealRequestInput = async (input = revealRequestInput) => {
+    setBusy(true); setRevealRequest(null); setViewerArtifact(null); setStatus('')
+    try {
+      const { parseRevealRequestInput, createRevealRequestArtifact } = await import('../capsules/revealRequestTransport')
+      const request = await parseRevealRequestInput(input)
+      const artifact = await createRevealRequestArtifact(request)
+      applyRevealRequest(request, artifact.serializedRequest)
+    } catch (error) {
+      setStatus(revealRequestErrorMessage(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const loadRevealRequestFile = async (file: File) => {
+    setBusy(true); setRevealRequest(null); setViewerArtifact(null); setStatus('')
+    try {
+      const { readRevealRequestFile, createRevealRequestArtifact } = await import('../capsules/revealRequestTransport')
+      const request = await readRevealRequestFile(file)
+      const artifact = await createRevealRequestArtifact(request)
+      applyRevealRequest(request, artifact.serializedRequest)
+    } catch (error) {
+      setStatus(revealRequestErrorMessage(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const declineRevealRequest = () => {
+    setRevealRequest(null)
+    setRevealRequestInput('')
+    setViewerRequest(null)
+    setViewerRequestInput('')
+    setViewerArtifact(null)
+    setCapsuleSections({ currentRoleSet: true, roleDefinitions: true })
+    setStatus('Reveal Request declined locally. No disclosure artifact was created and nothing was sent.')
+  }
+
   const cardCount = selectedRoles.length
   const exportLabel = cardCount === 1 ? 'Export card' : `Export ${cardCount} cards`
   const shareLabel = cardCount === 1 ? 'Share card' : `Share ${cardCount} cards`
@@ -254,26 +338,43 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
 
       {mode === 'capsule' && <section className="share-mode-panel" aria-labelledby="encrypted-disclosure-heading">
         <div className="share-panel-heading"><div><h3 id="encrypted-disclosure-heading">Create an encrypted disclosure</h3><p>This read-only Capsule contains only the sections listed below. Raw assessment answers, restore state, and navigation cannot be selected.</p></div></div>
-        <fieldset className="capsule-lock-options"><legend>Choose how the Capsule is unlocked</legend>
+        <details className="viewer-request-import reveal-request-import">
+          <summary>Review a Reveal Request</summary>
+          <p>A Reveal Request asks whether you are willing to share selected results. You can share all, some, or none. Importing it does not create, copy, download, or send a disclosure.</p>
+          <label><span>Reveal Request link or text</span><textarea ref={revealInputRef} rows={5} value={revealRequestInput} onChange={(event) => { setRevealRequestInput(event.target.value); setRevealRequest(null); setViewerRequest(null); setViewerArtifact(null) }} /></label>
+          <label className="capsule-file-input"><span>Or choose a Reveal Request file</span><input type="file" accept=".kinkatlas-reveal-request,application/vnd.kinkatlas.reveal-request" onChange={(event) => { const file = event.target.files?.[0]; if (file) void loadRevealRequestFile(file) }} /></label>
+          <button className="button secondary" type="button" disabled={!revealRequestInput.trim() || busy} onClick={() => void validateRevealRequestInput()}><Eye size={17} />Review request</button>
+        </details>
+        {!revealRequest && <fieldset className="capsule-lock-options"><legend>Choose how the Capsule is unlocked</legend>
           <label><input type="radio" name="capsule-lock-mode" value="secret" checked={capsuleLockMode === 'secret'} onChange={() => { setCapsuleLockMode('secret'); setViewerArtifact(null); setStatus('') }} /><span><FileLock2 aria-hidden="true" /><strong>Secret Capsule</strong><small>Share the encrypted Capsule and a separate secret.</small></span></label>
           <label><input type="radio" name="capsule-lock-mode" value="viewer-locked" checked={capsuleLockMode === 'viewer-locked'} onChange={() => { setCapsuleLockMode('viewer-locked'); setCapsuleArtifact(null); setStatus('') }} /><span><KeyRound aria-hidden="true" /><strong>Viewer-Locked Capsule</strong><small>Lock it to a recipient’s public Viewer Request. No decryption secret is created.</small></span></label>
-        </fieldset>
-        {capsuleLockMode === 'viewer-locked' && <div className="viewer-request-import">
+        </fieldset>}
+        {revealRequest && <div className="viewer-request-import reveal-request-review">
+          <span className="eyebrow">Recipient-bound request</span>
+          <h4 ref={revealReviewRef} tabIndex={-1}>Choose what to share</h4>
+          <p>The response will be a Viewer-Locked Capsule for the exact public key in this request. The Keyprint identifies that browser key, not a verified person.</p>
+          <div><strong>Requested</strong><ul>{revealRequest.requestedSections.map((section) => <li key={section}>{revealRequestSectionLabels[section]}</li>)}</ul></div>
+          <ViewerKeyprintPanel request={revealRequest.recipientViewerRequest} onCopy={copy} recipient />
+        </div>}
+        {!revealRequest && capsuleLockMode === 'viewer-locked' && <div className="viewer-request-import">
           <label><span>Recipient Viewer Request link or text</span><textarea rows={5} value={viewerRequestInput} onChange={(event) => { setViewerRequestInput(event.target.value); setViewerRequest(null); setViewerArtifact(null) }} /></label>
           <label className="capsule-file-input"><span>Or choose a Viewer Request file</span><input type="file" accept=".kinkatlas-viewer-request,application/vnd.kinkatlas.viewer-request" onChange={(event) => { const file = event.target.files?.[0]; if (file) void loadRecipientRequestFile(file) }} /></label>
           <button className="button secondary" type="button" disabled={!viewerRequestInput.trim() || busy} onClick={() => void validateRecipientRequest()}><KeyRound size={17} />Validate Viewer Request</button>
           {viewerRequest && <ViewerKeyprintPanel request={viewerRequest} onCopy={copy} recipient />}
         </div>}
-        <fieldset className="share-options"><legend>Include in the encrypted disclosure</legend>
-          <label><input type="checkbox" checked={capsuleSections.currentRoleSet} onChange={(event) => { setCapsuleSections((current) => ({ ...current, currentRoleSet: event.target.checked })); setCapsuleArtifact(null); setViewerArtifact(null) }} /><span><strong>Current Role Set</strong><small>Your current labels, order, and primary role.</small></span></label>
-          <label><input type="checkbox" checked={capsuleSections.roleDefinitions} onChange={(event) => { setCapsuleSections((current) => ({ ...current, roleDefinitions: event.target.checked })); setCapsuleArtifact(null); setViewerArtifact(null) }} /><span><strong>Role definitions</strong><small>Historical definition text for roles in your current set.</small></span></label>
+        <fieldset className="share-options"><legend>{revealRequest ? 'Select requested sections to share' : 'Include in the encrypted disclosure'}</legend>
+          <label><input type="checkbox" checked={capsuleSections.currentRoleSet} disabled={Boolean(revealRequest && !revealRequest.requestedSections.includes('currentRoleSet'))} onChange={(event) => { setCapsuleSections((current) => ({ ...current, currentRoleSet: event.target.checked })); setCapsuleArtifact(null); setViewerArtifact(null) }} /><span><strong>Current Role Set</strong><small>Your current labels, order, and primary role.</small></span></label>
+          <label><input type="checkbox" checked={capsuleSections.roleDefinitions} disabled={Boolean(revealRequest && !revealRequest.requestedSections.includes('roleDefinitions'))} onChange={(event) => { setCapsuleSections((current) => ({ ...current, roleDefinitions: event.target.checked })); setCapsuleArtifact(null); setViewerArtifact(null) }} /><span><strong>Role definitions</strong><small>Historical definition text for roles in your current set.</small></span></label>
         </fieldset>
-        <div className="privacy-receipt"><h4>Privacy receipt</h4><div><strong>Included</strong><ul>{capsuleReceipt.included.map((item) => <li key={item}>{item}</li>)}</ul></div><div><strong>Not included</strong><ul>{capsuleReceipt.notIncluded.map((item) => <li key={item}>{item}</li>)}</ul></div></div>
-        <div className="share-actions">{capsuleLockMode === 'secret'
+        {revealReceipt
+          ? <div className="privacy-receipt reveal-request-receipt"><h4>Privacy receipt</h4><div><strong>Requested</strong><ul>{revealReceipt.requested.map((item) => <li key={item}>{item}</li>)}</ul></div><div><strong>Selected</strong>{revealReceipt.selected.length ? <ul>{revealReceipt.selected.map((item) => <li key={item}>{item}</li>)}</ul> : <p>Nothing selected</p>}</div><div><strong>Excluded</strong><ul>{revealReceipt.excluded.map((item) => <li key={item}>{item}</li>)}</ul></div></div>
+          : <div className="privacy-receipt"><h4>Privacy receipt</h4><div><strong>Included</strong><ul>{capsuleReceipt.included.map((item) => <li key={item}>{item}</li>)}</ul></div><div><strong>Not included</strong><ul>{capsuleReceipt.notIncluded.map((item) => <li key={item}>{item}</li>)}</ul></div></div>}
+        <div className="share-actions">{!revealRequest && capsuleLockMode === 'secret'
           ? <button className="button primary" type="button" disabled={busy || (!capsuleSections.currentRoleSet && !capsuleSections.roleDefinitions)} onClick={createEncryptedDisclosure}><FileLock2 size={17} />Create encrypted disclosure</button>
-          : <button className="button primary" type="button" disabled={busy || !viewerRequest || (!capsuleSections.currentRoleSet && !capsuleSections.roleDefinitions)} onClick={createViewerLockedDisclosure}><KeyRound size={17} />Create Viewer-Locked Capsule</button>}
+          : <button className="button primary" type="button" disabled={busy || !viewerRequest || (!capsuleSections.currentRoleSet && !capsuleSections.roleDefinitions)} onClick={createViewerLockedDisclosure}><KeyRound size={17} />{revealRequest ? 'Share selected' : 'Create Viewer-Locked Capsule'}</button>}
+          {revealRequest && <button className="button secondary" type="button" disabled={busy} onClick={declineRevealRequest}>Decline</button>}
         </div>
-        {capsuleLockMode === 'secret' && capsuleArtifact && <div className="capsule-artifact">
+        {!revealRequest && capsuleLockMode === 'secret' && capsuleArtifact && <div className="capsule-artifact">
           <p><strong>Both parts are required.</strong> Send the encrypted Capsule and secret through separate channels when practical; sending both together weakens that separation.</p>
           <label><span>Encrypted Capsule link</span><textarea readOnly rows={4} value={capsuleArtifact.link} /></label>
           <label><span>Encrypted Capsule text</span><textarea readOnly rows={4} value={capsuleArtifact.serializedEnvelope} /></label>
@@ -293,6 +394,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
           />
         </div>}
         {capsuleLockMode === 'viewer-locked' && viewerArtifact && <div className="capsule-artifact">
+          <h4 ref={revealResponseRef} tabIndex={revealRequest ? -1 : undefined}>{revealRequest ? 'Viewer-Locked response ready' : 'Viewer-Locked Capsule ready'}</h4>
           <p><strong>Locked to the validated Viewer Request.</strong> The matching non-exportable private key must be present in the recipient’s browser profile. The link alone is not enough.</p>
           <label><span>Viewer-Locked Capsule link</span><textarea readOnly rows={4} value={viewerArtifact.link} /></label>
           <label><span>Viewer-Locked Capsule text</span><textarea readOnly rows={4} value={viewerArtifact.serializedEnvelope} /></label>

@@ -7,6 +7,7 @@ export type CapsuleErrorCode =
   | 'missing-recipient-key'
   | 'oversized-input'
   | 'payload-validation-failed'
+  | 'reveal-request-invalid'
   | 'unsupported-algorithm'
   | 'unsupported-version'
   | 'viewer-request-invalid'
@@ -20,6 +21,7 @@ const safeMessages: Record<CapsuleErrorCode, string> = {
   'missing-recipient-key': 'The matching Viewer Request key is not available.',
   'oversized-input': 'The Capsule exceeds a supported size limit.',
   'payload-validation-failed': 'The Capsule content is invalid.',
+  'reveal-request-invalid': 'The Reveal Request is invalid.',
   'unsupported-algorithm': 'The Capsule uses an unsupported algorithm.',
   'unsupported-version': 'The Capsule version is not supported.',
   'viewer-request-invalid': 'The Viewer Request is invalid.',

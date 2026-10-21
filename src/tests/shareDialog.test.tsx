@@ -14,8 +14,9 @@ import { createRoleCardImage, getShareableRoleSet, roleCardFileName, type ShareR
 import { roleLibrary } from '../taxonomy/roleLibrary'
 import * as capsuleTransport from '../capsules/capsuleTransport'
 import * as viewerTransport from '../capsules/viewerLockedTransport'
+import * as revealTransport from '../capsules/revealRequestTransport'
 import { CapsuleError } from '../capsules/capsuleError'
-import type { ViewerRequest } from '../capsules/capsuleTypes'
+import type { RevealRequest, ViewerRequest } from '../capsules/capsuleTypes'
 
 const answers = { 'd-power-give': 'strong', 'd-position-give': 'strong', 'r-lead': 'strong', 'r-responsibility': 'strong' }
 const roleResults = matchRoles(calculateTraitScores(answers), answers)
@@ -189,6 +190,86 @@ describe('Export & Share dialog', () => {
     expect(input).toHaveValue('request-that-needs-replacing')
     expect(screen.queryByText('Recipient Four-Word Keyprint')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Copy Four-Word Keyprint' })).not.toBeInTheDocument()
+  })
+
+  it('reviews a Reveal Request and creates only the explicitly selected subset', async () => {
+    const recipient = {
+      magic: 'kinkatlas-viewer-request', viewerRequestVersion: 1,
+      requestId: 'AAAAAAAAAAAAAAAAAAAAAA',
+      suite: 'ECDH-P256+HKDF-SHA-256+A256GCM',
+      recipientPublicKey: 'viewer-public-key',
+      keyprint: { version: 1, short: 'ABCD-EF01-234', checksum: '42', fingerprint: 'A'.repeat(64) },
+    } as ViewerRequest
+    const request = {
+      magic: 'kinkatlas-reveal-request', revealRequestVersion: 1,
+      requestId: 'BBBBBBBBBBBBBBBBBBBBBB',
+      requestedSections: ['currentRoleSet', 'roleDefinitions'],
+      recipientViewerRequest: recipient,
+    } as RevealRequest
+    vi.spyOn(revealTransport, 'parseRevealRequestInput').mockResolvedValue(request)
+    vi.spyOn(revealTransport, 'createRevealRequestArtifact').mockResolvedValue({
+      serializedRequest: '{"reveal":"request"}',
+      link: 'https://example.test/reveal-request#request=public',
+      file: new File(['request'], 'request.kinkatlas-reveal-request'),
+    })
+    const createDisclosure = vi.spyOn(viewerTransport, 'createViewerLockedDisclosureArtifact').mockResolvedValue({
+      link: 'https://example.test/capsule#capsule=partial',
+      fragment: '#capsule=partial',
+      serializedEnvelope: '{"mode":"viewer-locked","ciphertext":"partial"}',
+      file: new File(['partial'], 'partial.kinkatlas-capsule'),
+    })
+
+    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
+    fireEvent.click(screen.getByText('Review a Reveal Request'))
+    fireEvent.change(screen.getByLabelText('Reveal Request link or text'), { target: { value: 'public-reveal-request' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Review request' }))
+
+    expect(await screen.findByRole('heading', { name: 'Choose what to share' })).toHaveFocus()
+    expect(screen.getByText(/exact public key/i)).toBeVisible()
+    expect(screen.getByText('primary fetch primary fetch')).toBeVisible()
+    const choices = screen.getByRole('group', { name: 'Select requested sections to share' })
+    fireEvent.click(within(choices).getByRole('checkbox', { name: /Role definitions/i }))
+    expect(within(screen.getByText('Selected').parentElement!).getByText('Current Role Set')).toBeVisible()
+    expect(within(screen.getByText('Excluded').parentElement!).getByText('Role definitions')).toBeVisible()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share selected' }))
+    await screen.findByLabelText('Viewer-Locked Capsule link')
+    const payload = createDisclosure.mock.calls[0][0]
+    expect(payload.sections.currentRoleSet).toEqual(expect.any(Array))
+    expect(payload.sections.roleDefinitions).toBeUndefined()
+    expect(createDisclosure.mock.calls[0][1]).toBe(recipient)
+  })
+
+  it('declines a validated Reveal Request without creating a disclosure artifact', async () => {
+    const recipient = {
+      magic: 'kinkatlas-viewer-request', viewerRequestVersion: 1,
+      requestId: 'AAAAAAAAAAAAAAAAAAAAAA', suite: 'ECDH-P256+HKDF-SHA-256+A256GCM', recipientPublicKey: 'viewer-public-key',
+      keyprint: { version: 1, short: 'ABCD-EF01-234', checksum: '42', fingerprint: 'A'.repeat(64) },
+    } as ViewerRequest
+    const request = {
+      magic: 'kinkatlas-reveal-request', revealRequestVersion: 1, requestId: 'BBBBBBBBBBBBBBBBBBBBBB',
+      requestedSections: ['currentRoleSet'], recipientViewerRequest: recipient,
+    } as RevealRequest
+    vi.spyOn(revealTransport, 'parseRevealRequestInput').mockResolvedValue(request)
+    vi.spyOn(revealTransport, 'createRevealRequestArtifact').mockResolvedValue({
+      serializedRequest: '{"reveal":"request"}', link: 'https://example.test/reveal-request#request=public', file: new File(['request'], 'request.kinkatlas-reveal-request'),
+    })
+    const createDisclosure = vi.spyOn(viewerTransport, 'createViewerLockedDisclosureArtifact')
+
+    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
+    fireEvent.click(screen.getByText('Review a Reveal Request'))
+    const input = screen.getByLabelText('Reveal Request link or text')
+    fireEvent.change(input, { target: { value: 'public-reveal-request' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Review request' }))
+    await screen.findByRole('heading', { name: 'Choose what to share' })
+    fireEvent.click(screen.getByRole('button', { name: 'Decline' }))
+
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/No disclosure artifact was created/i))
+    expect(createDisclosure).not.toHaveBeenCalled()
+    expect(screen.queryByLabelText('Viewer-Locked Capsule link')).not.toBeInTheDocument()
+    expect(input).toHaveFocus()
   })
 
   it('uses canonical primary wording and a static role reference on an exported card without metrics', async () => {

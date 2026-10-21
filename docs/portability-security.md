@@ -10,6 +10,7 @@ This document describes the guarantees and limits of KinkAtlas portability featu
 | Revisit Link | Yes | No | No | No | No |
 | Secret Capsule | No; the separate secret is also required | Yes | No | No | No |
 | Viewer-Locked Capsule | No; the matching browser key is required | Yes | Yes, to a browser key—not a human identity | No | No |
+| Reveal Request | Yes; request metadata is public | No | References a browser public key—not a human identity | No | No |
 | Private Restore | No; the file and separate secret are required | Yes | No | Yes | Yes |
 
 QR is an optional local presentation of supported existing links, not a separate privacy mode. KinkAtlas generates QR codes in the browser without sending their content to a QR service. Viewer Requests currently fit the conservative single-code limit. Even the smallest current Secret and Viewer-Locked Capsule links do not, so those modes stay on their existing copy and file transports. Revisit QR is deferred because realistic links can be too dense for dependable mobile scanning, and Private Restore remains file-first. KinkAtlas does not include a camera scanner or multipart QR.
@@ -22,6 +23,7 @@ QR is an optional local presentation of supported existing links, not a separate
 | Revisit Link | A historical `ResultSnapshot`; possession of the complete bearer link grants access | None | The payload stays in the URL fragment and is not sent in an HTTP request; browser history and bookmarks may retain it | No expiry or revocation; losing the link loses access, and deleting one copy does not remove others | No sender or recipient authentication; it can be copied, forwarded, or captured |
 | Secret Capsule | A selected, read-only disclosure; both encrypted artifact and separate secret are required | None after creation | The encrypted fragment is captured locally and removed from the address bar; history can retain only a deliberately copied complete link | No expiry or revocation; loss of either part prevents recovery by KinkAtlas | Not recipient-bound and no identity authentication; decrypted content can be copied or captured |
 | Viewer Request | A public request ID, public key, Four-Word Keyprint, comparison code, and full fingerprint | The matching non-exportable private key and optional label stay in IndexedDB | A request fragment is captured locally and removed; request material is public and can be copied | Deleting or losing the local key removes this browser profile's capability; no remote recovery or revocation | Keyprints reduce substitution risk but are not identity proof |
+| Reveal Request | Public requested-section identifiers, a random request ID, and a validated Viewer Request binding; it cannot force disclosure | None; imported requests are reviewed in memory | A request fragment is captured locally and removed; no inbox, callback, read receipt, or status API exists | Static metadata has no remote expiry or revocation and can be copied or forwarded | Browser-key binding is not human identity; the sender chooses the final manifest and may decline |
 | Viewer-Locked Capsule | A selected, read-only disclosure; the matching Viewer Request private key is required | Recipient private key in IndexedDB | The encrypted fragment is captured locally and removed from the address bar | No expiry or remote revocation; key deletion blocks future opening in that browser but does not erase opened copies | Bound to a browser key, not a verified person; sender is not authenticated; content can be copied or captured |
 | Private Restore | Full authorized assessment restore state, including raw answer maps | File and separate secret held by the user | File-first flow; no restore payload is placed in a URL or sent to KinkAtlas | No expiry or revocation; KinkAtlas cannot recover a lost file or secret | Intended for same-user portability, not casual sharing; no identity authentication |
 
@@ -36,13 +38,14 @@ All modes run in the same site origin. Non-exportable keys cannot be directly ex
 | Secret Capsule | Only sections enabled by the disclosure manifest; currently Current Role Set and role definitions | Raw answers, assessment navigation, restore state, unselected sections, secret |
 | Viewer-Locked Capsule | The same selected disclosure payload used by Secret Capsule | Raw answers, assessment navigation, restore state, unselected sections, recipient private key |
 | Viewer Request | Request ID, public key, comparison code, full fingerprint, format metadata; the Four-Word Keyprint is derived locally and is not serialized | Optional local label, private key, assessment data, disclosure data |
+| Reveal Request | Version, random request ID, exact supported section identifiers, and a validated public Viewer Request | Sender results, raw answers, private keys, local labels, secrets, restore state, unrequested disclosure sections |
 | Private Restore | Answer maps, assessment navigation, Current Role Set, completion flags, and an optional historical snapshot | Server identifiers, analytics identifiers, account data |
 
 The privacy receipt shown for encrypted disclosures is derived from the validated disclosure manifest, rather than separate presentation state.
 
 ## Formats, versions, and upgrade policy
 
-- Capsule envelope, Capsule payload, Viewer Request, comparison-code keyprint, Four-Word Keyprint vocabulary, Private Restore, `ResultSnapshot`, and Revisit transport all have explicit versions or semantic revisions.
+- Capsule envelope, Capsule payload, Viewer Request, Reveal Request, comparison-code keyprint, Four-Word Keyprint vocabulary, Private Restore, `ResultSnapshot`, and Revisit transport all have explicit versions or semantic revisions.
 - Secret and Viewer-Locked Capsules retain separate cryptographic suites and are not reinterpreted as one another.
 - Revisit uses the explicit `v1.lzss` transport and deterministic canonical JSON. It does not use native gzip or randomness.
 - Unsupported format versions and algorithms fail closed. Unknown fields and noncanonical encodings are rejected.
@@ -76,6 +79,7 @@ Parsers reject input before expensive work where practical:
 - Object key: 256 bytes
 - Current roles and role definitions: 5 each
 - Viewer Request ID: 16 random bytes
+- Reveal Request ID: 16 random bytes; serialized request: 2 KiB; requested sections: 2
 - Revisit encoded payload: 12,288 characters
 - Revisit decoded snapshot: 65,536 bytes
 
@@ -99,11 +103,12 @@ Equivalent link, text, and file transports converge on the same strict parsers. 
 
 ## Browser, network, and accessibility behavior
 
-- `/capsule`, `/restore`, `/viewer-request`, and `/revisit` are `noindex, nofollow`, are excluded from the sitemap and public prerendering, and do not emit canonical links.
+- `/capsule`, `/restore`, `/viewer-request`, `/reveal-request`, and `/revisit` are `noindex, nofollow`, are excluded from the sitemap and public prerendering, and do not emit canonical links.
 - The site sends `Referrer-Policy: no-referrer`. Private payloads use fragments or local files, not paths or queries.
-- Secret and Viewer-Locked Capsule fragments are captured and removed from the address bar. Viewer Request fragments are public request material and are also removed. Revisit fragments intentionally remain because the complete URL is the saved result.
+- Secret and Viewer-Locked Capsule fragments are captured and removed from the address bar. Viewer Request and Reveal Request fragments are public request material and are also removed. Revisit fragments intentionally remain because the complete URL is the saved result.
 - Portability flows do not POST or PUT user content. The unrelated completion counter sends only an empty same-origin increment request.
 - QR generation and SVG download are local-only and lazy-loaded. A QR contains the exact existing link: Viewer Request QR is public request material; Secret Capsule QR contains encrypted material but never its secret; Viewer-Locked QR remains bound to the matching browser key. Screenshots and downloaded QR images can be copied indefinitely.
+- Reveal Request QR uses the same 624-byte size gate as every supported single-code transport. Current one-section and two-section links measure 791 and 815 UTF-8 bytes respectively, so Reveal Request QR is not currently offered; link, text, and file alternatives remain available. There is no multipart QR or camera scanner.
 - Long links, secrets, fingerprints, and encrypted text wrap within their containers. Four-Word Keyprints wrap between complete lowercase words and are exposed as ordinary readable text. Native controls, focus management, live status regions, labelled inputs, and keyboard-operable dialogs/disclosures are preserved.
 
 The supported browser matrix is Chromium, Firefox, and WebKit. The local-key feature additionally requires IndexedDB and non-exportable Web Crypto keys in the active browser profile.
@@ -128,3 +133,6 @@ Scanning or sharing a QR code does not communicate consent. QR inherits the unde
 10. A recipient can screenshot or copy decrypted content.
 11. Malicious same-origin JavaScript could potentially invoke a non-exportable key.
 12. Raw answers are excluded from every sharing mode except the explicitly created Private Restore backup.
+13. A Reveal Request cannot force disclosure; importing one creates no response, and the sender explicitly chooses all, some, or none.
+14. A Reveal Request ID is not authentication, its Viewer Request binding identifies only a browser key, and forwarding the request does not grant decryption access.
+15. Reveal Requests have no server inbox, notification, remote status, callback, expiry, or revocation mechanism.

@@ -9,6 +9,15 @@ export const VIEWER_REQUEST_VERSION = 1 as const
 export const VIEWER_KEYPRINT_VERSION = 1 as const
 export const VIEWER_LOCKED_SUITE = 'ECDH-P256+HKDF-SHA-256+A256GCM' as const
 export const VIEWER_LOCKED_KDF = 'HKDF-SHA-256' as const
+export const REVEAL_REQUEST_MAGIC = 'kinkatlas-reveal-request' as const
+export const REVEAL_REQUEST_VERSION = 1 as const
+
+export const REVEAL_REQUEST_SECTION_IDS = [
+  'currentRoleSet',
+  'roleDefinitions',
+] as const
+
+export type RevealRequestSectionId = (typeof REVEAL_REQUEST_SECTION_IDS)[number]
 
 export const DISCLOSURE_SECTION_IDS = [
   'currentRoleSet',
@@ -120,6 +129,14 @@ export interface ViewerRequest {
   suite: typeof VIEWER_LOCKED_SUITE
   recipientPublicKey: string
   keyprint: ViewerKeyprint
+}
+
+export interface RevealRequest {
+  magic: typeof REVEAL_REQUEST_MAGIC
+  revealRequestVersion: typeof REVEAL_REQUEST_VERSION
+  requestId: string
+  requestedSections: RevealRequestSectionId[]
+  recipientViewerRequest: ViewerRequest
 }
 
 export interface ViewerLockedCapsuleEnvelope {

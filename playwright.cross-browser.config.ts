@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: './e2e',
-  testMatch: ['**/cross-browser.spec.ts', '**/capsule-crypto.smoke.spec.ts', '**/capsule-portability.smoke.spec.ts', '**/viewer-keyprint.smoke.spec.ts', '**/viewer-locked.smoke.spec.ts'],
+  testMatch: ['**/cross-browser.spec.ts', '**/capsule-crypto.smoke.spec.ts', '**/capsule-portability.smoke.spec.ts', '**/viewer-keyprint.smoke.spec.ts', '**/viewer-locked.smoke.spec.ts', '**/reveal-request.smoke.spec.ts'],
   fullyParallel: false,
   workers: 1,
   timeout: 30_000,
