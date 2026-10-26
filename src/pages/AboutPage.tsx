@@ -177,8 +177,10 @@ export function AboutPage() {
       </section>
       <section id="privacy" aria-labelledby="privacy-heading">
         <h2 id="privacy-heading">Privacy &amp; transparency</h2>
-        <p>No account is required. KinkAtlas keeps assessment answers and generated results in browser memory for the current assessment session, not in persistent browser storage or an assessment database. Refreshing or closing the assessment page may clear your current assessment state unless you explicitly create an encrypted Private Restore file and keep its secret separately.</p>
-        <p>Assessment answers and results are not saved in localStorage, sessionStorage, cookies, or IndexedDB. KinkAtlas does not maintain a questionnaire-data backend.</p>
+        <p>No account is required. KinkAtlas is ephemeral by default: assessment answers and results remain in browser memory unless you explicitly choose Save or Share. Refreshing or closing may clear unsaved work.</p>
+        <p>Save my assessment encrypts the complete assessment in your browser before uploading ciphertext. My KinkAtlas stores only an opaque ID, delete capability, optional name, harmless management metadata, and a non-exportable browser vault key locally. Saved assessments are available on that browser unless you delete its site data.</p>
+        <p>Quick Share stores the historical cards and approved result sections in plaintext so anyone with its high-entropy link can view them; it never includes raw answers. QR is generated locally and opens that same link. ConsentCapsule™ encrypts the same share content in the browser for a selected recipient browser key before uploading ciphertext.</p>
+        <p>Delete actions remove the hosted copy, but cannot recall screenshots, downloads, or copies another person already made. ConsentCapsule™ is a sharing feature and does not give or imply consent to any activity.</p>
         <p>Copying, downloading, exporting, or sharing a result is your choice. Copies you create may remain outside KinkAtlas after your assessment session ends.</p>
         <p>When you choose to view a completed assessment, your browser sends an empty same-origin request that increments an aggregate completion counter. The KinkAtlas application does not include assessment answers, results, roles, readiness information, boundaries, negotiation preferences, or other assessment content in that request.</p>
         <p>The application stores an aggregate number of assessment completions rather than a record of individual assessment users. The public total is approximate and should not be interpreted as a count of unique people.</p>
@@ -212,7 +214,7 @@ export function AboutPage() {
           <li>security-related information; or</li>
           <li>server or infrastructure logs.</li>
         </ul>
-        <p>This technical processing does not mean that KinkAtlas stores your assessment answers or generated results.</p>
+        <p>This technical processing does not automatically store your assessment answers or generated results. Assessment content is hosted only when you explicitly use Save or Share, under the privacy boundaries described above.</p>
         <h3>Exports and sharing</h3>
         <p>KinkAtlas allows you to copy, download, export, or share information when you choose to do so.</p>
         <p>These actions are initiated by you.</p>

@@ -39,6 +39,21 @@
     X-Robots-Tag = "noindex, nofollow"
 
 [[headers]]
+  for = "/my-kinkatlas"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/s/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/p/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
   for = "/capsule"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"

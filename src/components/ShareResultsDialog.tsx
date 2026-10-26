@@ -5,6 +5,8 @@ import { BrandLogo } from './BrandLogo'
 import { RoleIdentityCard } from './RoleIdentityCard'
 import { ViewerKeyprintPanel } from './ViewerKeyprintPanel'
 import { QrTransport } from './QrTransport'
+import { SimpleSharePanel } from './SimpleSharePanel'
+import type { SharePackage } from '../sharing/sharePackage'
 import { buildSharedDisclosurePayload, privacyReceiptForPayload } from '../capsules/capsuleData'
 import { capsuleErrorMessage, createSharedDisclosureArtifact, downloadCapsuleFile, revealRequestErrorMessage, viewerRequestErrorMessage, type SharedCapsuleArtifact } from '../capsules/capsuleTransport'
 import { buildRevealRequestDisclosure, revealRequestPrivacyReceipt, revealRequestSectionLabels } from '../capsules/revealRequestDecision'
@@ -43,7 +45,7 @@ const modes: { id: ShareMode; label: string; description: string; icon: typeof I
   { id: 'capsule', label: 'Encrypted Capsule', description: 'Create a Secret Capsule or Viewer-Locked Capsule.', icon: FileLock2 },
 ]
 
-export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; onClose: () => void }) {
+export function ShareResultsDialog({ data, sharePackage, onClose }: { data: ShareResultsData; sharePackage?: SharePackage; onClose: () => void }) {
   const roleCards = useMemo(() => getShareableRoleSet(data.roleSet, data.roleResults), [data.roleSet, data.roleResults])
   const [mode, setMode] = useState<ShareMode>('cards')
   const [selectedIds, setSelectedIds] = useState(() => new Set(roleCards.map((role) => role.id)))
@@ -108,7 +110,8 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
         return
       }
       if (event.key !== 'Tab') return
-      const focusable = [...(dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])') ?? [])]
+      const focusable = [...(dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), summary, [href], [tabindex]:not([tabindex="-1"])') ?? [])]
+        .filter((element) => element.tagName === 'SUMMARY' || !element.closest('details:not([open])'))
       if (!focusable.length) return
       const first = focusable[0]
       const last = focusable[focusable.length - 1]
@@ -308,7 +311,14 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
   return <div className="share-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
     <div className="share-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} ref={dialogRef}>
       <header><BrandLogo size="footer" /><button className="quiet-button share-close" type="button" onClick={onClose} aria-label="Close export and sharing dialog" ref={closeRef}><X /></button></header>
-      <div className="share-heading"><span className="eyebrow">Choose what leaves this tab</span><h2 id={titleId}>Export & Share</h2><p id={descriptionId}>Create images from your current role set to save, share, or manually post to FetLife; copy a summary; or make an encrypted Capsule. Everything is generated locally; KinkAtlas never connects to or posts to a FetLife profile.</p></div>
+      <div className="share-heading"><span className="eyebrow">You choose what leaves this tab</span><h2 id={titleId}>Share your KinkAtlas</h2><p id={descriptionId}>Your cards and historical result are included. Raw assessment answers are not.</p></div>
+
+      {sharePackage && <SimpleSharePanel sharePackage={sharePackage} />}
+
+      <details className="advanced-privacy-options">
+        <summary>Advanced privacy options</summary>
+        <div className="advanced-privacy-options-content">
+      <p className="advanced-privacy-note">You can still save legacy local exports or use them to manually post to FetLife. KinkAtlas never connects to or posts to a FetLife profile.</p>
 
       <div className="share-mode-grid" aria-label="What would you like to share?">{modes.map((item) => {
         const Icon = item.icon
@@ -339,7 +349,7 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
       {mode === 'capsule' && <section className="share-mode-panel" aria-labelledby="encrypted-disclosure-heading">
         <div className="share-panel-heading"><div><h3 id="encrypted-disclosure-heading">Create an encrypted disclosure</h3><p>This read-only Capsule contains only the sections listed below. Raw assessment answers, restore state, and navigation cannot be selected.</p></div></div>
         <details className="viewer-request-import reveal-request-import">
-          <summary>Review a Reveal Request</summary>
+          <summary>Review a request for more details</summary>
           <p>A Reveal Request asks whether you are willing to share selected results. You can share all, some, or none. Importing it does not create, copy, download, or send a disclosure.</p>
           <label><span>Reveal Request link or text</span><textarea ref={revealInputRef} rows={5} value={revealRequestInput} onChange={(event) => { setRevealRequestInput(event.target.value); setRevealRequest(null); setViewerRequest(null); setViewerArtifact(null) }} /></label>
           <label className="capsule-file-input"><span>Or choose a Reveal Request file</span><input type="file" accept=".kinkatlas-reveal-request,application/vnd.kinkatlas.reveal-request" onChange={(event) => { const file = event.target.files?.[0]; if (file) void loadRevealRequestFile(file) }} /></label>
@@ -413,6 +423,9 @@ export function ShareResultsDialog({ data, onClose }: { data: ShareResultsData; 
           <p>This protects against link possession but does not authenticate the sender or prove who supplied a Viewer Request.</p>
         </div>}
       </section>}
+
+        </div>
+      </details>
 
       <div className="share-disclaimer"><strong>Sharing is not consent.</strong><p>Sharing a result does not communicate consent, availability, boundaries, or agreement to any activity.</p>{mode === 'full' && options.boundaries && <p>Boundaries shown here reflect the selections made when this result was generated and should never replace direct communication.</p>}</div>
       <p className="share-status" role="status" aria-live="polite">{status}</p>

@@ -15,6 +15,8 @@ This document describes the guarantees and limits of KinkAtlas portability featu
 
 QR is an optional local presentation of supported existing links, not a separate privacy mode. KinkAtlas generates QR codes in the browser without sending their content to a QR service. Viewer Requests currently fit the conservative single-code limit. Even the smallest current Secret and Viewer-Locked Capsule links do not, so those modes stay on their existing copy and file transports. Revisit QR is deferred because realistic links can be too dense for dependable mobile scanning, and Private Restore remains file-first. KinkAtlas does not include a camera scanner or multipart QR.
 
+Phase K keeps assessments ephemeral by default and adds explicit same-origin hosted actions. Quick Share stores a validated historical result package in plaintext under a high-entropy bearer ID and excludes raw answers. ConsentCapsule™ stores only recipient-bound client ciphertext. Save my assessment stores only client-encrypted full assessment ciphertext; its non-exportable vault key and management capability remain in that browser. QR for the normal share flow encodes the short Quick Share URL and still uses no external QR service. ConsentCapsule™ is not a consent record and does not imply consent to any activity.
+
 ## Consolidated threat model
 
 | Mode | Protected asset and access | Local state | Server and history visibility | Loss, expiry, and revocation | Identity and forwarding limits |

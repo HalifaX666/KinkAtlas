@@ -3310,6 +3310,181 @@ summary:focus-visible {
   line-height: 1.5;
 }
 
+.role-set-primary-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  align-items: flex-start;
+}
+
+.save-assessment-action {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.save-assessment-action .share-status {
+  max-width: 28rem;
+}
+
+.simple-share {
+  margin-bottom: 1.25rem;
+}
+
+.simple-share-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.simple-share-grid > article {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.simple-share-grid > article > svg {
+  color: var(--gold);
+}
+
+.simple-share-grid h4,
+.simple-share-grid p {
+  margin: 0;
+}
+
+.simple-share-grid p,
+.simple-share-grid small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.simple-share-grid label,
+.saved-share-link {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.simple-share-grid input,
+.saved-share-link input,
+.saved-inline-action input {
+  width: 100%;
+  min-width: 0;
+}
+
+.simple-share-grid .button {
+  margin-top: auto;
+}
+
+.advanced-privacy-options {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.advanced-privacy-options > summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.advanced-privacy-options-content {
+  margin-top: 1.25rem;
+}
+
+.my-kinkatlas {
+  min-height: 65vh;
+}
+
+.saved-assessment-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.saved-assessment-list > li,
+.saved-assessment-preview {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.saved-assessment-list > li > div:first-child {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.saved-assessment-list span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.saved-inline-action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  align-items: end;
+  margin-top: 0.8rem;
+}
+
+.saved-assessment-preview {
+  margin-top: 2rem;
+}
+
+.shared-result-view .historical-result details {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.shared-result-view .historical-result summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.historical-role-list,
+.historical-discovery-grid,
+.historical-section-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.historical-discovery-grid,
+.historical-section-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+}
+
+.historical-role-list li,
+.historical-discovery-grid article,
+.historical-section-grid section {
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+@media (max-width: 680px) {
+  .simple-share-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .role-set-primary-actions,
+  .role-set-primary-actions .button,
+  .save-assessment-action {
+    width: 100%;
+  }
+}
+
 .footer-meta p {
   margin: 0;
 }

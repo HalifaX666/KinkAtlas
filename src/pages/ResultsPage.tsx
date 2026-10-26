@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { RoleCard } from "../components/RoleCard";
 import { ShareResultsDialog } from "../components/ShareResultsDialog";
+import { SaveAssessmentButton } from "../components/SaveAssessmentButton";
 import { RevisitLinkCreator } from "../components/RevisitLinkCreator";
 import { RoleProfileBuilderLauncher } from "../components/RoleProfileBuilderLauncher";
 import { RoleSetIdentityGallery } from "../components/RoleSetIdentityGallery";
@@ -12,7 +13,9 @@ import { negotiationQuestions } from "../data/negotiation";
 import { competencyDefinitions } from "../data/readiness";
 import { traitById } from "../data/traits";
 import { useAssessment } from "../context/AssessmentContext";
-import { buildResultSnapshot } from "../capsules/capsuleData";
+import { buildPrivateRestoreState, buildResultSnapshot } from "../capsules/capsuleData";
+import { buildSharePackage } from "../sharing/sharePackage";
+import { SAVED_ASSESSMENT_BUNDLE_MAGIC, SAVED_ASSESSMENT_BUNDLE_VERSION, type SavedAssessmentBundle } from "../sharing/hostedContracts";
 import { calculateTraitScores } from "../engine/discoveryScoring";
 import { activityRecommendations } from "../engine/activityRecommendations";
 import { generateRecommendations } from "../engine/recommendations";
@@ -25,7 +28,7 @@ const readinessLabels: Record<ReadinessBand, string> = { strong: "Established", 
 const blindSpotLabels = { notice: "Reflection cue", concern: "Worth reviewing", critical: "Important concept" } as const;
 
 export function ResultsPage() {
-  const { answers, assessmentCompletion, currentRoleSet, setCurrentRoleSet, initializeCurrentRoleSet } = useAssessment();
+  const { answers, assessmentNavigation, assessmentCompletion, currentRoleSet, setCurrentRoleSet, initializeCurrentRoleSet, completionRequested, historicalResultSnapshot } = useAssessment();
   const [sharing, setSharing] = useState(false);
   const traitScores = useMemo(() => calculateTraitScores(answers.discovery), [answers.discovery]);
   const roleResults = useMemo(() => matchRoles(traitScores, answers.discovery), [traitScores, answers.discovery]);
@@ -41,7 +44,21 @@ export function ResultsPage() {
   const establishedCompetencies = readiness.competencies.filter((item) => item.band === "strong");
   const developingCompetencies = readiness.competencies.filter((item) => item.band !== "strong");
   const conversationStarters = negotiationQuestions.filter((question) => answers.negotiation[question.id]).slice(0, 8);
-  const createRevisitSnapshot = useCallback(() => buildResultSnapshot(answers, visibleRoleSet), [answers, visibleRoleSet]);
+  const resultSnapshot = useMemo(() => buildResultSnapshot(answers, visibleRoleSet), [answers, visibleRoleSet]);
+  const sharePackage = useMemo(() => buildSharePackage(resultSnapshot, visibleRoleSet, roleResults), [resultSnapshot, visibleRoleSet, roleResults]);
+  const createRevisitSnapshot = useCallback(() => resultSnapshot, [resultSnapshot]);
+  const createSavedAssessment = useCallback((): SavedAssessmentBundle => ({
+    magic: SAVED_ASSESSMENT_BUNDLE_MAGIC,
+    savedAssessmentBundleVersion: SAVED_ASSESSMENT_BUNDLE_VERSION,
+    restore: buildPrivateRestoreState({
+      answers,
+      navigation: assessmentNavigation,
+      currentRoleSet: visibleRoleSet,
+      historicalResultSnapshot: historicalResultSnapshot ?? resultSnapshot,
+      completionRequested,
+    }),
+    sharePackage,
+  }), [answers, assessmentNavigation, completionRequested, historicalResultSnapshot, resultSnapshot, sharePackage, visibleRoleSet]);
 
   useEffect(() => {
     if (assessmentCompletion.complete) initializeCurrentRoleSet(suggestedRoleSet);
@@ -79,8 +96,8 @@ export function ResultsPage() {
 
         <div className="result-privacy">
           <LockKeyhole />
-          <strong>Your answers and results were not uploaded or stored.</strong>
-          <span>Reloading this page erases your session.</span>
+          <strong>Ephemeral by default.</strong>
+          <span>Your assessment is not remotely saved unless you explicitly choose Save or Share. Reloading can erase unsaved work.</span>
         </div>
       </header>
       <section className="section page-width">
@@ -109,19 +126,21 @@ export function ResultsPage() {
       <section className="page-width role-set-export-section" aria-labelledby="role-set-export-heading">
         <div>
           <span className="eyebrow">When you are ready</span>
-          <h2 id="role-set-export-heading">Take your role set with you</h2>
-          <p>Create shareable cards from your current role set for a profile, a conversation with someone you trust, or a manual post to FetLife. You choose whether and where to share; KinkAtlas never connects to or posts to a FetLife profile.</p>
+          <h2 id="role-set-export-heading">Your KinkAtlas</h2>
+          <p>Save this assessment for this browser, or share your cards and historical result. Nothing is remotely saved unless you choose an action.</p>
           {currentRoleSet === null && <span className="role-set-export-loading" role="status">Preparing your current role set…</span>}
         </div>
-        <button className="button primary share-results-button" type="button" disabled={currentRoleSet === null} onClick={() => setSharing(true)}>
-          <Share2 size={18} />
-          Create my role cards
-        </button>
-        <Link className="quiet-button" to="/restore">Create a Private Restore backup</Link>
+        <div className="role-set-primary-actions">
+          <SaveAssessmentButton createBundle={createSavedAssessment} disabled={currentRoleSet === null} />
+          <button className="button secondary share-results-button" type="button" disabled={currentRoleSet === null} onClick={() => setSharing(true)}>
+            <Share2 size={18} />
+            Share
+          </button>
+        </div>
       </section>
 
       <details className="page-width portability-guide">
-        <summary>Which sharing or backup option fits?</summary>
+        <summary>Advanced privacy options</summary>
         <div className="portability-guide-grid">
           <div><strong>Public Card</strong><span>A public image for saving or sharing. It is not confidential.</span></div>
           <div><strong>Revisit Link</strong><span>A read-only historical result. Anyone with the complete bearer link can open it.</span></div>
@@ -129,9 +148,9 @@ export function ResultsPage() {
           <div><strong>Viewer-Locked Capsule</strong><span>An encrypted disclosure for a recipient browser key. It does not verify human identity.</span></div>
           <div><strong>Private Restore</strong><span>An encrypted full assessment backup, including answers, for restoring your own session.</span></div>
         </div>
+        <Link className="quiet-button" to="/restore">Create a Private Restore backup</Link>
+        <RevisitLinkCreator createSnapshot={createRevisitSnapshot} available={currentRoleSet !== null} />
       </details>
-
-      <RevisitLinkCreator createSnapshot={createRevisitSnapshot} available={currentRoleSet !== null} />
 
       <section className="section page-width">
         <div className="section-heading">
@@ -293,7 +312,7 @@ export function ResultsPage() {
           </Link>
         </div>
       </section>
-      {sharing && currentRoleSet !== null && <ShareResultsDialog data={shareData} onClose={() => setSharing(false)} />}
+      {sharing && currentRoleSet !== null && <ShareResultsDialog data={shareData} sharePackage={sharePackage} onClose={() => setSharing(false)} />}
     </div>
   );
 }

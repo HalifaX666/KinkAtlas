@@ -67,6 +67,7 @@ async function createLink(type: BrowserType, locale: string) {
   const page = await context.newPage()
   const guards = await installBrowserGuards(page)
   await openPersonaResults(page, personaId)
+  await page.getByText('Advanced privacy options').click()
   await page.getByRole('button', { name: 'Create revisit link' }).click()
   const output = page.getByRole('textbox', { name: 'Revisit link' })
   await expect(output).toBeVisible()
@@ -79,6 +80,7 @@ async function createLink(type: BrowserType, locale: string) {
 
   await page.reload()
   await expect(page.getByRole('heading', { name: 'A map, not a verdict.' })).toBeVisible()
+  await page.getByText('Advanced privacy options').click()
   await page.getByRole('button', { name: 'Create revisit link' }).click()
   await expect(page.getByRole('textbox', { name: 'Revisit link' })).toHaveValue(first)
   const details = await page.evaluate(async (link) => {

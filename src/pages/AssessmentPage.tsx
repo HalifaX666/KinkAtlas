@@ -512,7 +512,7 @@ export function AssessmentPage() {
               </div>
             </>
           ) : (
-            <StageComplete title="Your first map is ready." text="Everything on the next page was calculated here in your browser. Your answers and results were not uploaded or stored." button="View my results" onBack={() => setNegotiationIndex(negotiationQuestions.length - 1)} onContinue={viewResults} />
+            <StageComplete title="Your first map is ready." text="Everything on the next page was calculated here in your browser. Nothing is remotely saved unless you explicitly choose Save or Share." button="View my results" onBack={() => setNegotiationIndex(negotiationQuestions.length - 1)} onContinue={viewResults} />
           )}
         </section>
       )}

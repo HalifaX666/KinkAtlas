@@ -145,7 +145,7 @@ export function HomePage() {
         <div className="faq-grid">
           <details>
             <summary>Will my answers be saved?</summary>
-            <p>Not automatically. Answers live only in browser memory, and reloading or closing this tab erases them. They leave memory only if you explicitly create and download an encrypted Private Restore file. The app has no account, answer-storage database, or tracking pixel.</p>
+            <p>Not automatically. Unsaved answers live only in browser memory, and reloading or closing this tab can erase them. Remote storage happens only after an explicit Save or Share action. Full saved assessments are encrypted in your browser before upload; there is no account or tracking pixel.</p>
           </details>
           <details>
             <summary>Can this tell me which role I am?</summary>

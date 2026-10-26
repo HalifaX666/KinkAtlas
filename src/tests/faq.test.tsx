@@ -41,7 +41,7 @@ describe('public FAQ and footer', () => {
     expect(aiButton).toHaveAttribute('aria-expanded', 'false')
     expect(aiAnswer()).toHaveAttribute('aria-hidden', 'true')
     expect(storedAnswer()).toHaveAttribute('aria-hidden', 'false')
-    expect(screen.getByText(/Assessment answers and results are not persisted by KinkAtlas/)).toBeInTheDocument()
+    expect(screen.getByText(/Not automatically\. Unsaved answers stay in browser memory/)).toBeInTheDocument()
 
     fireEvent.click(storedButton)
     expect(storedButton).toHaveAttribute('aria-expanded', 'false')

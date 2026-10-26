@@ -35,8 +35,9 @@ describe('Terms of Use and privacy transparency', () => {
     const privacy = document.getElementById('privacy')
     expect(privacy).toBeInTheDocument()
     const section = privacy as HTMLElement
-    for (const value of ['localStorage', 'sessionStorage', 'cookies', 'IndexedDB']) expect(section).toHaveTextContent(value)
-    expect(section).toHaveTextContent('browser memory for the current assessment session')
+    for (const value of ['browser memory', 'non-exportable browser vault key', 'Quick Share', 'ConsentCapsule™']) expect(section).toHaveTextContent(value)
+    expect(section).toHaveTextContent('ephemeral by default')
+    expect(section).toHaveTextContent('encrypts the complete assessment in your browser before uploading ciphertext')
     expect(section).toHaveTextContent('aggregate number of assessment completions')
     expect(section).toHaveTextContent('does not include assessment answers, results, roles, readiness information, boundaries, negotiation preferences, or other assessment content')
     expect(section).toHaveTextContent('approximate and should not be interpreted as a count of unique people')

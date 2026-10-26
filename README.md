@@ -24,9 +24,9 @@ Role language is contextual and changes across people and communities. There is 
 
 ## Privacy
 
-Assessment answers and results stay in browser memory for the current session. KinkAtlas does not persist them in cookies, `localStorage`, `sessionStorage`, or IndexedDB, and it has no questionnaire-data backend. Refreshing or closing the tab clears the assessment session. When someone chooses to view a completed assessment, the browser sends an empty same-origin increment request; the server persists only the aggregate completion integer, with no answers, results, roles, readiness information, boundaries, negotiation preferences, or user/device identifiers.
+Assessment answers and results remain in browser memory by default. KinkAtlas does not remotely save an assessment unless the user explicitly chooses Save or Share, so refreshing or closing can clear unsaved work. Save my assessment encrypts the complete assessment in the browser before uploading ciphertext. Quick Share stores only the historical cards and approved result content, never raw answers. ConsentCapsule™ stores client-encrypted share content. IndexedDB may hold a non-exportable vault key, opaque object IDs, delete capabilities, optional save names, and harmless management metadata. The anonymous completion counter remains separate and stores only an aggregate integer.
 
-Exports and shares are created locally only when the user requests them. Anything copied, downloaded, or shared can remain outside KinkAtlas after the session ends.
+Saves and shares are created only after an explicit user action. New hosted items can be deleted with a browser-held management capability, but deletion cannot recall screenshots, downloads, or copies someone already made.
 
 KinkAtlas keeps its portability modes distinct: Public Cards are public images; a Revisit Link is an unencrypted bearer link to a read-only historical result; Secret Capsules need an encrypted artifact plus a separate secret; Viewer-Locked Capsules need the matching browser key; and Private Restore is an encrypted full-session backup that intentionally includes answer maps. Revisit Links and Capsules have no remote expiry or revocation. Historical snapshots render the saved result and are not silently rescored.
 

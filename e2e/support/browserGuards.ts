@@ -2,7 +2,7 @@ import { expect, type Page, type Request } from '@playwright/test'
 
 const completionCountPath = '/.netlify/functions/completion-count'
 
-export async function installBrowserGuards(page: Page) {
+export async function installBrowserGuards(page: Page, options: { allowHostedContent?: boolean; allowExpectedHostedNotFound?: boolean } = {}) {
   const pageErrors: string[] = []
   const consoleErrors: string[] = []
   const unexpectedNetwork: string[] = []
@@ -10,15 +10,20 @@ export async function installBrowserGuards(page: Page) {
 
   page.on('pageerror', (error) => pageErrors.push(error.message))
   page.on('console', (message) => {
-    if (message.type() === 'error') consoleErrors.push(message.text())
+    if (message.type() !== 'error') return
+    if (options.allowExpectedHostedNotFound && message.text().includes('the server responded with a status of 404')) return
+    consoleErrors.push(message.text())
   })
   page.on('request', (request: Request) => {
     const url = new URL(request.url())
     const isLocal = url.hostname === '127.0.0.1' || url.hostname === 'localhost'
     const isCompletionEndpoint = isLocal && url.pathname === completionCountPath && url.search === ''
     const isExpectedCompletionRequest = isCompletionEndpoint && (request.method() === 'GET' || request.method() === 'POST')
+    const isHostedContentRequest = options.allowHostedContent && isLocal
+      && url.pathname === '/.netlify/functions/hosted-content'
+      && ['GET', 'POST', 'DELETE'].includes(request.method())
     const isStaticDevRequest = isLocal && request.method() === 'GET' && request.resourceType() !== 'fetch' && request.resourceType() !== 'xhr'
-    if (!isExpectedCompletionRequest && !isStaticDevRequest) unexpectedNetwork.push(`${request.method()} ${request.url()}`)
+    if (!isExpectedCompletionRequest && !isHostedContentRequest && !isStaticDevRequest) unexpectedNetwork.push(`${request.method()} ${request.url()}`)
   })
 
   await page.route(`**${completionCountPath}*`, async (route) => {

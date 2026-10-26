@@ -17,6 +17,7 @@ import * as viewerTransport from '../capsules/viewerLockedTransport'
 import * as revealTransport from '../capsules/revealRequestTransport'
 import { CapsuleError } from '../capsules/capsuleError'
 import type { RevealRequest, ViewerRequest } from '../capsules/capsuleTypes'
+import type { SharePackage } from '../sharing/sharePackage'
 
 const answers = { 'd-power-give': 'strong', 'd-position-give': 'strong', 'r-lead': 'strong', 'r-responsibility': 'strong' }
 const roleResults = matchRoles(calculateTraitScores(answers), answers)
@@ -69,6 +70,14 @@ function RoleSetSharingHarness({ suggestedRoleSet }: { suggestedRoleSet: Editabl
   </>
 }
 
+function DialogFocusHarness() {
+  const [open, setOpen] = useState(false)
+  return <>
+    <button type="button" onClick={() => setOpen(true)}>Open sharing</button>
+    {open && <ShareResultsDialog data={data} sharePackage={{} as SharePackage} onClose={() => setOpen(false)} />}
+  </>
+}
+
 function shareRoleLabels() {
   return within(screen.getByRole('group', { name: 'Roles to export' })).getAllByRole('checkbox').map((choice) => (
     choice.closest('label')?.querySelector(':scope > span:last-child > strong')?.textContent
@@ -90,6 +99,20 @@ async function searchResultFor(label: string) {
 }
 
 describe('Export & Share dialog', () => {
+  it('presents exactly three simple Phase K choices and keeps legacy transports collapsed', () => {
+    render(<ShareResultsDialog data={data} sharePackage={{} as SharePackage} onClose={vi.fn()} />)
+
+    expect(screen.getByRole('dialog', { name: 'Share your KinkAtlas' })).toBeVisible()
+    const simple = screen.getByRole('heading', { name: 'Share your KinkAtlas', level: 3 }).closest('section')!
+    expect(within(simple).getAllByRole('article')).toHaveLength(3)
+    for (const label of ['Quick Share Link', 'QR Code', 'ConsentCapsule™']) {
+      expect(within(simple).getByRole('heading', { name: label })).toBeVisible()
+    }
+    expect(screen.getByText('Advanced privacy options').closest('details')).not.toHaveAttribute('open')
+    expect(screen.getByRole('button', { name: /Encrypted Capsule/i })).not.toBeVisible()
+    expect(screen.getByText(/does not give or imply consent/i)).toBeVisible()
+  })
+
   it('keeps encrypted disclosure separate and derives its privacy receipt from supported selections', () => {
     render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
@@ -120,6 +143,7 @@ describe('Export & Share dialog', () => {
       file: new File(['encrypted-ciphertext'], 'disclosure.kinkatlas-capsule'),
     })
     render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
+    fireEvent.click(screen.getByText('Advanced privacy options'))
     fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
     expect(screen.queryByLabelText('Encrypted Capsule text')).not.toBeInTheDocument()
 
@@ -158,6 +182,7 @@ describe('Export & Share dialog', () => {
       file: new File(['viewer-locked'], 'viewer-locked.kinkatlas-capsule'),
     })
     render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
+    fireEvent.click(screen.getByText('Advanced privacy options'))
     fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
     fireEvent.click(screen.getByRole('radio', { name: /Viewer-Locked Capsule/i }))
     fireEvent.change(screen.getByLabelText('Recipient Viewer Request link or text'), { target: { value: 'public-request' } })
@@ -220,8 +245,9 @@ describe('Export & Share dialog', () => {
     })
 
     render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
+    fireEvent.click(screen.getByText('Advanced privacy options'))
     fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
-    fireEvent.click(screen.getByText('Review a Reveal Request'))
+    fireEvent.click(screen.getByText('Review a request for more details'))
     fireEvent.change(screen.getByLabelText('Reveal Request link or text'), { target: { value: 'public-reveal-request' } })
     fireEvent.click(screen.getByRole('button', { name: 'Review request' }))
 
@@ -259,7 +285,7 @@ describe('Export & Share dialog', () => {
 
     render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
-    fireEvent.click(screen.getByText('Review a Reveal Request'))
+    fireEvent.click(screen.getByText('Review a request for more details'))
     const input = screen.getByLabelText('Reveal Request link or text')
     fireEvent.change(input, { target: { value: 'public-reveal-request' } })
     fireEvent.click(screen.getByRole('button', { name: 'Review request' }))
@@ -790,5 +816,28 @@ describe('Export & Share dialog', () => {
     expect(screen.getByRole('button', { name: /close export and sharing dialog/i })).toHaveFocus()
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it('traps focus among visible controls, exposes Advanced on demand, and restores opener focus', async () => {
+    render(<DialogFocusHarness />)
+    const opener = screen.getByRole('button', { name: 'Open sharing' })
+    opener.focus()
+    fireEvent.click(opener)
+
+    const close = screen.getByRole('button', { name: /close export and sharing dialog/i })
+    const advanced = screen.getByText('Advanced privacy options')
+    expect(close).toHaveFocus()
+    expect(screen.getByRole('button', { name: /Encrypted Capsule/i })).not.toBeVisible()
+
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
+    expect(advanced).toHaveFocus()
+    fireEvent.keyDown(document, { key: 'Tab' })
+    expect(close).toHaveFocus()
+
+    fireEvent.click(advanced)
+    expect(screen.getByRole('button', { name: /Encrypted Capsule/i })).toBeVisible()
+    fireEvent.keyDown(document, { key: 'Escape' })
+    await waitFor(() => expect(opener).toHaveFocus())
+    expect(screen.queryByRole('dialog', { name: 'Share your KinkAtlas' })).not.toBeInTheDocument()
   })
 })

@@ -93,8 +93,9 @@ test('Viewer-Locked Capsule requires the recipient browser key and stops opening
 
   await openPersonaResults(senderPage, 'balanced-authority-pattern')
   const expectedRoles = await senderPage.locator('.current-role-cards-grid h3').allTextContents()
-  await senderPage.getByRole('button', { name: 'Create my role cards' }).click()
-  const dialog = senderPage.getByRole('dialog', { name: 'Export & Share' })
+  await senderPage.getByRole('button', { name: 'Share', exact: true }).click()
+  const dialog = senderPage.getByRole('dialog', { name: 'Share your KinkAtlas' })
+  await dialog.getByText('Advanced privacy options').click()
   await dialog.getByRole('button', { name: /Encrypted Capsule/i }).click()
   await dialog.getByRole('radio', { name: /Viewer-Locked Capsule/i }).check()
   await dialog.getByLabel('Recipient Viewer Request link or text').fill(viewerRequestText)

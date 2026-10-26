@@ -3,7 +3,7 @@ import { matchPath, useLocation } from "react-router-dom";
 import { roleById, roles } from "../data/roles";
 import { roleSlug } from "../taxonomy/roleSlug";
 
-export const baseDescription = "KinkAtlas is a private, rules-based kink and BDSM self-reflection quiz for exploring interests, roles, boundaries, dynamics, and kink vocabulary without storing your assessment data.";
+export const baseDescription = "KinkAtlas is a private-by-default, rules-based kink and BDSM self-reflection quiz for exploring interests, roles, boundaries, dynamics, and kink vocabulary.";
 
 const scoredRoleBySlug = new Map(roles.map((role) => [roleSlug({ label: role.name }), role]));
 
@@ -84,6 +84,12 @@ const publicRoutes: Record<string, RouteMetadata> = {
     robots: "noindex, nofollow",
   },
 
+  "/my-kinkatlas": {
+    title: "My KinkAtlas",
+    description: "Open and manage KinkAtlas assessments you explicitly saved on this browser.",
+    robots: "noindex, nofollow",
+  },
+
   "/capsule": {
     title: "Open Encrypted Capsule | KinkAtlas",
     description: "Open an encrypted KinkAtlas disclosure locally in this browser.",
@@ -129,6 +135,14 @@ export function metadataForPath(pathname: string): RouteMetadata {
 
   if (knownRoute) {
     return knownRoute;
+  }
+
+  if (matchPath("/s/:id", normalizedPath) || matchPath("/p/:id", normalizedPath)) {
+    return {
+      title: "Shared KinkAtlas Result",
+      description: "Open a KinkAtlas result that someone explicitly shared.",
+      robots: "noindex, nofollow",
+    };
   }
 
   const roleMatch = matchPath("/roles/:roleId", normalizedPath);

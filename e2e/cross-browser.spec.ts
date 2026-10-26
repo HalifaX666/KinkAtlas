@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { expectNoHorizontalOverflow, installBrowserGuards, namedRoleSetLabels, openPersonaResults, openRoleSetBuilder } from './support/browserGuards'
+import { createHostedApiState, installHostedApi } from './support/hostedApi'
 
 const pilotRolePaths = [
   ['/roles/dominant', 'Dominant'],
@@ -50,6 +51,70 @@ test('targeted Results and role navigation preserve the current role set', async
   await openRoleSetBuilder(page)
 
   expect(await namedRoleSetLabels(page, 'Current role set')).toEqual(before)
+  await expectNoHorizontalOverflow(page)
+  await guards.assertClean()
+})
+
+test('Phase K hosted sharing and local vault remain compatible', async ({ page }) => {
+  test.setTimeout(60_000)
+  const state = createHostedApiState()
+  await installHostedApi(page, state)
+  const guards = await installBrowserGuards(page, { allowHostedContent: true })
+
+  await page.goto('/viewer-request')
+  await page.getByRole('button', { name: 'Create Viewer Request' }).click()
+  const pairingLink = await page.getByLabel('Viewer Request link').inputValue()
+
+  await openPersonaResults(page, 'balanced-authority-pattern')
+  await page.getByRole('button', { name: 'Save my assessment' }).click()
+  await expect(page.getByRole('status')).toContainText('Assessment saved')
+  await page.getByRole('button', { name: 'Share', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Share your KinkAtlas' })
+
+  const advanced = dialog.locator('details', { hasText: 'Advanced privacy options' })
+  await expect(advanced).not.toHaveAttribute('open')
+  await dialog.getByText('Advanced privacy options').click()
+  await expect(dialog.getByRole('button', { name: /Encrypted Capsule/i })).toBeVisible()
+  await dialog.getByText('Advanced privacy options').click()
+
+  await dialog.getByRole('button', { name: 'Create link', exact: true }).click()
+  const qrChoice = dialog.getByRole('heading', { name: 'QR Code' }).locator('..')
+  await qrChoice.getByRole('button', { name: 'Show QR' }).click()
+  await qrChoice.getByRole('button', { name: 'Show QR' }).click()
+  await expect(dialog.getByRole('img', { name: 'QR code for Quick Share Link' })).toBeVisible()
+
+  await dialog.getByLabel('Recipient pairing link').fill(pairingLink)
+  await dialog.getByRole('button', { name: 'Confirm recipient' }).click()
+  await dialog.getByRole('button', { name: 'Create ConsentCapsule™' }).click()
+  const privateUrl = await dialog.getByLabel('Private share link').inputValue()
+
+  const persistedKey = await page.evaluate(async () => {
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('kinkatlas-vault')
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error)
+    })
+    const key = await new Promise<CryptoKey>((resolve, reject) => {
+      const request = database.transaction('vault-key', 'readonly').objectStore('vault-key').get('primary')
+      request.onsuccess = () => resolve((request.result as { key: CryptoKey }).key)
+      request.onerror = () => reject(request.error)
+    })
+    let exportRejected = false
+    try { await crypto.subtle.exportKey('raw', key) } catch { exportRejected = true }
+    database.close()
+    return { algorithm: key.algorithm.name, extractable: key.extractable, exportRejected }
+  })
+  expect(persistedKey).toEqual({ algorithm: 'AES-GCM', extractable: false, exportRejected: true })
+
+  await page.goto(privateUrl)
+  await expect(page.getByRole('heading', { name: 'Their KinkAtlas' })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Their KinkAtlas' })).toBeVisible()
+
+  await page.goto('/my-kinkatlas')
+  await expect(page.getByRole('heading', { name: 'Saved assessments' })).toBeVisible()
+  await page.getByRole('button', { name: 'Open' }).click()
+  await expect(page.getByRole('heading', { name: 'Saved assessment preview' })).toBeVisible()
   await expectNoHorizontalOverflow(page)
   await guards.assertClean()
 })

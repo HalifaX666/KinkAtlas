@@ -132,14 +132,14 @@ describe("assessment flow", () => {
       expect(meter).toHaveAttribute("aria-valuetext", expect.stringMatching(/normalized dimension strength/i));
     });
 
-    expect(screen.getByText(/Your answers and results were not uploaded or stored/i)).toBeInTheDocument();
+    expect(screen.getByText(/Your assessment is not remotely saved unless you explicitly choose Save or Share/i)).toBeInTheDocument();
 
-    const createRoleCards = await screen.findByRole("button", {
-      name: /create my role cards/i,
+    const shareResults = await screen.findByRole("button", {
+      name: /^share$/i,
     });
-    await waitFor(() => expect(createRoleCards).toBeEnabled());
-    fireEvent.click(createRoleCards);
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    await waitFor(() => expect(shareResults).toBeEnabled());
+    fireEvent.click(shareResults);
+    expect(await screen.findByRole("dialog", { name: /share your kinkatlas/i })).toBeInTheDocument();
 
     expect(screen.getByText(/role-alignment suggestions, not identities assigned to you/i)).toBeInTheDocument();
 
