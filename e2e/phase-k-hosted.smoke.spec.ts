@@ -10,7 +10,7 @@ function recursiveKeys(value: unknown, keys = new Set<string>()): Set<string> {
   return keys
 }
 
-test('Quick Share and its QR preserve historical cards without raw answers and remain owner-deletable', async ({ browser }) => {
+test('Link & QR preserves historical cards without raw answers and remains owner-deletable', async ({ browser }) => {
   test.setTimeout(60_000)
   const state = createHostedApiState()
   const ownerContext = await browser.newContext()
@@ -27,8 +27,13 @@ test('Quick Share and its QR preserve historical cards without raw answers and r
   expect(state.requests.filter(({ method }) => method === 'POST')).toHaveLength(0)
   await owner.getByRole('button', { name: 'Share', exact: true }).click()
   const dialog = owner.getByRole('dialog', { name: 'Share your KinkAtlas' })
-  await dialog.getByRole('button', { name: 'Create link', exact: true }).click()
-  const shareUrl = await dialog.getByLabel('Quick Share Link').inputValue()
+  for (const option of ['Public Card', 'Quick Summary', 'Full Reflection', 'Link & QR']) await expect(dialog.getByRole('button', { name: new RegExp(option, 'i') })).toBeVisible()
+  await expect(dialog.getByText(/Advanced privacy options|ConsentCapsule|recipient pairing|Encrypted Capsule/i)).toHaveCount(0)
+  await dialog.getByRole('button', { name: /Link & QR/i }).click()
+  await expect(dialog.getByText(/individual assessment answers are not included/i)).toBeVisible()
+  await expect(dialog.locator('.link-share-preview article')).toHaveCount(expectedCards.length)
+  await dialog.getByRole('button', { name: 'Create share', exact: true }).click()
+  const shareUrl = await dialog.getByLabel('Share link').inputValue()
   expect(new URL(shareUrl).pathname).toMatch(/^\/s\/[A-Za-z0-9_-]{22}$/u)
   expect(shareUrl.length).toBeLessThan(100)
 
@@ -40,12 +45,12 @@ test('Quick Share and its QR preserve historical cards without raw answers and r
   expect([...recursiveKeys(createBody.payload)]).not.toEqual(expect.arrayContaining(['answers', 'discovery', 'refinement', 'negotiation', 'restore', 'navigation', 'response']))
   expect(createRequest.body).not.toContain('d-power-give')
 
-  const qrChoice = dialog.getByRole('heading', { name: 'QR Code' }).locator('..')
-  await qrChoice.getByRole('button', { name: 'Show QR' }).click()
-  await qrChoice.getByRole('button', { name: 'Show QR' }).click()
-  const qr = qrChoice.getByRole('img', { name: 'QR code for Quick Share Link' })
+  const qr = dialog.getByRole('img', { name: 'QR code for shared KinkAtlas result' })
   const qrMetrics = await expectQrRoundTrip(qr, shareUrl)
   expect(qrMetrics.version).toBeLessThan(10)
+  const qrDownload = owner.waitForEvent('download')
+  await dialog.getByRole('button', { name: 'Download QR as SVG' }).click()
+  expect((await qrDownload).suggestedFilename()).toBe('kinkatlas-share-qr.svg')
   const mobile: Array<{ viewport: number; displayedPixels: number }> = []
   for (const width of [320, 375, 430]) {
     await owner.setViewportSize({ width, height: 800 })
@@ -54,8 +59,8 @@ test('Quick Share and its QR preserve historical cards without raw answers and r
     mobile.push({ viewport: width, displayedPixels: box!.width })
     await expect.poll(() => owner.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
   }
-  console.log(`Quick Share QR metrics: ${JSON.stringify({ ...qrMetrics, path: undefined, mobile })}`)
-  await expectNoAxeViolations(owner, 'Phase K Quick Share dialog')
+  console.log(`Link & QR metrics: ${JSON.stringify({ ...qrMetrics, path: undefined, mobile })}`)
+  await expectNoAxeViolations(owner, 'Phase K Link & QR dialog')
 
   await clean.goto(shareUrl)
   await expect(clean.getByRole('heading', { name: 'Their KinkAtlas' })).toBeVisible()
@@ -77,61 +82,27 @@ test('Quick Share and its QR preserve historical cards without raw answers and r
   await cleanContext.close()
 })
 
-test('ConsentCapsule encrypts a historical share for one recipient browser and uploads ciphertext only', async ({ browser }) => {
-  test.setTimeout(60_000)
+test('legacy encrypted-sharing routes remain available outside the normal Share interface', async ({ page }) => {
   const state = createHostedApiState()
-  const recipientContext = await browser.newContext()
-  const senderContext = await browser.newContext()
-  const wrongContext = await browser.newContext()
-  const recipient = await recipientContext.newPage()
-  const sender = await senderContext.newPage()
-  const wrong = await wrongContext.newPage()
-  for (const page of [recipient, sender, wrong]) await installHostedApi(page, state)
-  const recipientGuards = await installBrowserGuards(recipient, { allowHostedContent: true, allowExpectedHostedNotFound: true })
-  const senderGuards = await installBrowserGuards(sender, { allowHostedContent: true })
-  const wrongGuards = await installBrowserGuards(wrong, { allowHostedContent: true, allowExpectedHostedNotFound: true })
+  await installHostedApi(page, state)
+  const guards = await installBrowserGuards(page, { allowHostedContent: true, allowExpectedHostedNotFound: true })
 
-  await recipient.goto('/viewer-request')
-  await recipient.getByLabel('Optional local label').fill('Phase K recipient')
-  await recipient.getByRole('button', { name: 'Create Viewer Request' }).click()
-  const pairingLink = await recipient.getByLabel('Viewer Request link').inputValue()
+  await page.goto('/viewer-request')
+  await expect(page.getByRole('heading', { name: 'Create a Viewer Request' })).toBeVisible()
+  await page.goto('/capsule')
+  await expect(page.getByRole('heading', { name: 'Open an encrypted KinkAtlas Capsule' })).toBeVisible()
+  await page.goto('/restore')
+  await expect(page.getByRole('heading', { name: 'Back up or restore your private session' })).toBeVisible()
+  await page.goto('/p/AAAAAAAAAAAAAAAAAAAAAA')
+  await expect(page.getByRole('heading', { name: 'Shared result unavailable' })).toBeVisible()
 
-  await openPersonaResults(sender, 'balanced-authority-pattern')
-  const expectedCards = await sender.locator('.current-role-cards-grid h3').allTextContents()
-  await sender.getByRole('button', { name: 'Share', exact: true }).click()
-  const dialog = sender.getByRole('dialog', { name: 'Share your KinkAtlas' })
-  await dialog.getByLabel('Recipient pairing link').fill(pairingLink)
-  await dialog.getByRole('button', { name: 'Confirm recipient' }).click()
-  await dialog.getByRole('button', { name: 'Create ConsentCapsule™' }).click()
-  const privateUrl = await dialog.getByLabel('Private share link').inputValue()
-  expect(new URL(privateUrl).pathname).toMatch(/^\/p\/[A-Za-z0-9_-]{22}$/u)
+  await openPersonaResults(page, 'balanced-authority-pattern')
+  await page.getByRole('button', { name: 'Share', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Share your KinkAtlas' })
+  await expect(dialog.getByRole('button', { name: /Link & QR/i })).toBeVisible()
+  await expect(dialog.getByText(/ConsentCapsule|recipient pairing|Encrypted Capsule/i)).toHaveCount(0)
 
-  const privateCreate = state.requests.find(({ method, body }) => method === 'POST' && body?.includes('consent-capsule'))!
-  const privateBody = JSON.parse(privateCreate.body!) as { payload: Record<string, unknown> }
-  expect(Object.keys(privateBody.payload).sort()).toEqual(['ciphertext', 'compression', 'consentCapsuleVersion', 'ephemeralPublicKey', 'iv', 'kdf', 'magic', 'recipientKeyId', 'salt', 'suite'])
-  expect(privateCreate.body).not.toContain(expectedCards[0])
-  expect(privateCreate.body).not.toContain('d-power-give')
-  expect(privateBody.payload).not.toHaveProperty('deleteToken')
-
-  await wrong.goto(privateUrl)
-  await expect(wrong.getByRole('heading', { name: 'Shared result unavailable' })).toBeVisible()
-  await expect(wrong.getByText(/matching recipient key/i)).toBeVisible()
-  await expect(wrong.getByRole('heading', { name: 'Their KinkAtlas' })).toHaveCount(0)
-
-  await recipient.goto(privateUrl)
-  await expect(recipient.getByRole('heading', { name: 'Their KinkAtlas' })).toBeVisible()
-  expect(await recipient.locator('.current-role-cards-grid h3').allTextContents()).toEqual(expectedCards)
-  await expectNoAxeViolations(recipient, 'Phase K ConsentCapsule result')
-
-  await dialog.getByRole('button', { name: 'Delete share' }).click()
-  await recipient.reload()
-  await expect(recipient.getByRole('heading', { name: 'Shared result unavailable' })).toBeVisible()
-  await recipientGuards.assertClean()
-  await senderGuards.assertClean()
-  await wrongGuards.assertClean()
-  await recipientContext.close()
-  await senderContext.close()
-  await wrongContext.close()
+  await guards.assertClean()
 })
 
 test('Saved Assessment writes only after explicit Save, reopens locally, restores explicitly, and deletes remotely', async ({ browser }) => {

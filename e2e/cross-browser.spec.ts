@@ -63,30 +63,18 @@ test('Phase K hosted sharing and local vault remain compatible', async ({ page }
 
   await page.goto('/viewer-request')
   await page.getByRole('button', { name: 'Create Viewer Request' }).click()
-  const pairingLink = await page.getByLabel('Viewer Request link').inputValue()
+  await expect(page.getByLabel('Viewer Request link')).toBeVisible()
 
   await openPersonaResults(page, 'balanced-authority-pattern')
   await page.getByRole('button', { name: 'Save my assessment' }).click()
   await expect(page.getByRole('status')).toContainText('Assessment saved')
   await page.getByRole('button', { name: 'Share', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: 'Share your KinkAtlas' })
-
-  const advanced = dialog.locator('details', { hasText: 'Advanced privacy options' })
-  await expect(advanced).not.toHaveAttribute('open')
-  await dialog.getByText('Advanced privacy options').click()
-  await expect(dialog.getByRole('button', { name: /Encrypted Capsule/i })).toBeVisible()
-  await dialog.getByText('Advanced privacy options').click()
-
-  await dialog.getByRole('button', { name: 'Create link', exact: true }).click()
-  const qrChoice = dialog.getByRole('heading', { name: 'QR Code' }).locator('..')
-  await qrChoice.getByRole('button', { name: 'Show QR' }).click()
-  await qrChoice.getByRole('button', { name: 'Show QR' }).click()
-  await expect(dialog.getByRole('img', { name: 'QR code for Quick Share Link' })).toBeVisible()
-
-  await dialog.getByLabel('Recipient pairing link').fill(pairingLink)
-  await dialog.getByRole('button', { name: 'Confirm recipient' }).click()
-  await dialog.getByRole('button', { name: 'Create ConsentCapsule™' }).click()
-  const privateUrl = await dialog.getByLabel('Private share link').inputValue()
+  await expect(dialog.getByText(/Advanced privacy options|ConsentCapsule|recipient pairing|Encrypted Capsule/i)).toHaveCount(0)
+  await dialog.getByRole('button', { name: /Link & QR/i }).click()
+  await dialog.getByRole('button', { name: 'Create share', exact: true }).click()
+  const shareUrl = await dialog.getByLabel('Share link').inputValue()
+  await expect(dialog.getByRole('img', { name: 'QR code for shared KinkAtlas result' })).toBeVisible()
 
   const persistedKey = await page.evaluate(async () => {
     const database = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -106,7 +94,7 @@ test('Phase K hosted sharing and local vault remain compatible', async ({ page }
   })
   expect(persistedKey).toEqual({ algorithm: 'AES-GCM', extractable: false, exportRejected: true })
 
-  await page.goto(privateUrl)
+  await page.goto(shareUrl)
   await expect(page.getByRole('heading', { name: 'Their KinkAtlas' })).toBeVisible()
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Their KinkAtlas' })).toBeVisible()

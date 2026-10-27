@@ -134,12 +134,22 @@ describe("assessment flow", () => {
 
     expect(screen.getByText(/Your assessment is not remotely saved unless you explicitly choose Save or Share/i)).toBeInTheDocument();
 
+    expect(screen.getByRole("button", { name: /save my assessment/i })).toBeVisible();
+    for (const removed of ["Advanced privacy options", "Revisit", "Secret Capsule", "Viewer-Locked", "Private Restore", "ConsentCapsule"]) {
+      expect(screen.queryByText(removed, { exact: false })).not.toBeInTheDocument();
+    }
+
     const shareResults = await screen.findByRole("button", {
       name: /^share$/i,
     });
     await waitFor(() => expect(shareResults).toBeEnabled());
     fireEvent.click(shareResults);
     expect(await screen.findByRole("dialog", { name: /share your kinkatlas/i })).toBeInTheDocument();
+    for (const option of ["Public Card", "Quick Summary", "Full Reflection", "Link & QR"]) {
+      expect(screen.getByRole("button", { name: new RegExp(option, "i") })).toBeVisible();
+    }
+    expect(screen.queryByText("Advanced privacy options", { exact: false })).not.toBeInTheDocument();
+    expect(screen.queryByText("ConsentCapsule", { exact: false })).not.toBeInTheDocument();
 
     expect(screen.getByText(/role-alignment suggestions, not identities assigned to you/i)).toBeInTheDocument();
 

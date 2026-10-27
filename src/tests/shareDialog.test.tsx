@@ -13,11 +13,27 @@ import { buildEditableRoleProfileEntries, buildRoleProfileCandidates, optimizeRo
 import { createRoleCardImage, getShareableRoleSet, roleCardFileName, type ShareResultsData } from '../engine/shareResults'
 import { roleLibrary } from '../taxonomy/roleLibrary'
 import * as capsuleTransport from '../capsules/capsuleTransport'
-import * as viewerTransport from '../capsules/viewerLockedTransport'
-import * as revealTransport from '../capsules/revealRequestTransport'
-import { CapsuleError } from '../capsules/capsuleError'
-import type { RevealRequest, ViewerRequest } from '../capsules/capsuleTypes'
 import type { SharePackage } from '../sharing/sharePackage'
+import * as localVault from '../sharing/localVault'
+import * as hostedStorage from '../sharing/hostedStorage'
+
+vi.mock('../sharing/localVault', async () => {
+  const actual = await vi.importActual<typeof import('../sharing/localVault')>('../sharing/localVault')
+  return {
+    ...actual,
+    saveHostedShareRecord: vi.fn(),
+    removeHostedShareRecord: vi.fn(),
+  }
+})
+
+vi.mock('../sharing/hostedStorage', async () => {
+  const actual = await vi.importActual<typeof import('../sharing/hostedStorage')>('../sharing/hostedStorage')
+  return {
+    ...actual,
+    createHostedContent: vi.fn(),
+    deleteHostedContent: vi.fn(),
+  }
+})
 
 const answers = { 'd-power-give': 'strong', 'd-position-give': 'strong', 'r-lead': 'strong', 'r-responsibility': 'strong' }
 const roleResults = matchRoles(calculateTraitScores(answers), answers)
@@ -99,203 +115,18 @@ async function searchResultFor(label: string) {
 }
 
 describe('Export & Share dialog', () => {
-  it('presents exactly three simple Phase K choices and keeps legacy transports collapsed', () => {
+  it('opens directly to the four primary Share / Export options without legacy controls', () => {
     render(<ShareResultsDialog data={data} sharePackage={{} as SharePackage} onClose={vi.fn()} />)
 
     expect(screen.getByRole('dialog', { name: 'Share your KinkAtlas' })).toBeVisible()
-    const simple = screen.getByRole('heading', { name: 'Share your KinkAtlas', level: 3 }).closest('section')!
-    expect(within(simple).getAllByRole('article')).toHaveLength(3)
-    for (const label of ['Quick Share Link', 'QR Code', 'ConsentCapsule™']) {
-      expect(within(simple).getByRole('heading', { name: label })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Share / Export options' })).toBeVisible()
+    for (const label of ['Public Card', 'Quick Summary', 'Full Reflection', 'Link & QR']) {
+      expect(screen.getByRole('button', { name: new RegExp(label.replace('&', '\\&'), 'i') })).toBeVisible()
     }
-    expect(screen.getByText('Advanced privacy options').closest('details')).not.toHaveAttribute('open')
-    expect(screen.getByRole('button', { name: /Encrypted Capsule/i })).not.toBeVisible()
-    expect(screen.getByText(/does not give or imply consent/i)).toBeVisible()
-  })
-
-  it('keeps encrypted disclosure separate and derives its privacy receipt from supported selections', () => {
-    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
-    fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
-
-    const choices = screen.getByRole('group', { name: 'Include in the encrypted disclosure' })
-    const roleSet = within(choices).getByRole('checkbox', { name: /Current Role Set/i })
-    const definitions = within(choices).getByRole('checkbox', { name: /Role definitions/i })
-    expect(roleSet).toBeChecked()
-    expect(definitions).toBeChecked()
-    expect(within(choices).queryByRole('checkbox', { name: /raw|answer|boundary|readiness/i })).not.toBeInTheDocument()
-
-    const receipt = screen.getByRole('heading', { name: 'Privacy receipt' }).closest('.privacy-receipt')!
-    expect(receipt).toHaveTextContent('Current Role Set')
-    expect(receipt).toHaveTextContent('Role definitions')
-    expect(receipt).toHaveTextContent('Raw assessment answers')
-
-    fireEvent.click(definitions)
-    expect(definitions).not.toBeChecked()
-    expect(receipt).toHaveTextContent('Not included')
-  })
-
-  it('creates encrypted link, text, file, and separate secret from the selected disclosure manifest', async () => {
-    const createDisclosure = vi.spyOn(capsuleTransport, 'createSharedDisclosureArtifact').mockResolvedValue({
-      link: 'https://example.test/capsule#capsule=encrypted-ciphertext',
-      fragment: '#capsule=encrypted-ciphertext',
-      serializedEnvelope: '{"ciphertext":"encrypted-ciphertext"}',
-      secret: 'KA1-separate.secret',
-      file: new File(['encrypted-ciphertext'], 'disclosure.kinkatlas-capsule'),
-    })
-    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
-    fireEvent.click(screen.getByText('Advanced privacy options'))
-    fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
-    expect(screen.queryByLabelText('Encrypted Capsule text')).not.toBeInTheDocument()
-
-    const choices = screen.getByRole('group', { name: 'Include in the encrypted disclosure' })
-    fireEvent.click(within(choices).getByRole('checkbox', { name: /Role definitions/i }))
-    fireEvent.click(screen.getByRole('button', { name: 'Create encrypted disclosure' }))
-
-    const encryptedText = await screen.findByLabelText('Encrypted Capsule text') as HTMLTextAreaElement
-    const link = screen.getByLabelText('Encrypted Capsule link') as HTMLTextAreaElement
-    const secret = screen.getByLabelText(/Secret — never embedded in the link/i) as HTMLInputElement
-    expect(link.value).toMatch(/\/capsule#capsule=/)
-    expect(encryptedText.value).toBe('{"ciphertext":"encrypted-ciphertext"}')
-    expect(link.value).not.toContain(secret.value)
-    expect(screen.getByRole('button', { name: 'Download encrypted file' })).toBeVisible()
-
-    const payload = createDisclosure.mock.calls[0][0]
-    expect(payload.disclosureManifest.currentRoleSet).toBe(true)
-    expect(payload.disclosureManifest.roleDefinitions).toBe(false)
-    expect(payload.sections).toHaveProperty('currentRoleSet')
-    expect(payload.sections).not.toHaveProperty('roleDefinitions')
-  }, 30_000)
-
-  it('creates a Viewer-Locked disclosure from the same conservative payload without generating a secret', async () => {
-    const request = {
-      magic: 'kinkatlas-viewer-request', viewerRequestVersion: 1,
-      requestId: 'AAAAAAAAAAAAAAAAAAAAAA',
-      suite: 'ECDH-P256+HKDF-SHA-256+A256GCM',
-      recipientPublicKey: 'viewer-public-key',
-      keyprint: { version: 1, short: 'ABCD-EF01-234', checksum: '42', fingerprint: 'A'.repeat(64) },
-    } as ViewerRequest
-    vi.spyOn(viewerTransport, 'parseViewerRequestInput').mockResolvedValue(request)
-    const createDisclosure = vi.spyOn(viewerTransport, 'createViewerLockedDisclosureArtifact').mockResolvedValue({
-      link: 'https://example.test/capsule#capsule=viewer-locked-ciphertext',
-      fragment: '#capsule=viewer-locked-ciphertext',
-      serializedEnvelope: '{"mode":"viewer-locked","ciphertext":"encrypted"}',
-      file: new File(['viewer-locked'], 'viewer-locked.kinkatlas-capsule'),
-    })
-    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
-    fireEvent.click(screen.getByText('Advanced privacy options'))
-    fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
-    fireEvent.click(screen.getByRole('radio', { name: /Viewer-Locked Capsule/i }))
-    fireEvent.change(screen.getByLabelText('Recipient Viewer Request link or text'), { target: { value: 'public-request' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Validate Viewer Request' }))
-    expect(await screen.findByText(/ABCD-EF01-234/)).toBeVisible()
-    expect(screen.getByText('primary fetch primary fetch')).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Copy Four-Word Keyprint' })).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Copy comparison code' })).toBeVisible()
-    fireEvent.click(screen.getByText('Full fingerprint'))
-    expect(screen.getByRole('button', { name: 'Copy full fingerprint' })).toBeVisible()
-    fireEvent.click(screen.getByRole('button', { name: 'Create Viewer-Locked Capsule' }))
-    expect((await screen.findByLabelText('Viewer-Locked Capsule link')) as HTMLTextAreaElement).toHaveValue(
-      'https://example.test/capsule#capsule=viewer-locked-ciphertext',
-    )
-    expect(screen.queryByLabelText(/Secret —/i)).not.toBeInTheDocument()
-    expect(createDisclosure.mock.calls[0][0].sections).toEqual(expect.objectContaining({ currentRoleSet: expect.any(Array), roleDefinitions: expect.any(Array) }))
-    expect(createDisclosure.mock.calls[0][1]).toBe(request)
-  })
-
-  it('keeps invalid Viewer Request input editable and distinguishes unsupported versions', async () => {
-    vi.spyOn(viewerTransport, 'parseViewerRequestInput').mockRejectedValue(new CapsuleError('unsupported-version'))
-    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
-    fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
-    fireEvent.click(screen.getByRole('radio', { name: /Viewer-Locked Capsule/i }))
-    const input = screen.getByLabelText('Recipient Viewer Request link or text')
-    fireEvent.change(input, { target: { value: 'request-that-needs-replacing' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Validate Viewer Request' }))
-
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/version this browser cannot use/i))
-    expect(input).toHaveValue('request-that-needs-replacing')
-    expect(screen.queryByText('Recipient Four-Word Keyprint')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Copy Four-Word Keyprint' })).not.toBeInTheDocument()
-  })
-
-  it('reviews a Reveal Request and creates only the explicitly selected subset', async () => {
-    const recipient = {
-      magic: 'kinkatlas-viewer-request', viewerRequestVersion: 1,
-      requestId: 'AAAAAAAAAAAAAAAAAAAAAA',
-      suite: 'ECDH-P256+HKDF-SHA-256+A256GCM',
-      recipientPublicKey: 'viewer-public-key',
-      keyprint: { version: 1, short: 'ABCD-EF01-234', checksum: '42', fingerprint: 'A'.repeat(64) },
-    } as ViewerRequest
-    const request = {
-      magic: 'kinkatlas-reveal-request', revealRequestVersion: 1,
-      requestId: 'BBBBBBBBBBBBBBBBBBBBBB',
-      requestedSections: ['currentRoleSet', 'roleDefinitions'],
-      recipientViewerRequest: recipient,
-    } as RevealRequest
-    vi.spyOn(revealTransport, 'parseRevealRequestInput').mockResolvedValue(request)
-    vi.spyOn(revealTransport, 'createRevealRequestArtifact').mockResolvedValue({
-      serializedRequest: '{"reveal":"request"}',
-      link: 'https://example.test/reveal-request#request=public',
-      file: new File(['request'], 'request.kinkatlas-reveal-request'),
-    })
-    const createDisclosure = vi.spyOn(viewerTransport, 'createViewerLockedDisclosureArtifact').mockResolvedValue({
-      link: 'https://example.test/capsule#capsule=partial',
-      fragment: '#capsule=partial',
-      serializedEnvelope: '{"mode":"viewer-locked","ciphertext":"partial"}',
-      file: new File(['partial'], 'partial.kinkatlas-capsule'),
-    })
-
-    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
-    fireEvent.click(screen.getByText('Advanced privacy options'))
-    fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
-    fireEvent.click(screen.getByText('Review a request for more details'))
-    fireEvent.change(screen.getByLabelText('Reveal Request link or text'), { target: { value: 'public-reveal-request' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Review request' }))
-
-    expect(await screen.findByRole('heading', { name: 'Choose what to share' })).toHaveFocus()
-    expect(screen.getByText(/exact public key/i)).toBeVisible()
-    expect(screen.getByText('primary fetch primary fetch')).toBeVisible()
-    const choices = screen.getByRole('group', { name: 'Select requested sections to share' })
-    fireEvent.click(within(choices).getByRole('checkbox', { name: /Role definitions/i }))
-    expect(within(screen.getByText('Selected').parentElement!).getByText('Current Role Set')).toBeVisible()
-    expect(within(screen.getByText('Excluded').parentElement!).getByText('Role definitions')).toBeVisible()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Share selected' }))
-    await screen.findByLabelText('Viewer-Locked Capsule link')
-    const payload = createDisclosure.mock.calls[0][0]
-    expect(payload.sections.currentRoleSet).toEqual(expect.any(Array))
-    expect(payload.sections.roleDefinitions).toBeUndefined()
-    expect(createDisclosure.mock.calls[0][1]).toBe(recipient)
-  })
-
-  it('declines a validated Reveal Request without creating a disclosure artifact', async () => {
-    const recipient = {
-      magic: 'kinkatlas-viewer-request', viewerRequestVersion: 1,
-      requestId: 'AAAAAAAAAAAAAAAAAAAAAA', suite: 'ECDH-P256+HKDF-SHA-256+A256GCM', recipientPublicKey: 'viewer-public-key',
-      keyprint: { version: 1, short: 'ABCD-EF01-234', checksum: '42', fingerprint: 'A'.repeat(64) },
-    } as ViewerRequest
-    const request = {
-      magic: 'kinkatlas-reveal-request', revealRequestVersion: 1, requestId: 'BBBBBBBBBBBBBBBBBBBBBB',
-      requestedSections: ['currentRoleSet'], recipientViewerRequest: recipient,
-    } as RevealRequest
-    vi.spyOn(revealTransport, 'parseRevealRequestInput').mockResolvedValue(request)
-    vi.spyOn(revealTransport, 'createRevealRequestArtifact').mockResolvedValue({
-      serializedRequest: '{"reveal":"request"}', link: 'https://example.test/reveal-request#request=public', file: new File(['request'], 'request.kinkatlas-reveal-request'),
-    })
-    const createDisclosure = vi.spyOn(viewerTransport, 'createViewerLockedDisclosureArtifact')
-
-    render(<ShareResultsDialog data={data} onClose={vi.fn()} />)
-    fireEvent.click(screen.getByRole('button', { name: /Encrypted Capsule/i }))
-    fireEvent.click(screen.getByText('Review a request for more details'))
-    const input = screen.getByLabelText('Reveal Request link or text')
-    fireEvent.change(input, { target: { value: 'public-reveal-request' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Review request' }))
-    await screen.findByRole('heading', { name: 'Choose what to share' })
-    fireEvent.click(screen.getByRole('button', { name: 'Decline' }))
-
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/No disclosure artifact was created/i))
-    expect(createDisclosure).not.toHaveBeenCalled()
-    expect(screen.queryByLabelText('Viewer-Locked Capsule link')).not.toBeInTheDocument()
-    expect(input).toHaveFocus()
+    for (const removed of ['Advanced privacy options', 'ConsentCapsule™', 'Recipient pairing link', 'Encrypted Capsule']) {
+      expect(screen.queryByText(removed, { exact: false })).not.toBeInTheDocument()
+    }
+    expect(screen.getByText(/Sharing is not consent/i)).toBeVisible()
   })
 
   it('uses canonical primary wording and a static role reference on an exported card without metrics', async () => {
@@ -649,6 +480,8 @@ describe('Export & Share dialog', () => {
   it('keeps replacement, order, removal, and manual additions synchronized with exported role cards', async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
+    vi.mocked(localVault.saveHostedShareRecord).mockResolvedValue(undefined)
+    vi.mocked(localVault.removeHostedShareRecord).mockResolvedValue(undefined)
     const downloads: string[] = []
     mockImageExport(downloads)
     const suggestedRoleSet = buildEditableRoleProfileEntries(optimizeRoleProfile(buildRoleProfileCandidates(roleResults)))
@@ -744,6 +577,51 @@ describe('Export & Share dialog', () => {
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/select the preview text manually/i))
   })
 
+  it('creates one hosted Link & QR share, shows the same URL, and keeps raw answers out of the request', async () => {
+    const presentation = getShareableRoleSet(initialRoleSet, roleResults)[0]
+    const sharePackage = {
+      cards: [{
+        roleId: presentation.roleId,
+        label: presentation.name,
+        familyLabel: presentation.family,
+        summary: presentation.summary,
+        attributes: presentation.attributes,
+        emblem: presentation.emblem,
+        sourceLabel: presentation.sourceLabel,
+        assessmentDetails: presentation.assessmentDetails,
+      }],
+      result: { currentRoleSet: [] },
+    } as unknown as SharePackage
+    const createHosted = vi.mocked(hostedStorage.createHostedContent).mockResolvedValue({ id: 'AAAAAAAAAAAAAAAAAAAAAA', createdAt: '2026-10-25T12:00:00.000Z', deleteToken: 'owner-delete-token' })
+    const deleteHosted = vi.mocked(hostedStorage.deleteHostedContent).mockResolvedValue(undefined)
+    vi.mocked(localVault.saveHostedShareRecord).mockResolvedValue(undefined)
+    vi.mocked(localVault.removeHostedShareRecord).mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: vi.fn().mockResolvedValue(undefined) } })
+
+    render(<ShareResultsDialog data={data} sharePackage={sharePackage} onClose={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /Link & QR/i }))
+
+    expect(screen.getByRole('heading', { name: 'Link & QR' })).toBeVisible()
+    expect(screen.getByText(/individual assessment answers are not included/i)).toBeVisible()
+    expect(screen.getByText(presentation.name)).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Create share' }))
+
+    const link = await screen.findByLabelText('Share link') as HTMLInputElement
+    expect(link.value).toMatch(/\/s\/AAAAAAAAAAAAAAAAAAAAAA$/)
+    await screen.findByRole('img', { name: 'QR code for shared KinkAtlas result' })
+    expect(screen.getByText(/exact same shared result/i)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Download QR as SVG' })).toBeVisible()
+
+    expect(createHosted).toHaveBeenCalledWith('quick-share', sharePackage)
+    expect(JSON.stringify(createHosted.mock.calls[0][1])).not.toContain('answers')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy link' }))
+    await waitFor(() => expect(navigator.clipboard.writeText).toHaveBeenCalledWith(link.value))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete share' }))
+    await waitFor(() => expect(screen.getByText(/link and QR no longer load/i)).toBeVisible())
+    expect(deleteHosted).toHaveBeenCalledWith('quick-share', 'AAAAAAAAAAAAAAAAAAAAAA', 'owner-delete-token')
+  })
+
   it('revokes Capsule download URLs and reports unavailable download primitives', async () => {
     const revoke = vi.fn()
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
@@ -818,24 +696,25 @@ describe('Export & Share dialog', () => {
     expect(onClose).toHaveBeenCalledOnce()
   })
 
-  it('traps focus among visible controls, exposes Advanced on demand, and restores opener focus', async () => {
+  it('traps focus among the visible primary share controls and restores opener focus', async () => {
     render(<DialogFocusHarness />)
     const opener = screen.getByRole('button', { name: 'Open sharing' })
     opener.focus()
     fireEvent.click(opener)
 
     const close = screen.getByRole('button', { name: /close export and sharing dialog/i })
-    const advanced = screen.getByText('Advanced privacy options')
+    const dialog = screen.getByRole('dialog', { name: 'Share your KinkAtlas' })
+    const buttons = within(dialog).getAllByRole('button')
+    const last = buttons[buttons.length - 1]
     expect(close).toHaveFocus()
-    expect(screen.getByRole('button', { name: /Encrypted Capsule/i })).not.toBeVisible()
+    expect(screen.getByRole('button', { name: /Link & QR/i })).toBeVisible()
+    expect(screen.queryByText('Advanced privacy options')).not.toBeInTheDocument()
 
     fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
-    expect(advanced).toHaveFocus()
+    expect(last).toHaveFocus()
     fireEvent.keyDown(document, { key: 'Tab' })
     expect(close).toHaveFocus()
 
-    fireEvent.click(advanced)
-    expect(screen.getByRole('button', { name: /Encrypted Capsule/i })).toBeVisible()
     fireEvent.keyDown(document, { key: 'Escape' })
     await waitFor(() => expect(opener).toHaveFocus())
     expect(screen.queryByRole('dialog', { name: 'Share your KinkAtlas' })).not.toBeInTheDocument()

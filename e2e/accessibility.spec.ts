@@ -47,6 +47,18 @@ test('high-value application states have no WCAG A/AA axe violations', async ({ 
   await openPersonaResults(page, 'balanced-authority-pattern')
   await expectNoAxeViolations(page, 'Results')
 
+  const shareButton = page.getByRole('button', { name: 'Share', exact: true })
+  await shareButton.click()
+  const shareDialog = page.getByRole('dialog', { name: 'Share your KinkAtlas' })
+  await expect(shareDialog).toBeVisible()
+  await expectNoAxeViolations(page, 'Share options')
+  await shareDialog.getByRole('button', { name: /Link & QR/i }).click()
+  await expect(shareDialog.getByRole('heading', { name: 'Link & QR' })).toBeVisible()
+  await expectNoAxeViolations(page, 'Link and QR before creation')
+  await page.keyboard.press('Escape')
+  await expect(shareDialog).toBeHidden()
+  await expect(shareButton).toBeFocused()
+
   await openRoleSetBuilder(page)
   await expectNoAxeViolations(page, 'Results with Role Set Builder open')
 

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { expectNoAxeViolations } from './support/accessibility'
-import { installBrowserGuards, openPersonaResults } from './support/browserGuards'
+import { installBrowserGuards } from './support/browserGuards'
 import { expectQrRoundTrip } from './support/qr'
 
 test('Viewer-Locked Capsule requires the recipient browser key and stops opening after deletion', async ({ browser }) => {
@@ -91,31 +91,26 @@ test('Viewer-Locked Capsule requires the recipient browser key and stops opening
   const originalStoredRequest = recipientPage.getByRole('listitem').filter({ hasText: 'Recipient test request' })
   await expect(originalStoredRequest.locator('.viewer-word-keyprint')).toHaveText(wordKeyprint)
 
-  await openPersonaResults(senderPage, 'balanced-authority-pattern')
-  const expectedRoles = await senderPage.locator('.current-role-cards-grid h3').allTextContents()
-  await senderPage.getByRole('button', { name: 'Share', exact: true }).click()
-  const dialog = senderPage.getByRole('dialog', { name: 'Share your KinkAtlas' })
-  await dialog.getByText('Advanced privacy options').click()
-  await dialog.getByRole('button', { name: /Encrypted Capsule/i }).click()
-  await dialog.getByRole('radio', { name: /Viewer-Locked Capsule/i }).check()
-  await dialog.getByLabel('Recipient Viewer Request link or text').fill(viewerRequestText)
-  await dialog.getByRole('button', { name: 'Validate Viewer Request' }).click()
-  await expect(dialog.getByText(wordKeyprint)).toBeVisible()
-  for (const width of [320, 375, 430]) {
-    await senderPage.setViewportSize({ width, height: 800 })
-    await expect.poll(() => senderPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
-    await expect(dialog.getByText(wordKeyprint)).toBeVisible()
-    await expect(dialog.getByRole('button', { name: 'Create Viewer-Locked Capsule' })).toBeVisible()
-  }
-  await dialog.getByRole('button', { name: 'Create Viewer-Locked Capsule' }).click()
-  const capsuleLink = await dialog.getByLabel('Viewer-Locked Capsule link').inputValue()
-  const capsuleText = await dialog.getByLabel('Viewer-Locked Capsule text').inputValue()
+  await senderPage.goto('/')
+  const legacyArtifact = await senderPage.evaluate(async ({ requestText, personaId }) => {
+    const personasPath = '/src/tests/fixtures/assessmentPersonas.ts'
+    const runnerPath = '/src/tests/helpers/assessmentPersonaRunner.ts'
+    const dataPath = '/src/capsules/capsuleData.ts'
+    const transportPath = '/src/capsules/viewerLockedTransport.ts'
+    const [{ assessmentPersonas }, { evaluateAssessmentPersona }, { buildSharedDisclosurePayload }, { parseViewerRequestInput, createViewerLockedDisclosureArtifact }] = await Promise.all([
+      import(personasPath), import(runnerPath), import(dataPath), import(transportPath),
+    ])
+    const persona = assessmentPersonas.find((candidate: { id: string }) => candidate.id === personaId)!
+    const evaluation = evaluateAssessmentPersona(persona)
+    const created = await createViewerLockedDisclosureArtifact(buildSharedDisclosurePayload(evaluation.yourRoleSet), await parseViewerRequestInput(requestText), window.location.origin)
+    return { link: created.link, text: created.serializedEnvelope, roles: evaluation.yourRoleSet.map((role: { label: string }) => role.label) }
+  }, { requestText: viewerRequestText, personaId: 'balanced-authority-pattern' })
+  const expectedRoles = legacyArtifact.roles
+  const capsuleLink = legacyArtifact.link
+  const capsuleText = legacyArtifact.text
   expect(capsuleLink).not.toContain(viewerRequestText)
   expect(capsuleText).not.toContain(expectedRoles[0])
   expect(capsuleText).not.toContain('Recipient test request')
-  await expect(dialog.getByLabel(/never embedded in the link/i)).toHaveCount(0)
-  await expect(dialog.getByText(/too large for a reliable single QR code/i)).toBeVisible()
-  await expect(dialog.getByRole('button', { name: 'Show QR' })).toHaveCount(0)
 
   const cleanRequests: string[] = []
   cleanPage.on('request', (request) => { if (request.isNavigationRequest()) cleanRequests.push(request.url()) })

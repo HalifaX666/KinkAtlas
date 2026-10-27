@@ -7,7 +7,7 @@ import { FaqPage } from '../pages/FaqPage'
 afterEach(() => cleanup())
 
 describe('public FAQ and footer', () => {
-  const questions = ['What is KinkAtlas?', 'How does KinkAtlas work?', 'Does KinkAtlas use AI to generate my results?', 'Are my answers stored?', 'Why might I get fewer than five suggested roles?', 'What do Alignment and Confidence mean?', 'What does Evidence breadth mean?', 'Do boundaries affect my role results?', 'Does a suggested role mean I should identify with it?', 'Does a role imply consent?', 'Can I add roles manually?', 'Can I leave my role set empty?', 'What is Reflection?', 'What are Potential blind spots?', 'Are these results a safety assessment?', 'Why can two people use the same role label differently?']
+  const questions = ['What is KinkAtlas?', 'How does KinkAtlas work?', 'Does KinkAtlas use AI to generate my results?', 'Does KinkAtlas automatically save my assessment?', 'What does Save my assessment do?', 'What is My KinkAtlas?', 'What does Link & QR share?', 'Is the QR different from the link?', 'Who can view my Link & QR share?', 'Can I delete a share?', 'Why might I get fewer than five suggested roles?', 'What do Alignment and Confidence mean?', 'What does Evidence breadth mean?', 'Do boundaries affect my role results?', 'Does a suggested role mean I should identify with it?', 'Does a role imply consent?', 'Can I add roles manually?', 'Can I leave my role set empty?', 'What is Reflection?', 'What are Potential blind spots?', 'Are these results a safety assessment?', 'Why can two people use the same role label differently?']
 
   it('renders FAQ questions as collapsed accessible accordion buttons', () => {
     const { container } = render(<MemoryRouter><FaqPage /></MemoryRouter>)
@@ -27,7 +27,7 @@ describe('public FAQ and footer', () => {
   it('opens and closes answers while keeping only one FAQ item open', () => {
     render(<MemoryRouter><FaqPage /></MemoryRouter>)
     const aiButton = screen.getByRole('button', { name: 'Does KinkAtlas use AI to generate my results?' })
-    const storedButton = screen.getByRole('button', { name: 'Are my answers stored?' })
+    const storedButton = screen.getByRole('button', { name: 'Does KinkAtlas automatically save my assessment?' })
     const aiAnswer = () => document.getElementById(aiButton.getAttribute('aria-controls') as string)
     const storedAnswer = () => document.getElementById(storedButton.getAttribute('aria-controls') as string)
 
@@ -41,7 +41,7 @@ describe('public FAQ and footer', () => {
     expect(aiButton).toHaveAttribute('aria-expanded', 'false')
     expect(aiAnswer()).toHaveAttribute('aria-hidden', 'true')
     expect(storedAnswer()).toHaveAttribute('aria-hidden', 'false')
-    expect(screen.getByText(/Not automatically\. Unsaved answers stay in browser memory/)).toBeInTheDocument()
+    expect(screen.getByText(/No\. Unsaved answers stay in browser memory/)).toBeInTheDocument()
 
     fireEvent.click(storedButton)
     expect(storedButton).toHaveAttribute('aria-expanded', 'false')

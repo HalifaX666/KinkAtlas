@@ -7,6 +7,7 @@ const expectedSections = [
   ['What it does', '#what-it-does'],
   ['How it works', '#how-it-works'],
   ['How to read your results', '#how-to-read-results'],
+  ['Save & Share', '#save-and-share'],
   ['Different questions, separate answers', '#different-questions'],
   ['Why it was built', '#why-it-exists'],
   ['What it does not do', '#what-it-does-not-do'],
@@ -68,11 +69,24 @@ describe('About contents navigation', () => {
     const resultsGuide = screen.getByRole('region', { name: 'How to read your results' })
     for (const heading of ['Strongest dimensions', 'Suggested Role Set', 'Your Role Set', 'Role Discovery', 'Reflection', 'Patterns worth a second look', 'Wants & boundaries', 'Conversation starters', 'Useful next steps', 'Export & Share']) expect(within(resultsGuide).getByRole('heading', { name: heading })).toBeInTheDocument()
     expect(resultsGuide).toHaveTextContent('Role ≠ consent')
-    expect(resultsGuide).toHaveTextContent('manually post them to FetLife')
-    expect(resultsGuide).toHaveTextContent('does not connect to, read, modify, or automatically post to a FetLife profile')
+    expect(resultsGuide).toHaveTextContent('manually post exports to FetLife')
+    expect(resultsGuide).toHaveTextContent('never connects to or posts to a FetLife profile')
 
     const aiSection = screen.getByRole('region', { name: 'Does KinkAtlas use AI?' })
     expect(aiSection).toHaveTextContent('KinkAtlas does not use AI')
-    expect(aiSection).toHaveTextContent('No generative AI or language model receives assessment answers or results')
+    expect(aiSection).toHaveTextContent('No generative AI or language model receives assessment answers for scoring')
+  })
+
+  it('explains the normal save and Link & QR model in plain language', () => {
+    renderAbout()
+
+    const section = screen.getByRole('region', { name: 'Saving and sharing your KinkAtlas' })
+    for (const heading of ['Temporary by default', 'Save my assessment', 'My KinkAtlas', 'Link & QR']) {
+      expect(within(section).getByRole('heading', { name: heading })).toBeInTheDocument()
+    }
+    expect(section).toHaveTextContent('does not automatically save your assessment')
+    expect(section).toHaveTextContent('this browser')
+    expect(section).toHaveTextContent('link and QR open the same hosted share')
+    expect(section).toHaveTextContent('Raw individual answers are not included')
   })
 })

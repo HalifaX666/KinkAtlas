@@ -1,6 +1,6 @@
-import { chromium, expect, firefox, test, webkit, type BrowserType } from '@playwright/test'
+import { chromium, expect, firefox, test, webkit, type BrowserType, type Page } from '@playwright/test'
 import { expectNoAxeViolations } from './support/accessibility'
-import { expectNoHorizontalOverflow, installBrowserGuards, openPersonaResults } from './support/browserGuards'
+import { expectNoHorizontalOverflow, installBrowserGuards } from './support/browserGuards'
 
 const baseURL = 'http://127.0.0.1:4178'
 const personaId = 'multiple-hard-limits-pattern'
@@ -61,28 +61,32 @@ function inspectLink(
   }
 }
 
+async function createLegacyRevisitLink(page: Page): Promise<string> {
+  return page.evaluate(async (personaId) => {
+    const personasPath = '/src/tests/fixtures/assessmentPersonas.ts'
+    const runnerPath = '/src/tests/helpers/assessmentPersonaRunner.ts'
+    const dataPath = '/src/capsules/capsuleData.ts'
+    const revisitPath = '/src/revisit/revisitCodec.ts'
+    const [{ assessmentPersonas }, { evaluateAssessmentPersona }, { buildResultSnapshot }, { createRevisitArtifact }] = await Promise.all([
+      import(personasPath), import(runnerPath), import(dataPath), import(revisitPath),
+    ])
+    const persona = assessmentPersonas.find((candidate: { id: string }) => candidate.id === personaId)!
+    const evaluation = evaluateAssessmentPersona(persona)
+    return (await createRevisitArtifact(buildResultSnapshot(persona.answers, evaluation.yourRoleSet), window.location.origin)).link
+  }, personaId)
+}
+
 async function createLink(type: BrowserType, locale: string) {
   const browser = await type.launch()
   const context = await browser.newContext({ locale })
   const page = await context.newPage()
   const guards = await installBrowserGuards(page)
-  await openPersonaResults(page, personaId)
-  await page.getByText('Advanced privacy options').click()
-  await page.getByRole('button', { name: 'Create revisit link' }).click()
-  const output = page.getByRole('textbox', { name: 'Revisit link' })
-  await expect(output).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Show QR' })).toHaveCount(0)
-  await expect(page.getByText(/Anyone with the complete link can view this saved result/i)).toBeVisible()
-  const first = await output.inputValue()
-
-  await page.getByRole('button', { name: 'Create revisit link' }).click()
-  await expect(output).toHaveValue(first)
+  await page.goto('/')
+  const first = await createLegacyRevisitLink(page)
+  expect(await createLegacyRevisitLink(page)).toBe(first)
 
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'A map, not a verdict.' })).toBeVisible()
-  await page.getByText('Advanced privacy options').click()
-  await page.getByRole('button', { name: 'Create revisit link' }).click()
-  await expect(page.getByRole('textbox', { name: 'Revisit link' })).toHaveValue(first)
+  expect(await createLegacyRevisitLink(page)).toBe(first)
   const details = await page.evaluate(async (link) => {
     const codecPath = '/src/revisit/revisitCodec.ts'
     const codec = await import(codecPath)

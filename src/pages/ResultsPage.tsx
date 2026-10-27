@@ -4,7 +4,6 @@ import { Link, Navigate } from "react-router-dom";
 import { RoleCard } from "../components/RoleCard";
 import { ShareResultsDialog } from "../components/ShareResultsDialog";
 import { SaveAssessmentButton } from "../components/SaveAssessmentButton";
-import { RevisitLinkCreator } from "../components/RevisitLinkCreator";
 import { RoleProfileBuilderLauncher } from "../components/RoleProfileBuilderLauncher";
 import { RoleSetIdentityGallery } from "../components/RoleSetIdentityGallery";
 import { boundaryItems, boundaryOptions } from "../data/boundaries";
@@ -46,7 +45,6 @@ export function ResultsPage() {
   const conversationStarters = negotiationQuestions.filter((question) => answers.negotiation[question.id]).slice(0, 8);
   const resultSnapshot = useMemo(() => buildResultSnapshot(answers, visibleRoleSet), [answers, visibleRoleSet]);
   const sharePackage = useMemo(() => buildSharePackage(resultSnapshot, visibleRoleSet, roleResults), [resultSnapshot, visibleRoleSet, roleResults]);
-  const createRevisitSnapshot = useCallback(() => resultSnapshot, [resultSnapshot]);
   const createSavedAssessment = useCallback((): SavedAssessmentBundle => ({
     magic: SAVED_ASSESSMENT_BUNDLE_MAGIC,
     savedAssessmentBundleVersion: SAVED_ASSESSMENT_BUNDLE_VERSION,
@@ -138,19 +136,6 @@ export function ResultsPage() {
           </button>
         </div>
       </section>
-
-      <details className="page-width portability-guide">
-        <summary>Advanced privacy options</summary>
-        <div className="portability-guide-grid">
-          <div><strong>Public Card</strong><span>A public image for saving or sharing. It is not confidential.</span></div>
-          <div><strong>Revisit Link</strong><span>A read-only historical result. Anyone with the complete bearer link can open it.</span></div>
-          <div><strong>Secret Capsule</strong><span>An encrypted disclosure that needs both the artifact and its separate secret.</span></div>
-          <div><strong>Viewer-Locked Capsule</strong><span>An encrypted disclosure for a recipient browser key. It does not verify human identity.</span></div>
-          <div><strong>Private Restore</strong><span>An encrypted full assessment backup, including answers, for restoring your own session.</span></div>
-        </div>
-        <Link className="quiet-button" to="/restore">Create a Private Restore backup</Link>
-        <RevisitLinkCreator createSnapshot={createRevisitSnapshot} available={currentRoleSet !== null} />
-      </details>
 
       <section className="section page-width">
         <div className="section-heading">

@@ -5,6 +5,7 @@ const sections = [
   ["what-it-does", "What it does"],
   ["how-it-works", "How it works"],
   ["how-to-read-results", "How to read your results"],
+  ["save-and-share", "Save & Share"],
   ["different-questions", "Different questions, separate answers"],
   ["why-it-exists", "Why it was built"],
   ["what-it-does-not-do", "What it does not do"],
@@ -135,13 +136,26 @@ export function AboutPage() {
           </article>
           <article>
             <h3>Export &amp; Share</h3>
-            <p>Export &amp; Share uses the current Your Role Set. If you edit that set, the shareable cards update to match it. You can save cards privately, share them with someone you trust, or manually post them to FetLife. Exporting is always your choice: KinkAtlas does not connect to, read, modify, or automatically post to a FetLife profile.</p>
+            <p>Share uses the current Your Role Set. Public Card creates images, Quick Summary copies a short role-only version, Full Reflection lets you review a more detailed report, and Link &amp; QR creates one hosted result with a matching link and QR code. You can also manually post exports to FetLife; KinkAtlas never connects to or posts to a FetLife profile.</p>
           </article>
         </div>
         <div className="results-guide-principles" aria-label="Consent distinctions">
           <strong>Keep these distinctions close:</strong>
           <span>Role ≠ consent</span><span>Interest ≠ consent</span><span>Compatibility ≠ consent</span><span>Prior consent ≠ current consent</span><span>Submission ≠ lack of agency</span><span>Dominance ≠ entitlement</span><span>Hard limits are not challenges</span>
         </div>
+      </section>
+      <section id="save-and-share" aria-labelledby="save-and-share-heading">
+        <h2 id="save-and-share-heading">Saving and sharing your KinkAtlas</h2>
+        <h3>Temporary by default</h3>
+        <p>KinkAtlas does not automatically save your assessment. If you leave or refresh before saving, your unsaved assessment may be lost.</p>
+        <h3>Save my assessment</h3>
+        <p>If you choose Save my assessment, KinkAtlas encrypts the full assessment in your browser before storing it so you can come back to it later. Saving happens only when you ask for it, and your answers are not stored as readable server data.</p>
+        <h3>My KinkAtlas</h3>
+        <p>My KinkAtlas is where your saved assessments live on this browser. From there you can reopen a saved assessment, view its cards, rename it, share it, or delete it. Saved assessments are available on the browser where you saved them; there is no account or automatic cross-device sync.</p>
+        <h3>Link &amp; QR</h3>
+        <p>Public Card creates role-card images. Quick Summary copies a short role-only version. Full Reflection lets you choose and review more personal result sections before copying them. Link &amp; QR creates one hosted copy of your cards and historical result.</p>
+        <p>You can send the short link or show the matching QR code; the link and QR open the same hosted share. Anyone with the link or QR can view it. The shared result includes cards and approved historical result sections. Raw individual answers are not included.</p>
+        <p>You can delete a hosted share so its link and QR stop loading. Deletion cannot recall screenshots, downloads, or copies someone already made.</p>
       </section>
       <section id="different-questions" aria-labelledby="different-questions-heading">
         <h2 id="different-questions-heading">Different questions, separate answers</h2>
@@ -172,15 +186,15 @@ export function AboutPage() {
       <section id="ai" aria-labelledby="ai-heading">
         <h2 id="ai-heading">Does KinkAtlas use AI?</h2>
         <p><strong>No.</strong> KinkAtlas does not use AI to run the assessment, analyze answers, generate results, recommend roles, build a Suggested Role Set or Your Role Set, create conversation starters, identify reflection cues, interpret boundaries, or create export cards.</p>
-        <p>No generative AI or language model receives assessment answers or results, and no AI decides someone’s identity. Results are calculated locally in the browser from deterministic application rules and curated KinkAtlas data. With the same inputs and the same version of those rules, results are reproducible.</p>
-        <p>Your assessment answers stay in browser memory for the current session. KinkAtlas does not send them to an AI service; you choose when to copy, export, share, or save an encrypted Private Restore file.</p>
+        <p>No generative AI or language model receives assessment answers for scoring, and no AI decides someone’s identity. Results are calculated locally in the browser from deterministic application rules and curated KinkAtlas data. With the same inputs and the same version of those rules, results are reproducible.</p>
+        <p>KinkAtlas does not send assessment content to an AI service. Only an explicit Save action stores an encrypted assessment, and only an explicit Link &amp; QR action hosts the approved historical result content described above.</p>
       </section>
       <section id="privacy" aria-labelledby="privacy-heading">
         <h2 id="privacy-heading">Privacy &amp; transparency</h2>
         <p>No account is required. KinkAtlas is ephemeral by default: assessment answers and results remain in browser memory unless you explicitly choose Save or Share. Refreshing or closing may clear unsaved work.</p>
-        <p>Save my assessment encrypts the complete assessment in your browser before uploading ciphertext. My KinkAtlas stores only an opaque ID, delete capability, optional name, harmless management metadata, and a non-exportable browser vault key locally. Saved assessments are available on that browser unless you delete its site data.</p>
-        <p>Quick Share stores the historical cards and approved result sections in plaintext so anyone with its high-entropy link can view them; it never includes raw answers. QR is generated locally and opens that same link. ConsentCapsule™ encrypts the same share content in the browser for a selected recipient browser key before uploading ciphertext.</p>
-        <p>Delete actions remove the hosted copy, but cannot recall screenshots, downloads, or copies another person already made. ConsentCapsule™ is a sharing feature and does not give or imply consent to any activity.</p>
+        <p>Save my assessment encrypts the complete assessment in your browser before storing it. My KinkAtlas lists saved assessments for that browser so you can reopen, rename, share, or delete them.</p>
+        <p>Link &amp; QR hosts the historical cards and approved result sections so anyone with its link can view them; it never includes raw individual answers. The QR is generated locally and opens that exact same link.</p>
+        <p>Delete actions remove the hosted copy so its link and QR stop loading, but cannot recall screenshots, downloads, or copies another person already made.</p>
         <p>Copying, downloading, exporting, or sharing a result is your choice. Copies you create may remain outside KinkAtlas after your assessment session ends.</p>
         <p>When you choose to view a completed assessment, your browser sends an empty same-origin request that increments an aggregate completion counter. The KinkAtlas application does not include assessment answers, results, roles, readiness information, boundaries, negotiation preferences, or other assessment content in that request.</p>
         <p>The application stores an aggregate number of assessment completions rather than a record of individual assessment users. The public total is approximate and should not be interpreted as a count of unique people.</p>

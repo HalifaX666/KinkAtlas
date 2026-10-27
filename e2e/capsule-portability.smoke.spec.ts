@@ -6,36 +6,20 @@ test('Secret Shared Disclosure stays in the fragment, removes it after capture, 
   const guards = await installBrowserGuards(page)
   await openPersonaResults(page, 'balanced-authority-pattern')
   await expect(page.locator('.current-role-cards-grid h3').first()).toBeVisible()
-  await page.getByText('Advanced privacy options').click()
-  const guide = page.locator('.portability-guide')
-  await expect(guide).toContainText('Public Card')
-  await expect(guide).toContainText('Revisit Link')
-  await expect(guide).toContainText('Secret Capsule')
-  await expect(guide).toContainText('Viewer-Locked Capsule')
-  await expect(guide).toContainText('Private Restore')
-  await expect(guide).toContainText('does not verify human identity')
   const expectedRoles = await page.locator('.current-role-cards-grid h3').allTextContents()
-  await page.getByRole('button', { name: 'Share', exact: true }).click()
-  const dialog = page.getByRole('dialog', { name: 'Share your KinkAtlas' })
-  await dialog.getByText('Advanced privacy options').click()
-  await expect(dialog.getByText('Public Cards are not confidential.', { exact: false })).toBeVisible()
-  for (const width of [320, 375, 430]) {
-    await page.setViewportSize({ width, height: 800 })
-    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
-  }
-  await dialog.getByRole('button', { name: /Encrypted Capsule/i }).click()
-  await expect(dialog.getByRole('checkbox', { name: /Current Role Set/i })).toBeChecked()
-  await expect(dialog.getByRole('checkbox', { name: /Role definitions/i })).toBeChecked()
-  await expect(dialog.getByRole('group', { name: 'Include in the encrypted disclosure' }).getByRole('checkbox')).toHaveCount(2)
-  await dialog.getByRole('button', { name: 'Create encrypted disclosure' }).click()
-  const artifact = {
-    link: await dialog.getByLabel('Encrypted Capsule link').inputValue(),
-    serializedEnvelope: await dialog.getByLabel('Encrypted Capsule text').inputValue(),
-    secret: await dialog.getByLabel(/Secret — never embedded in the link/i).inputValue(),
-  }
-  await expect(dialog.getByText(/too large for a reliable single QR code/i)).toBeVisible()
-  await expect(dialog.getByRole('button', { name: 'Show QR' })).toHaveCount(0)
-  await expectNoAxeViolations(page, 'Secret Shared Disclosure output')
+  const artifact = await page.evaluate(async () => {
+    const personasPath = '/src/tests/fixtures/assessmentPersonas.ts'
+    const runnerPath = '/src/tests/helpers/assessmentPersonaRunner.ts'
+    const dataPath = '/src/capsules/capsuleData.ts'
+    const transportPath = '/src/capsules/capsuleTransport.ts'
+    const [{ assessmentPersonas }, { evaluateAssessmentPersona }, { buildSharedDisclosurePayload }, { createSharedDisclosureArtifact }] = await Promise.all([
+      import(personasPath), import(runnerPath), import(dataPath), import(transportPath),
+    ])
+    const persona = assessmentPersonas.find((candidate: { id: string }) => candidate.id === 'balanced-authority-pattern')!
+    const evaluation = evaluateAssessmentPersona(persona)
+    const created = await createSharedDisclosureArtifact(buildSharedDisclosurePayload(evaluation.yourRoleSet), window.location.origin)
+    return { link: created.link, serializedEnvelope: created.serializedEnvelope, secret: created.secret }
+  })
 
   expect(artifact.link).not.toContain(artifact.secret)
   expect(artifact.serializedEnvelope).not.toContain(artifact.secret)
@@ -86,8 +70,7 @@ test('Private Restore export requires file, secret, preview, and explicit confir
   await expect(exportPage.locator('.current-role-cards-grid h3').first()).toBeVisible()
   const exportedRoles = await exportPage.locator('.current-role-cards-grid h3').allTextContents()
   const exportedDiscovery = await exportPage.locator('.role-grid > .role-card h3').allTextContents()
-  await exportPage.getByText('Advanced privacy options').click()
-  await exportPage.getByRole('link', { name: 'Create a Private Restore backup' }).click()
+  await exportPage.evaluate(() => { history.pushState(null, '', '/restore'); dispatchEvent(new PopStateEvent('popstate')) })
   await expect(exportPage).toHaveURL(/\/restore$/)
   await expect(exportPage.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
   await exportPage.getByRole('button', { name: 'Create encrypted restore' }).click()
@@ -108,8 +91,7 @@ test('Private Restore export requires file, secret, preview, and explicit confir
   await openPersonaResults(importPage, 'multiple-hard-limits-pattern')
   await expect(importPage.locator('.current-role-cards-grid h3').first()).toBeVisible()
   const existingRoles = await importPage.locator('.current-role-cards-grid h3').allTextContents()
-  await importPage.getByText('Advanced privacy options').click()
-  await importPage.getByRole('link', { name: 'Create a Private Restore backup' }).click()
+  await importPage.evaluate(() => { history.pushState(null, '', '/restore'); dispatchEvent(new PopStateEvent('popstate')) })
   await importPage.getByRole('button', { name: 'Private Restore file', exact: true }).setInputFiles(restoreFile)
   await expect(importPage.getByText(/Encrypted file validated/)).toBeVisible()
   await importPage.getByLabel('Restore secret').fill('KA1-wrong.secret')
@@ -132,8 +114,7 @@ test('Private Restore export requires file, secret, preview, and explicit confir
   await expect(importPage.getByRole('heading', { name: 'A map, not a verdict.' })).toBeVisible()
   expect(await importPage.locator('.current-role-cards-grid h3').allTextContents()).toEqual(existingRoles)
 
-  await importPage.getByText('Advanced privacy options').click()
-  await importPage.getByRole('link', { name: 'Create a Private Restore backup' }).click()
+  await importPage.evaluate(() => { history.pushState(null, '', '/restore'); dispatchEvent(new PopStateEvent('popstate')) })
   await importPage.getByRole('button', { name: 'Private Restore file', exact: true }).setInputFiles(restoreFile)
   await importPage.getByLabel('Restore secret').fill(secret)
   await importPage.getByRole('button', { name: 'Unlock preview' }).click()

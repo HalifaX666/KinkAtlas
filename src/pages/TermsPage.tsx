@@ -74,7 +74,7 @@ export function TermsPage() {
         <h2 id="terms-privacy-heading">6. Assessment privacy</h2>
         <p>KinkAtlas does not require an account to complete the assessment.</p>
         <p>Assessment answers and generated results are processed in your browser and remain ephemeral unless you explicitly use a Save or Share action. Refreshing or closing may clear unsaved assessment state.</p>
-        <p>Save my assessment encrypts full assessment state in the browser before remote storage. Quick Share intentionally stores the historical result needed by anyone with its link and excludes raw answers. ConsentCapsule™ stores client-encrypted share content. Browser-local management information and non-exportable keys may be kept in IndexedDB.</p>
+        <p>Save my assessment encrypts full assessment state in the browser before remote storage. Link &amp; QR intentionally hosts cards and approved historical result content for anyone with its link and excludes raw individual answers. Saved-assessment access and management information may be kept in the browser where the save was created.</p>
         <p>When you choose to view a completed assessment, KinkAtlas may send an empty same-origin request used to increment an aggregate completion counter. Assessment answers, results, roles, readiness information, boundaries, negotiation preferences, and other assessment content are not included in that request.</p>
         <p>The completion counter is intended to record only an aggregate number of completed assessments and should not be interpreted as a count of unique individuals.</p>
         <p>KinkAtlas infrastructure and third-party service providers may process limited technical information associated with normal website requests, such as IP addresses, browser or device information, request information, or security-related logs. Such processing does not mean that KinkAtlas stores your assessment answers or results.</p>
@@ -104,6 +104,7 @@ export function TermsPage() {
         <p>KinkAtlas does not automatically post information to, connect to, read from, or modify a FetLife profile or any other third-party social-media or community profile unless a separate feature expressly states otherwise.</p>
         <p>You are responsible for deciding what information you share, where you share it, and with whom.</p>
         <p>Once you share information outside KinkAtlas, the recipient or third-party platform may copy, retain, redistribute, or otherwise use that information according to its own practices and policies.</p>
+        <p>A Link &amp; QR share is available to anyone who has its link or scans its matching QR code. Deleting the hosted share stops that link and QR from loading but cannot recall screenshots, downloads, or other copies.</p>
       </section>
 
       <section aria-labelledby="terms-accuracy-heading">

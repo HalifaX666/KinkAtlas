@@ -203,8 +203,8 @@ export function AssessmentPage() {
             <div>
               <LockKeyhole />
               <p>
-                <strong>Answers stay in memory</strong>
-                <span>No account, browser storage, database, or answer transmission. Reloading erases your session.</span>
+                <strong>Unsaved answers stay in memory</strong>
+                <span>No account and no automatic saving. Reloading can erase your session unless you later choose Save my assessment.</span>
               </p>
             </div>
 

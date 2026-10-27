@@ -17,7 +17,7 @@ export function SaveAssessmentButton({ createBundle, disabled = false }: { creat
       const envelope = await encryptSavedAssessment(createBundle(), key)
       const created = await createHostedContent('saved-assessment', envelope)
       await saveAssessmentRecord({ id: created.id, createdAt: created.createdAt, deleteToken: created.deleteToken })
-      setSaved(true); setStatus('Assessment saved. It is encrypted and available from My KinkAtlas on this browser.')
+      setSaved(true); setStatus('Assessment saved. You can return to it from My KinkAtlas on this browser.')
     } catch { setStatus('The assessment could not be saved. Your current in-memory assessment was not changed.') }
     finally { setBusy(false) }
   }

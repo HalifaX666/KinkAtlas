@@ -52,7 +52,7 @@ export function HomePage() {
           </div>
           <div className="hero-trust">
             <span>No account</span>
-            <span>No answer storage</span>
+            <span>No automatic saving</span>
             <span>18+ only</span>
           </div>
 
@@ -145,7 +145,7 @@ export function HomePage() {
         <div className="faq-grid">
           <details>
             <summary>Will my answers be saved?</summary>
-            <p>Not automatically. Unsaved answers live only in browser memory, and reloading or closing this tab can erase them. Remote storage happens only after an explicit Save or Share action. Full saved assessments are encrypted in your browser before upload; there is no account or tracking pixel.</p>
+            <p>Not automatically. Unsaved answers live only in browser memory, and reloading or closing this tab can erase them. Your assessment is remotely stored only when you choose Save my assessment. Link &amp; QR hosts only the result you choose to share, never raw individual answers.</p>
           </details>
           <details>
             <summary>Can this tell me which role I am?</summary>

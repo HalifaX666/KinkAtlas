@@ -9,6 +9,8 @@ interface QrTransportProps {
   accessibleLabel: string
   description: string
   downloadName: string
+  initiallyVisible?: boolean
+  plainLanguage?: boolean
 }
 
 function unavailableMessage(reason: 'empty' | 'oversized' | 'revisit-deferred'): string {
@@ -17,7 +19,7 @@ function unavailableMessage(reason: 'empty' | 'oversized' | 'revisit-deferred'):
   return 'QR is unavailable because this artifact is empty.'
 }
 
-export function QrTransport({ transportText, artifactType, accessibleLabel, description, downloadName }: QrTransportProps) {
+export function QrTransport({ transportText, artifactType, accessibleLabel, description, downloadName, initiallyVisible = false, plainLanguage = false }: QrTransportProps) {
   const availability = useMemo(() => qrAvailability(transportText, artifactType), [artifactType, transportText])
   const [qr, setQr] = useState<QrTransportResult | null>(null)
   const [status, setStatus] = useState('')
@@ -26,7 +28,15 @@ export function QrTransport({ transportText, artifactType, accessibleLabel, desc
   useEffect(() => {
     setQr(null)
     setStatus('')
-  }, [artifactType, transportText])
+    if (!initiallyVisible || !availability.available) return
+    let active = true
+    void import('../qr/qrTransport').then(({ createQrTransport }) => {
+      if (active) setQr(createQrTransport(transportText, artifactType))
+    }).catch(() => {
+      if (active) setStatus('QR could not be created. Use the copyable link instead.')
+    })
+    return () => { active = false }
+  }, [artifactType, availability.available, initiallyVisible, transportText])
 
   if (!availability.available) {
     return <div className="qr-transport qr-transport-unavailable" data-qr-availability="unavailable">
@@ -100,8 +110,8 @@ export function QrTransport({ transportText, artifactType, accessibleLabel, desc
         <rect width={qr.matrixModules} height={qr.matrixModules} fill="#fff" />
         <path d={qr.svgPath} fill="#000" />
       </svg>
-      <p className="qr-transport-metadata">ECC {qr.errorCorrection} · QR version {qr.version} · {qr.byteCount} bytes</p>
-      <p>A screenshot or downloaded copy can be forwarded. QR adds no expiry, revocation, identity proof, or consent.</p>
+      {!plainLanguage && <p className="qr-transport-metadata">ECC {qr.errorCorrection} · QR version {qr.version} · {qr.byteCount} bytes</p>}
+      <p>{plainLanguage ? 'The QR can be saved or forwarded. It opens the same share as the link above.' : 'A screenshot or downloaded copy can be forwarded. QR adds no expiry, revocation, identity proof, or consent.'}</p>
       <button className="button secondary" type="button" onClick={() => void download()}><Download size={17} />Download QR as SVG</button>
     </div>}
     {status && <p className="share-status" aria-live="polite">{status}</p>}

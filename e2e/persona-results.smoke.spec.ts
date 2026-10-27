@@ -30,7 +30,10 @@ test("Persona smoke: completed assessment renders coherent Results", async ({ pa
   await expect(page.getByRole("heading", { name: "Reflection" })).toBeVisible();
   await expect(page.getByText(/Wants & boundaries/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Conversation starters" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save my assessment" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Share", exact: true })).toBeVisible();
+  await expect(page.locator(".role-set-primary-actions").getByRole("button")).toHaveCount(2);
+  await expect(page.getByText(/Advanced privacy options|Revisit|Secret Capsule|Viewer-Locked|Private Restore|ConsentCapsule/i)).toHaveCount(0);
 
   await openRoleSetBuilder(page);
   const suggested = await roleSetLabels(page, ".profile-recommendation-summary > ol > li .profile-suggestion-heading > strong");
@@ -97,7 +100,6 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   await page.getByRole("button", { name: "Share", exact: true }).click();
   let dialog = page.getByRole("dialog", { name: "Share your KinkAtlas" });
   await expect(dialog).toBeVisible();
-  await dialog.getByText("Advanced privacy options").click();
   expect(await roleSetLabels(page, ".role-card-options > label > span:last-child > strong")).toEqual(primaryOrder);
   await dialog.getByRole("button", { name: "Close export and sharing dialog" }).click();
 
@@ -109,7 +111,6 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   await page.getByRole("button", { name: "Share", exact: true }).click();
   dialog = page.getByRole("dialog", { name: "Share your KinkAtlas" });
   await expect(dialog).toBeVisible();
-  await dialog.getByText("Advanced privacy options").click();
   expect(await roleSetLabels(page, ".role-card-options > label > span:last-child > strong")).toEqual(suggested);
   await dialog.getByRole("button", { name: "Close export and sharing dialog" }).click();
 
@@ -141,7 +142,6 @@ test("Persona smoke: edited Your Role Set drives Export & Share", async ({ page 
   await page.getByRole("button", { name: "Share", exact: true }).click();
   dialog = page.getByRole("dialog", { name: "Share your KinkAtlas" });
   await expect(dialog).toBeVisible();
-  await dialog.getByText("Advanced privacy options").click();
   const exported = await roleSetLabels(page, ".role-card-options > label > span:last-child > strong");
   expect(exported).toEqual(edited);
   expect(exported).not.toContain(replacedRole);

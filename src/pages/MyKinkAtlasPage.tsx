@@ -59,7 +59,7 @@ export function MyKinkAtlasPage() {
       const created = await createHostedContent('quick-share', selected.bundle.sharePackage)
       const url = hostedShareUrl('quick-share', created.id)
       await saveHostedShareRecord({ ...created, kind: 'quick-share', url })
-      setShareUrl(url); setStatus('Quick Share Link created. Anyone with this link can view the shared result.')
+      setShareUrl(url); setStatus('Share created. Anyone with this link can view the shared result.')
     } catch { setStatus('The share could not be created. The saved assessment was not changed.') }
     finally { setBusy(false) }
   }
@@ -85,14 +85,14 @@ export function MyKinkAtlasPage() {
   }
 
   return <div className="section page-width my-kinkatlas">
-    <div className="section-heading"><span className="eyebrow">My KinkAtlas</span><h1>Saved assessments</h1><p>Saved assessments are encrypted before upload and available only with this browser’s local vault key. KinkAtlas does not save assessments automatically.</p></div>
+    <div className="section-heading"><span className="eyebrow">My KinkAtlas</span><h1>Saved assessments</h1><p>Your saved assessments on this browser. KinkAtlas does not save assessments automatically, and saves do not sync to other browsers or devices.</p></div>
     {!records.length ? <div className="empty-panel"><p>No assessments have been explicitly saved on this browser.</p><Link className="button primary" to="/assessment">Start exploring</Link></div> : <ul className="saved-assessment-list">{records.map((record) => <li key={record.id}>
       <div><strong>{record.name ?? 'Saved KinkAtlas assessment'}</strong><span>{new Date(record.createdAt).toLocaleString()}</span></div>
       <div className="share-actions"><button className="button secondary" type="button" disabled={busy} onClick={() => void open(record)}>Open</button><button className="quiet-button" type="button" onClick={() => { setRenaming(record.id); setName(record.name ?? '') }}>Rename</button><button className="quiet-button" type="button" onClick={() => setConfirmDelete(record.id)}>Delete</button></div>
       {renaming === record.id && <div className="saved-inline-action"><label><span>Saved name</span><input maxLength={120} value={name} onChange={(event) => setName(event.target.value)} /></label><button className="button secondary" type="button" onClick={() => void rename(record)}>Save name</button><button className="quiet-button" type="button" onClick={() => setRenaming(null)}>Cancel</button></div>}
-      {confirmDelete === record.id && <div className="saved-inline-action" role="alert"><p>Delete this hosted encrypted assessment? This cannot recall copies already made.</p><button className="button primary" type="button" disabled={busy} onClick={() => void remove(record)}>Confirm delete</button><button className="quiet-button" type="button" onClick={() => setConfirmDelete(null)}>Cancel</button></div>}
+      {confirmDelete === record.id && <div className="saved-inline-action" role="alert"><p>Delete this saved assessment? This cannot recall copies already made.</p><button className="button primary" type="button" disabled={busy} onClick={() => void remove(record)}>Confirm delete</button><button className="quiet-button" type="button" onClick={() => setConfirmDelete(null)}>Cancel</button></div>}
     </li>)}</ul>}
     <p className="share-status" role="status" aria-live="polite">{status}</p>
-    {selected && <section className="saved-assessment-preview" aria-labelledby="saved-preview-heading"><h2 id="saved-preview-heading" ref={previewHeading} tabIndex={-1}>Saved assessment preview</h2><p>Review the historical cards and result before replacing current in-memory work.</p>{hasMeaningfulSession && <p className="safety-disclaimer"><strong>Current work warning:</strong> confirmation can replace the assessment currently held in this tab.</p>}<div className="share-actions"><button className="button primary" type="button" disabled={busy} onClick={() => void restore()}>Confirm and open assessment</button><button className="button secondary" type="button" disabled={busy} onClick={() => void share()}>Share</button></div>{shareUrl && <label className="saved-share-link"><span>Quick Share Link</span><input readOnly value={shareUrl} /></label>}<SharedResultView sharePackage={selected.bundle.sharePackage} /></section>}
+    {selected && <section className="saved-assessment-preview" aria-labelledby="saved-preview-heading"><h2 id="saved-preview-heading" ref={previewHeading} tabIndex={-1}>Saved assessment preview</h2><p>Review the historical cards and result before replacing current work in this tab.</p>{hasMeaningfulSession && <p className="safety-disclaimer"><strong>Current work warning:</strong> confirmation can replace the assessment currently held in this tab.</p>}<div className="share-actions"><button className="button primary" type="button" disabled={busy} onClick={() => void restore()}>Confirm and open assessment</button><button className="button secondary" type="button" disabled={busy} onClick={() => void share()}>Share</button></div>{shareUrl && <label className="saved-share-link"><span>Share link</span><input readOnly value={shareUrl} /></label>}<SharedResultView sharePackage={selected.bundle.sharePackage} /></section>}
   </div>
 }

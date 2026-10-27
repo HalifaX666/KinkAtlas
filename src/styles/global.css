@@ -3318,6 +3318,12 @@ summary:focus-visible {
   align-items: flex-start;
 }
 
+.role-set-primary-actions > .button,
+.save-assessment-action > .button {
+  min-height: 48px;
+  justify-content: center;
+}
+
 .save-assessment-action {
   display: grid;
   gap: 0.4rem;
@@ -3329,6 +3335,83 @@ summary:focus-visible {
 
 .simple-share {
   margin-bottom: 1.25rem;
+}
+
+.share-export-options {
+  margin-bottom: 1.5rem;
+}
+
+.share-option-panel {
+  min-width: 0;
+}
+
+.link-share-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.link-share-preview > article {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: center;
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.link-share-preview svg {
+  width: 64px;
+  height: 64px;
+}
+
+.link-share-preview div {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.link-share-preview span,
+.link-share-preview p,
+.share-delete-note {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.link-share-preview p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.link-share-ready {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+  margin-top: 1rem;
+}
+
+.link-share-ready label {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.link-share-ready input {
+  width: 100%;
+  min-width: 0;
+}
+
+.share-delete-note {
+  max-width: 62ch;
+  margin: 0;
 }
 
 .simple-share-grid {

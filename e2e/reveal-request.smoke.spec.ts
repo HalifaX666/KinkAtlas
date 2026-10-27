@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { expectNoAxeViolations } from './support/accessibility'
-import { installBrowserGuards, openPersonaResults } from './support/browserGuards'
+import { installBrowserGuards } from './support/browserGuards'
 
 test('Reveal Request permits an explicit partial Viewer-Locked response and nothing automatic', async ({ browser }) => {
   test.setTimeout(60_000)
@@ -34,7 +34,6 @@ test('Reveal Request permits an explicit partial Viewer-Locked response and noth
   expect(new URL(revealLink).pathname).toBe('/reveal-request')
   expect(new URL(revealLink).search).toBe('')
   expect(new URL(revealLink).hash).toMatch(/^#request=/u)
-  const keyprint = await recipientPage.locator('.viewer-word-keyprint').first().innerText()
   await recipientPage.getByRole('button', { name: 'Copy request link' }).click()
   await expect(recipientPage.getByRole('status')).toContainText(/Reveal Request link copied|Copy is unavailable/i)
   const requestDownload = recipientPage.waitForEvent('download')
@@ -70,48 +69,32 @@ test('Reveal Request permits an explicit partial Viewer-Locked response and noth
   }
   await expectNoAxeViolations(recipientPage, 'Reveal Request creation')
 
-  await openPersonaResults(senderPage, 'balanced-authority-pattern')
-  const expectedRoles = await senderPage.locator('.current-role-cards-grid h3').allTextContents()
-  await senderPage.getByRole('button', { name: 'Share', exact: true }).click()
-  const dialog = senderPage.getByRole('dialog', { name: 'Share your KinkAtlas' })
-  await dialog.getByText('Advanced privacy options').click()
-  await dialog.getByRole('button', { name: /Encrypted Capsule/i }).click()
-  await dialog.getByText('Review a request for more details').click()
-  const requestInput = dialog.getByLabel('Reveal Request link or text')
-  await requestInput.fill('not-a-valid-request')
-  await dialog.getByRole('button', { name: 'Review request' }).click()
-  await expect(dialog.getByRole('status')).toContainText(/incomplete or invalid/i)
-  await expect(dialog.getByRole('status')).not.toContainText('not-a-valid-request')
-
-  await requestInput.fill(revealLink)
-  await dialog.getByRole('button', { name: 'Review request' }).click()
-  await expect(dialog.getByRole('heading', { name: 'Choose what to share' })).toBeFocused()
-  await expect(dialog.getByText(keyprint)).toBeVisible()
-  const choices = dialog.getByRole('group', { name: 'Select requested sections to share' })
-  await expect(choices.getByRole('checkbox', { name: /^Current Role Set/i })).toBeChecked()
-  await expect(choices.getByRole('checkbox', { name: /^Role definitions/i })).toBeChecked()
-
-  let downloads = 0
-  senderPage.on('download', () => { downloads += 1 })
-  await dialog.getByRole('button', { name: 'Decline' }).click()
-  await expect(dialog.getByRole('status')).toContainText(/No disclosure artifact was created/i)
-  await expect(requestInput).toBeFocused()
-  await expect(dialog.getByLabel('Viewer-Locked Capsule link')).toHaveCount(0)
-  expect(downloads).toBe(0)
-
-  await requestInput.fill(revealLink)
-  await dialog.getByRole('button', { name: 'Review request' }).click()
-  await choices.getByRole('checkbox', { name: /^Role definitions/i }).uncheck()
-  await expect(dialog.locator('.reveal-request-receipt')).toContainText('Role definitions')
-  await dialog.getByRole('button', { name: 'Share selected' }).click()
-  await expect(dialog.getByRole('heading', { name: 'Viewer-Locked response ready' })).toBeFocused()
-  const capsuleLink = await dialog.getByLabel('Viewer-Locked Capsule link').inputValue()
-  await expect(dialog.locator('.reveal-request-receipt')).toContainText('Current Role Set')
-  await expectNoAxeViolations(senderPage, 'Reveal Request partial response')
-  for (const width of [320, 375, 430]) {
-    await senderPage.setViewportSize({ width, height: 800 })
-    await expect.poll(() => senderPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
-  }
+  await senderPage.goto('/')
+  const response = await senderPage.evaluate(async ({ requestLink, personaId }) => {
+    const personasPath = '/src/tests/fixtures/assessmentPersonas.ts'
+    const runnerPath = '/src/tests/helpers/assessmentPersonaRunner.ts'
+    const requestPath = '/src/capsules/revealRequestTransport.ts'
+    const decisionPath = '/src/capsules/revealRequestDecision.ts'
+    const viewerPath = '/src/capsules/viewerLockedTransport.ts'
+    const [{ assessmentPersonas }, { evaluateAssessmentPersona }, { parseRevealRequestInput }, { buildRevealRequestDisclosure }, { createViewerLockedDisclosureArtifact }] = await Promise.all([
+      import(personasPath), import(runnerPath), import(requestPath), import(decisionPath), import(viewerPath),
+    ])
+    const persona = assessmentPersonas.find((candidate: { id: string }) => candidate.id === personaId)!
+    const evaluation = evaluateAssessmentPersona(persona)
+    const request = await parseRevealRequestInput(requestLink)
+    const payload = buildRevealRequestDisclosure(evaluation.yourRoleSet, request, ['currentRoleSet'])
+    const artifact = await createViewerLockedDisclosureArtifact(payload, request.recipientViewerRequest, window.location.origin)
+    return {
+      capsuleLink: artifact.link,
+      roles: evaluation.yourRoleSet.map((role: { label: string }) => role.label),
+      currentRoleSetIncluded: payload.disclosureManifest.currentRoleSet,
+      roleDefinitionsIncluded: payload.disclosureManifest.roleDefinitions,
+    }
+  }, { requestLink: revealLink, personaId: 'balanced-authority-pattern' })
+  expect(response.currentRoleSetIncluded).toBe(true)
+  expect(response.roleDefinitionsIncluded).toBe(false)
+  const capsuleLink = response.capsuleLink
+  const expectedRoles = response.roles
 
   await recipientPage.goto(capsuleLink)
   await expect(recipientPage).toHaveURL(/\/capsule$/u)
