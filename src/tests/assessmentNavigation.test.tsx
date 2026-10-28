@@ -18,6 +18,10 @@ function currentRadios(): HTMLInputElement[] {
   return screen.getAllByRole("radio") as HTMLInputElement[];
 }
 
+function boundarySelects(): HTMLSelectElement[] {
+  return within(screen.getByRole("main")).getAllByRole("combobox") as HTMLSelectElement[];
+}
+
 function continueThroughRefinement() {
   expect(screen.getByRole("heading", { name: "Refine" })).toBeInTheDocument();
 
@@ -64,7 +68,7 @@ function completeReadiness() {
 }
 
 function completeBoundaries() {
-  screen.getAllByRole("combobox").forEach((select) => fireEvent.change(select, { target: { value: "prefer-not" } }));
+  boundarySelects().forEach((select) => fireEvent.change(select, { target: { value: "prefer-not" } }));
   expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
   fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 }
@@ -279,12 +283,12 @@ describe("assessment navigation", () => {
     for (let index = 1; index < readinessSet.length; index += 1) fireEvent.click(currentRadios()[0]);
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
-    const firstBoundary = screen.getAllByRole("combobox")[0] as HTMLSelectElement;
+    const firstBoundary = boundarySelects()[0];
     fireEvent.change(firstBoundary, { target: { value: "love" } });
     routeRoundTrip();
     expect(screen.getByRole("heading", { name: "Define" })).toBeInTheDocument();
-    expect(screen.getAllByRole("combobox")[0]).toHaveValue("love");
-    screen.getAllByRole("combobox").slice(1).forEach((select) => fireEvent.change(select, { target: { value: "prefer-not" } }));
+    expect(boundarySelects()[0]).toHaveValue("love");
+    boundarySelects().slice(1).forEach((select) => fireEvent.change(select, { target: { value: "prefer-not" } }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
     fireEvent.click(currentRadios()[0]);
@@ -351,7 +355,7 @@ describe("assessment navigation", () => {
     fireEvent.click(currentRadios()[0]);
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
-    expect(screen.getAllByRole("combobox")).toHaveLength(boundaryItems.length);
+    expect(boundarySelects()).toHaveLength(boundaryItems.length);
     completeBoundaries();
     const firstAnswer = currentRadios()[0];
     const changedAnswer = currentRadios()[1];

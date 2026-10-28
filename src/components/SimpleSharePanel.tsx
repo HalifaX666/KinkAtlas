@@ -59,7 +59,7 @@ export function SimpleSharePanel({ sharePackage }: { sharePackage: SharePackage 
       <button className="button secondary" type="button" onClick={() => void copy(quick.url)}><Copy size={17} />Copy link</button>
       <QrTransport transportText={quick.url} artifactType="quick-share" accessibleLabel="QR code for shared KinkAtlas result" description="This QR opens the exact same shared result as the link above." downloadName="kinkatlas-share-qr.svg" initiallyVisible plainLanguage />
       <p className="share-delete-note">Deleting this share makes the hosted link and QR stop working. It cannot remove screenshots or copies someone already saved.</p>
-      <button className="quiet-button" type="button" disabled={busy} onClick={() => void remove(quick)}><Trash2 size={16} />Delete share</button>
+      <button className="button danger" type="button" disabled={busy} onClick={() => void remove(quick)}><Trash2 size={16} />Delete share</button>
     </div>}
     {status && <p className="share-status" role="status" aria-live="polite">{status}</p>}
   </section>

@@ -3,6 +3,7 @@ import { expectNoAxeViolations } from './support/accessibility'
 import { installBrowserGuards, openPersonaResults, openRoleSetBuilder } from './support/browserGuards'
 
 test('high-value application states have no WCAG A/AA axe violations', async ({ page }) => {
+  await page.addInitScript(() => window.localStorage.setItem('kinkatlas-theme', 'dark'))
   const guards = await installBrowserGuards(page)
 
   await page.goto('/')
@@ -65,5 +66,41 @@ test('high-value application states have no WCAG A/AA axe violations', async ({ 
   await page.getByRole('link', { name: /Explore this result/i }).first().click()
   await expect(page.getByRole('heading', { name: 'How this relates to your answers' })).toBeVisible()
   await expectNoAxeViolations(page, 'Role detail')
+  await guards.assertClean()
+})
+
+test('Light theme has no WCAG A/AA axe violations on key public and private surfaces', async ({ page }) => {
+  await page.addInitScript(() => window.localStorage.setItem('kinkatlas-theme', 'light'))
+  const guards = await installBrowserGuards(page)
+
+  await page.goto('/')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+  await expectNoAxeViolations(page, 'Light Home')
+
+  await page.goto('/assessment')
+  await page.getByRole('button', { name: /begin/i }).click()
+  await expect(page.locator('fieldset.question-card')).toBeVisible()
+  await expectNoAxeViolations(page, 'Light Assessment question')
+
+  await page.goto('/about')
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await expectNoAxeViolations(page, 'Light About')
+
+  await page.goto('/faq')
+  await expect(page.getByRole('heading', { name: 'Common questions, clear answers.' })).toBeVisible()
+  await expectNoAxeViolations(page, 'Light FAQ')
+
+  await openPersonaResults(page, 'balanced-authority-pattern')
+  await expectNoAxeViolations(page, 'Light Results')
+  await page.getByRole('button', { name: 'Share', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Share your KinkAtlas' })
+  await expectNoAxeViolations(page, 'Light Share options')
+  await dialog.getByRole('button', { name: /Link & QR/i }).click()
+  await expectNoAxeViolations(page, 'Light Link and QR before creation')
+  await page.keyboard.press('Escape')
+
+  await page.goto('/my-kinkatlas')
+  await expect(page.getByRole('heading', { name: 'Saved assessments' })).toBeVisible()
+  await expectNoAxeViolations(page, 'Light My KinkAtlas')
   await guards.assertClean()
 })

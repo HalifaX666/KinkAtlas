@@ -44,7 +44,11 @@ test('targeted Results and role navigation preserve the current role set', async
   const before = await namedRoleSetLabels(page, 'Current role set')
   await expect(page.getByRole('list', { name: 'Current role cards' }).locator('.role-identity-card')).toHaveCount(before.length)
 
-  await page.getByRole('link', { name: /Explore this result/i }).first().click()
+  const exploreResult = page.getByRole('link', { name: /Explore this result/i }).first()
+  await Promise.all([
+    page.waitForURL(/\/roles\//),
+    exploreResult.dispatchEvent('click'),
+  ])
   await expect(page.getByRole('heading', { name: 'How this relates to your answers' })).toBeVisible()
   await page.getByRole('link', { name: 'Back to your results' }).click()
   await expect(page.getByRole('heading', { name: 'Role discovery' })).toBeVisible()

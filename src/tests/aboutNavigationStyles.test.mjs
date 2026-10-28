@@ -16,7 +16,7 @@ describe('About contents navigation styles', () => {
 
 describe('accessibility CSS safeguards', () => {
   it('defines the shared accent token and keeps normal page text selectable', () => {
-    expect(css).toMatch(/--accent:\s*var\(--gold\);/)
+    expect(css).toMatch(/--accent:\s*var\(--color-accent\);/)
     expect(css).not.toMatch(/body\s*\{[^}]*user-select:\s*none;/s)
     expect(css).toMatch(/\.button,[\s\S]*summary\s*\{\s*user-select:\s*none;/)
   })

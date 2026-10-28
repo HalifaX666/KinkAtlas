@@ -50,13 +50,18 @@ const data: ShareResultsData = {
 const originalCreateObjectURL = URL.createObjectURL
 const originalRevokeObjectURL = URL.revokeObjectURL
 
-function mockImageExport(downloads?: string[], drawnText?: string[]) {
+function mockImageExport(downloads?: string[], drawnText?: string[], drawnStyles?: string[]) {
   const gradient = { addColorStop: vi.fn() }
   const context = {
-    fillStyle: '', strokeStyle: '', lineWidth: 0, font: '',
+    strokeStyle: '', lineWidth: 0, font: '',
     lineCap: '', lineJoin: '',
     fillRect: vi.fn(), createRadialGradient: vi.fn(() => gradient), beginPath: vi.fn(), closePath: vi.fn(), arc: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(), bezierCurveTo: vi.fn(), stroke: vi.fn(), fillText: vi.fn((text: string) => drawnText?.push(text)),
   }
+  let fillStyle = ''
+  Object.defineProperty(context, 'fillStyle', {
+    get: () => fillStyle,
+    set: (value: string) => { fillStyle = value; drawnStyles?.push(value) },
+  })
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context as unknown as CanvasRenderingContext2D)
   vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((callback) => callback(new Blob(['local image'], { type: 'image/png' })))
   Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:local-card') })
@@ -115,6 +120,23 @@ async function searchResultFor(label: string) {
 }
 
 describe('Export & Share dialog', () => {
+  it('keeps exported role-card artwork on the fixed dark palette in both app themes', async () => {
+    const styles: string[] = []
+    mockImageExport(undefined, undefined, styles)
+    const role = getShareableRoleSet(data.roleSet, data.roleResults)[0]
+
+    document.documentElement.dataset.theme = 'dark'
+    await createRoleCardImage(role)
+    const darkThemeStyles = [...styles]
+    styles.length = 0
+
+    document.documentElement.dataset.theme = 'light'
+    await createRoleCardImage(role)
+    expect(styles).toEqual(darkThemeStyles)
+    expect(styles).toContain('#1b181a')
+    expect(styles).toContain('#f4efeb')
+  })
+
   it('opens directly to the four primary Share / Export options without legacy controls', () => {
     render(<ShareResultsDialog data={data} sharePackage={{} as SharePackage} onClose={vi.fn()} />)
 

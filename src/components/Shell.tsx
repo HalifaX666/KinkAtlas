@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { BrandLogo } from "./BrandLogo";
+import { ThemeControl } from "./ThemeControl";
 
 export function Shell() {
   return (
@@ -11,14 +12,17 @@ export function Shell() {
         <Link className="wordmark" to="/" aria-label="Kink Atlas home">
           <BrandLogo size="header" />
         </Link>
-        <nav aria-label="Main navigation">
-          <NavLink to="/roles">Role Library</NavLink>
-          <NavLink to="/philosophy">Consent philosophy</NavLink>
-          <NavLink to="/about">About</NavLink>
-          <NavLink to="/assessment" className="nav-cta">
-            Start exploring
-          </NavLink>
-        </nav>
+        <div className="header-actions">
+          <nav aria-label="Main navigation">
+            <NavLink to="/roles">Role Library</NavLink>
+            <NavLink to="/philosophy">Consent philosophy</NavLink>
+            <NavLink to="/about">About</NavLink>
+            <NavLink to="/assessment" className="nav-cta">
+              Start exploring
+            </NavLink>
+          </nav>
+          <ThemeControl />
+        </div>
       </header>
       <main id="main">
         <Outlet />

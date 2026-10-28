@@ -134,7 +134,8 @@ describe("assessment flow", () => {
 
     expect(screen.getByText(/Your assessment is not remotely saved unless you explicitly choose Save or Share/i)).toBeInTheDocument();
 
-    expect(screen.getByRole("button", { name: /save my assessment/i })).toBeVisible();
+    const saveAssessment = screen.getByRole("button", { name: /save my assessment/i });
+    expect(saveAssessment).toBeVisible();
     for (const removed of ["Advanced privacy options", "Revisit", "Secret Capsule", "Viewer-Locked", "Private Restore", "ConsentCapsule"]) {
       expect(screen.queryByText(removed, { exact: false })).not.toBeInTheDocument();
     }
@@ -142,6 +143,9 @@ describe("assessment flow", () => {
     const shareResults = await screen.findByRole("button", {
       name: /^share$/i,
     });
+    expect(saveAssessment.closest(".role-set-primary-actions")).toBe(shareResults.closest(".role-set-primary-actions"));
+    expect(saveAssessment).toHaveClass("button", "primary");
+    expect(shareResults).toHaveClass("button", "secondary");
     await waitFor(() => expect(shareResults).toBeEnabled());
     fireEvent.click(shareResults);
     expect(await screen.findByRole("dialog", { name: /share your kinkatlas/i })).toBeInTheDocument();
