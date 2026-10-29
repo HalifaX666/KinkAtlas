@@ -48,7 +48,6 @@ export function HomePage() {
             <a className="button secondary" href="/about#how-it-works">
               How this works
             </a>
-            <Link className="quiet-button" to="/restore">Restore a private backup</Link>
           </div>
           <div className="hero-trust">
             <span>No account</span>
