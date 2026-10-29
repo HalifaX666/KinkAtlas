@@ -25,6 +25,7 @@
     "test:e2e:preview": "npm run build && npm run test:e2e:boundary && playwright test --config playwright.preview.config.ts",
     "test:e2e:ci": "npm run build && npm run test:e2e:smoke && npm run test:e2e:cross-browser && npm run test:e2e:revisit && npm run test:e2e:a11y && npm run test:e2e:preview",
     "phase-j:audit": "vite-node scripts/generate-phase-j-audit.ts",
+    "phase-j:family-audit": "vite-node scripts/generate-phase-j1-family-audit.ts",
     "calibrate": "vitest run --config vitest.public.config.ts src/calibration/calibrationReport.test.ts src/calibration/recommendationReport.test.ts --reporter=verbose",
     "role-library:generate": "vite-node scripts/generate-role-library-runtime.ts",
     "role-library:check": "vite-node scripts/check-role-library-drift.ts",
