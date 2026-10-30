@@ -25,13 +25,20 @@ test("Persona smoke: completed assessment renders coherent Results", async ({ pa
   const guards = await installBrowserGuards(page);
   await openPersonaResults(page, "balanced-authority-pattern");
 
-  await expect(page.getByRole("heading", { name: "Strongest dimensions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What your answers suggest" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Suggested Role Set" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your Role Set", exact: true })).toBeVisible();
+  await expect(page.getByText(/not certainty about your identity/i)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Role discovery" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Reflection" })).toBeVisible();
-  await expect(page.getByText(/Wants & boundaries/)).toBeVisible();
+  await expect(page.locator("#boundaries")).toContainText("Wants & boundaries");
   await expect(page.getByRole("heading", { name: "Conversation starters" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Save my assessment" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Share", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Full Reflection", exact: true }).click();
+  const reflectionDialog = page.getByRole("dialog", { name: "Share your KinkAtlas" });
+  await expect(reflectionDialog.getByRole("heading", { name: "Full Reflection" })).toBeVisible();
+  await reflectionDialog.getByRole("button", { name: "Close export and sharing dialog" }).click();
   await expect(page.locator(".role-set-primary-actions").getByRole("button")).toHaveCount(2);
   await expect(page.getByText(/Advanced privacy options|Revisit|Secret Capsule|Viewer-Locked|Private Restore|ConsentCapsule/i)).toHaveCount(0);
 
@@ -176,7 +183,7 @@ test("Persona smoke: hard-limit profile preserves coherent Results", async ({ pa
   await openRoleSetBuilder(page);
 
   await expect(page.getByRole("heading", { name: "Role discovery" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Suggested role set" })).toBeVisible();
+  await expect(page.locator("details.profile-builder-disclosure").getByRole("heading", { name: "Suggested role set", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Your role set", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Reflection" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Independent by design" })).toBeVisible();
@@ -271,19 +278,23 @@ test("Persona smoke: confirmed Rigger retains scored assessment evidence", async
   await guards.assertClean();
 });
 
-test("Persona smoke: Results and role editing remain usable at mobile width", async ({ page }) => {
+test("Persona smoke: Results and role editing remain usable across mobile and zoom-equivalent reflow widths", async ({ page }) => {
   const guards = await installBrowserGuards(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await openPersonaResults(page, "balanced-authority-pattern");
   await openRoleSetBuilder(page);
 
-  await expect(page.getByRole("heading", { name: "Suggested role set" })).toBeVisible();
+  await expect(page.locator("details.profile-builder-disclosure").getByRole("heading", { name: "Suggested role set", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Your role set", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: /make .* primary/i }).first()).toBeVisible();
   await expect(page.getByText("Why this result appeared").first()).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Explore your results" })).toBeVisible();
 
-  const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
-  expect(hasHorizontalOverflow).toBe(false);
+  for (const width of [320, 375, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    expect(hasHorizontalOverflow, `${width}px Results layout overflowed`).toBe(false);
+  }
 
   await expectRenderedSanity(page);
   await guards.assertClean();

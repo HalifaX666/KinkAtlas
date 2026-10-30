@@ -18,7 +18,7 @@ import {
   type ShareResultsData,
 } from '../engine/shareResults'
 
-type ShareMode = 'cards' | 'quick' | 'full' | 'link'
+export type ShareMode = 'cards' | 'quick' | 'full' | 'link'
 
 const shareChoices: { key: keyof ShareOptions; label: string; detail: string; sensitive?: boolean }[] = [
   { key: 'roles', label: 'Your Role Set', detail: 'The current roles and order you chose.' },
@@ -37,9 +37,9 @@ const modes: { id: ShareMode; label: string; description: string; icon: typeof I
   { id: 'link', label: 'Link & QR', description: 'Create one share link and matching QR code for your cards and historical result.', icon: Link2 },
 ]
 
-export function ShareResultsDialog({ data, sharePackage, onClose }: { data: ShareResultsData; sharePackage?: SharePackage; onClose: () => void }) {
+export function ShareResultsDialog({ data, sharePackage, initialMode = 'cards', onClose }: { data: ShareResultsData; sharePackage?: SharePackage; initialMode?: ShareMode; onClose: () => void }) {
   const roleCards = useMemo(() => getShareableRoleSet(data.roleSet, data.roleResults), [data.roleSet, data.roleResults])
-  const [mode, setMode] = useState<ShareMode>('cards')
+  const [mode, setMode] = useState<ShareMode>(initialMode)
   const [selectedIds, setSelectedIds] = useState(() => new Set(roleCards.map((role) => role.id)))
   const [overviewConfidence, setOverviewConfidence] = useState(true)
   const [options, setOptions] = useState<ShareOptions>(defaultShareOptions)

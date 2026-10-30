@@ -143,7 +143,7 @@ test('Full journey: sparse and uncertain answers produce a coherent map without 
   expect(trace.boundaries.length).toBeGreaterThan(0)
   expect(trace.negotiation.length).toBeGreaterThan(0)
 
-  await expect(page.getByRole('heading', { name: 'Strongest dimensions' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'What your answers suggest' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Reflection' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Independent by design' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Conversation starters' })).toBeVisible()

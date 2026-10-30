@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
 
@@ -148,9 +148,10 @@ describe("assessment flow", () => {
     expect(shareResults).toHaveClass("button", "secondary");
     await waitFor(() => expect(shareResults).toBeEnabled());
     fireEvent.click(shareResults);
-    expect(await screen.findByRole("dialog", { name: /share your kinkatlas/i })).toBeInTheDocument();
+    const shareDialog = await screen.findByRole("dialog", { name: /share your kinkatlas/i });
+    expect(shareDialog).toBeInTheDocument();
     for (const option of ["Public Card", "Quick Summary", "Full Reflection", "Link & QR"]) {
-      expect(screen.getByRole("button", { name: new RegExp(option, "i") })).toBeVisible();
+      expect(within(shareDialog).getByRole("button", { name: new RegExp(option, "i") })).toBeVisible();
     }
     expect(screen.queryByText("Advanced privacy options", { exact: false })).not.toBeInTheDocument();
     expect(screen.queryByText("ConsentCapsule", { exact: false })).not.toBeInTheDocument();

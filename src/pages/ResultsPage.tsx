@@ -6,11 +6,11 @@ import { ShareResultsDialog } from "../components/ShareResultsDialog";
 import { SaveAssessmentButton } from "../components/SaveAssessmentButton";
 import { RoleProfileBuilderLauncher } from "../components/RoleProfileBuilderLauncher";
 import { RoleSetIdentityGallery } from "../components/RoleSetIdentityGallery";
+import { ResultsSummary } from "../components/ResultsSummary";
 import { boundaryItems, boundaryOptions } from "../data/boundaries";
 import { getConversationStarter } from "../data/conversationStarters";
 import { negotiationQuestions } from "../data/negotiation";
 import { competencyDefinitions } from "../data/readiness";
-import { traitById } from "../data/traits";
 import { useAssessment } from "../context/AssessmentContext";
 import { buildPrivateRestoreState, buildResultSnapshot } from "../capsules/capsuleData";
 import { buildSharePackage } from "../sharing/sharePackage";
@@ -20,7 +20,9 @@ import { activityRecommendations } from "../engine/activityRecommendations";
 import { generateRecommendations } from "../engine/recommendations";
 import { evaluateReadiness } from "../engine/readinessScoring";
 import { matchRoles } from "../engine/roleMatching";
-import { buildSuggestedRoleProfileEntries } from "../engine/roleProfileOptimizer";
+import { preferredPrimaryRoleIdsFromRefinement } from "../engine/refinementEvidence";
+import { buildEditableRoleProfileEntries, buildRoleProfileCandidates, optimizeRoleProfile, roleProfileEntriesEqual } from "../engine/roleProfileOptimizer";
+import type { ShareMode } from "../components/ShareResultsDialog";
 import type { ReadinessBand } from "../types";
 
 const readinessLabels: Record<ReadinessBand, string> = { strong: "Established", developing: "Building", explore: "Further reflection", important: "Needs more reflection" };
@@ -29,10 +31,17 @@ const blindSpotLabels = { notice: "Reflection cue", concern: "Worth reviewing", 
 export function ResultsPage() {
   const { answers, assessmentNavigation, assessmentCompletion, currentRoleSet, setCurrentRoleSet, initializeCurrentRoleSet, completionRequested, historicalResultSnapshot } = useAssessment();
   const [sharing, setSharing] = useState(false);
+  const [shareMode, setShareMode] = useState<ShareMode>("cards");
   const traitScores = useMemo(() => calculateTraitScores(answers.discovery), [answers.discovery]);
   const roleResults = useMemo(() => matchRoles(traitScores, answers.discovery), [traitScores, answers.discovery]);
-  const suggestedRoleSet = useMemo(() => buildSuggestedRoleProfileEntries(roleResults, answers.refinement, answers.discovery), [roleResults, answers.refinement, answers.discovery]);
+  const roleProfileOptimization = useMemo(() => optimizeRoleProfile(
+    buildRoleProfileCandidates(roleResults, answers.refinement, answers.discovery),
+    5,
+    { preferredPrimaryRoleIds: preferredPrimaryRoleIdsFromRefinement(answers.refinement, answers.discovery) },
+  ), [roleResults, answers.refinement, answers.discovery]);
+  const suggestedRoleSet = useMemo(() => buildEditableRoleProfileEntries(roleProfileOptimization), [roleProfileOptimization]);
   const visibleRoleSet = currentRoleSet ?? suggestedRoleSet;
+  const roleSetIsEdited = !roleProfileEntriesEqual(visibleRoleSet, suggestedRoleSet);
   const activityGuidance = useMemo(() => activityRecommendations(answers.boundaries, boundaryItems), [answers.boundaries]);
   const readiness = useMemo(() => evaluateReadiness(answers.readiness), [answers.readiness]);
   const recommendations = useMemo(() => generateRecommendations(roleResults, readiness.competencies), [roleResults, readiness.competencies]);
@@ -57,6 +66,10 @@ export function ResultsPage() {
     }),
     sharePackage,
   }), [answers, assessmentNavigation, completionRequested, historicalResultSnapshot, resultSnapshot, sharePackage, visibleRoleSet]);
+  const openSharing = (mode: ShareMode) => {
+    setShareMode(mode);
+    setSharing(true);
+  };
 
   useEffect(() => {
     if (assessmentCompletion.complete) initializeCurrentRoleSet(suggestedRoleSet);
@@ -98,28 +111,8 @@ export function ResultsPage() {
           <span>Your assessment is not remotely saved unless you explicitly choose Save or Share. Reloading can erase unsaved work.</span>
         </div>
       </header>
-      <section className="section page-width">
-        <div className="section-heading">
-          <span className="eyebrow">01 · Your kink map</span>
-          <h2>Strongest dimensions</h2>
-          <p>Independent dimensions can be strong at the same time. Directing does not cancel yielding; intensity does not cancel care.</p>
-        </div>
-        <div className="trait-map">
-          {topTraits.map(([id, score]) => (
-            <div className="trait-bar" key={id}>
-              <div>
-                <strong id={`trait-${id}-label`}>{traitById[id as keyof typeof traitById].label}</strong>
-                <span>{score!.evidence} responses</span>
-              </div>
-              <div className="bar-track" role="meter" aria-labelledby={`trait-${id}-label`} aria-valuemin={0} aria-valuemax={1} aria-valuenow={score!.value} aria-valuetext={`${Math.round(score!.value * 100)}% normalized dimension strength`}>
-                <span aria-hidden="true" style={{ width: `${Math.round(score!.value * 100)}%` }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <RoleSetIdentityGallery roleSet={visibleRoleSet} roleResults={roleResults} />
+      <ResultsSummary suggestedRoleSet={suggestedRoleSet} optimization={roleProfileOptimization} roleResults={roleResults} topTraits={topTraits} onOpenFullReflection={() => openSharing("full")} />
+      <RoleSetIdentityGallery roleSet={visibleRoleSet} roleResults={roleResults} isEdited={roleSetIsEdited} />
       <RoleProfileBuilderLauncher roleResults={roleResults} discoveryAnswers={answers.discovery} refinementAnswers={answers.refinement} currentRoleSet={visibleRoleSet} onRoleSetChange={(roles) => setCurrentRoleSet(roles)} />
       <section className="page-width role-set-export-section" aria-labelledby="role-set-export-heading">
         <div>
@@ -130,16 +123,16 @@ export function ResultsPage() {
         </div>
         <div className="role-set-primary-actions">
           <SaveAssessmentButton createBundle={createSavedAssessment} disabled={currentRoleSet === null} />
-          <button className="button secondary share-results-button" type="button" disabled={currentRoleSet === null} onClick={() => setSharing(true)}>
+          <button className="button secondary share-results-button" type="button" disabled={currentRoleSet === null} onClick={() => openSharing("cards")}>
             <Share2 size={18} />
             Share
           </button>
         </div>
       </section>
 
-      <section className="section page-width">
+      <section className="section page-width" id="role-discovery">
         <div className="section-heading">
-          <span className="eyebrow">03 · Role discovery</span>
+          <span className="eyebrow">04 · Role discovery</span>
           <h2>Role discovery</h2>
           <p>Explore the role vocabulary most closely connected to your answers. This ranking is separate from the curated Suggested Role Set above.</p>
           <details className="calculation-disclosure results-metrics-guide">
@@ -154,10 +147,10 @@ export function ResultsPage() {
         </div>
       </section>
 
-      <section className="editorial-band">
+      <section className="editorial-band" id="reflection">
         <div className="page-width">
           <div className="section-heading">
-            <span className="eyebrow">04 · Reflection</span>
+            <span className="eyebrow">05 · Reflection</span>
             <h2>Reflection</h2>
             <p>These scenario results remain separate from role discovery.</p>
           </div>
@@ -194,7 +187,7 @@ export function ResultsPage() {
 
       <section className="section page-width">
         <div className="section-heading">
-          <span className="eyebrow">05 · Potential blind spots</span>
+          <span className="eyebrow">06 · Potential blind spots</span>
           <h2>Patterns worth a second look</h2>
           <p>Reflection cue marks an early signal; Worth reviewing marks a pattern for closer attention; Important concept marks a critical misconception. These describe response patterns, not you. Each explanation describes why it appeared, and critical flags remain visible regardless of other answers.</p>
         </div>
@@ -230,9 +223,9 @@ export function ResultsPage() {
         )}
       </section>
 
-      <section className="section page-width">
+      <section className="section page-width" id="boundaries">
         <div className="section-heading">
-          <span className="eyebrow">06 · Wants & boundaries</span>
+          <span className="eyebrow">07 · Wants & boundaries</span>
           <h2>Independent by design</h2>
           <p>These choices guide activity suggestions but never alter role alignment or ordering.</p>
         </div>
@@ -255,7 +248,7 @@ export function ResultsPage() {
 
       <section className="section page-width conversation-starters">
         <div className="section-heading">
-          <span className="eyebrow">07 · Communication</span>
+          <span className="eyebrow">08 · Communication</span>
           <h2>Conversation starters</h2>
           <p>These turn your answers into language you can adapt when talking with a partner. They describe preferences you expressed in the assessment, not rules you are required to follow.</p>
         </div>
@@ -271,7 +264,7 @@ export function ResultsPage() {
 
       <section className="section page-width">
         <div className="section-heading">
-          <span className="eyebrow">08 · Learning path</span>
+          <span className="eyebrow">09 · Learning path</span>
           <h2>Useful next steps</h2>
         </div>
         {recommendations.length ? <div className="learning-grid">
@@ -297,7 +290,7 @@ export function ResultsPage() {
           </Link>
         </div>
       </section>
-      {sharing && currentRoleSet !== null && <ShareResultsDialog data={shareData} sharePackage={sharePackage} onClose={() => setSharing(false)} />}
+      {sharing && currentRoleSet !== null && <ShareResultsDialog data={shareData} sharePackage={sharePackage} initialMode={shareMode} onClose={() => setSharing(false)} />}
     </div>
   );
 }

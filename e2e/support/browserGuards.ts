@@ -78,8 +78,8 @@ export async function openRoleSetBuilder(page: Page) {
   await expect(disclosure).not.toHaveAttribute('open', '')
   await page.getByRole('heading', { name: 'Build your role set' }).click()
   await expect(disclosure).toHaveAttribute('open', '')
-  await expect(page.getByRole('heading', { name: 'Suggested role set' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Your role set', exact: true })).toBeVisible()
+  await expect(disclosure.getByRole('heading', { name: 'Suggested role set', exact: true })).toBeVisible()
+  await expect(disclosure.getByRole('heading', { name: 'Your role set', exact: true })).toBeVisible()
 }
 
 export async function roleSetLabels(page: Page, selector: string): Promise<string[]> {

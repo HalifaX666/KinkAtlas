@@ -49,6 +49,7 @@
   "src/tests/revealRequestPage.test.tsx",
   "src/tests/revisitCodec.test.ts",
   "src/tests/revisitUi.test.tsx",
+  "src/tests/resultsInformationArchitecture.test.tsx",
   "src/tests/roleAssessmentExplanation.test.tsx",
   "src/tests/roleExplanation.test.tsx",
   "src/tests/rolePageScoringBoundary.test.tsx",

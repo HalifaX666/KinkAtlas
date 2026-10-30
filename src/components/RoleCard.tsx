@@ -18,8 +18,9 @@ export function RoleCard({ result }: { result: RoleResult }) {
     <details className="role-card-evidence">
       <summary>Why this result appeared</summary>
       <div className="why-block"><p>{explanation.summary}</p>{signals.length > 0 && <><h4>Strongest contributing signals</h4><div className="trait-chips">{signals.map((item) => <span className="trait-up" key={item.traitId}>{explanation.supportingSignals.some((signal) => signal.traitId === item.traitId) ? <TrendingUp size={14} /> : <Target size={14} />}{item.description}</span>)}</div></>}</div>
+      <div className="role-confidence-explanation"><strong>What {confidence.toLowerCase()} confidence means</strong><p>{explanation.confidenceExplanation}</p></div>
       <div className="evidence-row"><span>Based on <strong>{result.relevantAnswers}</strong> relevant response{result.relevantAnswers === 1 ? '' : 's'}</span><span><strong>{Math.round(result.coverage * 100)}%</strong> evidence breadth<small>of this role’s themes had usable answer evidence; not match strength.</small></span></div>
     </details>
-    <Link className="text-link" to={rolePathForScoredRole(result.role)}>Explore this result <ArrowRight size={16} /></Link>
+    <Link className="text-link" to={rolePathForScoredRole(result.role)} aria-label={`Explore this result: ${result.role.name}. Explore role meaning and distinctions.`}>Explore role meaning and distinctions <ArrowRight size={16} /></Link>
   </article>
 }

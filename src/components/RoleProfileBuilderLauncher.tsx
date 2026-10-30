@@ -39,7 +39,7 @@ export function RoleProfileBuilderLauncher({ roleResults, refinementAnswers, dis
   };
 
   return (
-    <section className="section page-width profile-builder-section" aria-labelledby="profile-builder-heading">
+    <section className="section page-width profile-builder-section" id="role-set-editor" aria-labelledby="profile-builder-heading">
       <span className="eyebrow">Manage your role set</span>
       <details className="profile-builder-disclosure" open={isOpen || isClosing} data-closing={isClosing || undefined}>
         <summary onClick={toggleDisclosure}>
