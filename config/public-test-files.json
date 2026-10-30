@@ -8,6 +8,7 @@
   "src/calibration/calibrationReport.test.ts",
   "src/calibration/phaseJAssessmentAudit.test.ts",
   "src/calibration/phaseJFamilyAudit.test.ts",
+  "src/calibration/phaseJQuestionAudit.test.ts",
   "src/calibration/recommendationReport.test.ts",
   "src/tests/aboutNavigation.test.tsx",
   "src/tests/aboutNavigationStyles.test.mjs",
