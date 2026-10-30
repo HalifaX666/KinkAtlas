@@ -1,0 +1,1235 @@
+{
+  "baselineCommit": "32d3d6d0da12112f386659c3c35a6615ec1ca362",
+  "tieBreaks": {
+    "production": {
+      "scenarios": 69,
+      "exactTieSteps": 20,
+      "scenariosWithTie": [
+        "many-compatible-five-slots",
+        "fetish-heavy-direct-interests",
+        "role-rich-experienced",
+        "five-complementary-roles",
+        "near-tied-valid-sets",
+        "two-supported-recommendations",
+        "j3-rope-giver-only",
+        "j3-primal-directional-mix",
+        "j3-many-independent-interests"
+      ]
+    },
+    "alternatives": [
+      {
+        "rule": "stable-role-id",
+        "changedScenarioCount": 7,
+        "membershipChangeCount": 2,
+        "primaryChangeCount": 1,
+        "changes": [
+          {
+            "scenarioId": "many-compatible-five-slots",
+            "productionRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:exhibitionist-a68c66d6",
+              "role:service-top-1030da11"
+            ],
+            "alternativeRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:exhibitionist-a68c66d6",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:service-top-1030da11"
+            ],
+            "productionPrimaryRoleId": "role:dominant-4cfaa6ab",
+            "alternativePrimaryRoleId": "role:dominant-4cfaa6ab",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "fetish-heavy-direct-interests",
+            "productionRoleIds": [
+              "role:latex-pony-061abae5",
+              "role:foot-fetishist-cc02ffa0",
+              "role:gear-fetishist-27106e0a"
+            ],
+            "alternativeRoleIds": [
+              "role:foot-fetishist-cc02ffa0",
+              "role:latex-pony-061abae5",
+              "role:gear-fetishist-27106e0a"
+            ],
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "role-rich-experienced",
+            "productionRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:exhibitionist-a68c66d6",
+              "role:service-top-1030da11"
+            ],
+            "alternativeRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:exhibitionist-a68c66d6",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:service-top-1030da11"
+            ],
+            "productionPrimaryRoleId": "role:dominant-4cfaa6ab",
+            "alternativePrimaryRoleId": "role:dominant-4cfaa6ab",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "five-complementary-roles",
+            "productionRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:exhibitionist-a68c66d6",
+              "role:service-top-1030da11"
+            ],
+            "alternativeRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:exhibitionist-a68c66d6",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:service-top-1030da11"
+            ],
+            "productionPrimaryRoleId": "role:dominant-4cfaa6ab",
+            "alternativePrimaryRoleId": "role:dominant-4cfaa6ab",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "near-tied-valid-sets",
+            "productionRoleIds": [
+              "role:exhibitionist-a68c66d6",
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:voyeur-4af03138"
+            ],
+            "alternativeRoleIds": [
+              "role:exhibitionist-a68c66d6",
+              "role:dominant-4cfaa6ab",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:voyeur-4af03138"
+            ],
+            "productionPrimaryRoleId": "role:exhibitionist-a68c66d6",
+            "alternativePrimaryRoleId": "role:exhibitionist-a68c66d6",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "j3-primal-directional-mix",
+            "productionRoleIds": [
+              "role:primal-switch-705db664",
+              "role:switch-39921a74",
+              "role:primal-predator-a89f810a"
+            ],
+            "alternativeRoleIds": [
+              "role:primal-switch-705db664",
+              "role:switch-39921a74",
+              "role:primal-hunter-af2866bb"
+            ],
+            "productionPrimaryRoleId": "role:primal-switch-705db664",
+            "alternativePrimaryRoleId": "role:primal-switch-705db664",
+            "membershipChanged": true
+          },
+          {
+            "scenarioId": "j3-many-independent-interests",
+            "productionRoleIds": [
+              "role:primal-predator-a89f810a",
+              "role:rigger-5d2f2d93",
+              "role:tease-6d5f3dc6",
+              "role:caregiver-b45607f2",
+              "role:exhibitionist-a68c66d6"
+            ],
+            "alternativeRoleIds": [
+              "role:primal-hunter-af2866bb",
+              "role:rigger-5d2f2d93",
+              "role:tease-6d5f3dc6",
+              "role:caregiver-b45607f2",
+              "role:exhibitionist-a68c66d6"
+            ],
+            "productionPrimaryRoleId": "role:primal-predator-a89f810a",
+            "alternativePrimaryRoleId": "role:primal-hunter-af2866bb",
+            "membershipChanged": true
+          }
+        ]
+      },
+      {
+        "rule": "stronger-independent-evidence",
+        "changedScenarioCount": 7,
+        "membershipChangeCount": 2,
+        "primaryChangeCount": 1,
+        "changes": [
+          {
+            "scenarioId": "many-compatible-five-slots",
+            "productionRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:exhibitionist-a68c66d6",
+              "role:service-top-1030da11"
+            ],
+            "alternativeRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:exhibitionist-a68c66d6",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:service-top-1030da11"
+            ],
+            "productionPrimaryRoleId": "role:dominant-4cfaa6ab",
+            "alternativePrimaryRoleId": "role:dominant-4cfaa6ab",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "fetish-heavy-direct-interests",
+            "productionRoleIds": [
+              "role:latex-pony-061abae5",
+              "role:foot-fetishist-cc02ffa0",
+              "role:gear-fetishist-27106e0a"
+            ],
+            "alternativeRoleIds": [
+              "role:foot-fetishist-cc02ffa0",
+              "role:latex-pony-061abae5",
+              "role:gear-fetishist-27106e0a"
+            ],
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "role-rich-experienced",
+            "productionRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:exhibitionist-a68c66d6",
+              "role:service-top-1030da11"
+            ],
+            "alternativeRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:exhibitionist-a68c66d6",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:service-top-1030da11"
+            ],
+            "productionPrimaryRoleId": "role:dominant-4cfaa6ab",
+            "alternativePrimaryRoleId": "role:dominant-4cfaa6ab",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "five-complementary-roles",
+            "productionRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:exhibitionist-a68c66d6",
+              "role:service-top-1030da11"
+            ],
+            "alternativeRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:exhibitionist-a68c66d6",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:service-top-1030da11"
+            ],
+            "productionPrimaryRoleId": "role:dominant-4cfaa6ab",
+            "alternativePrimaryRoleId": "role:dominant-4cfaa6ab",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "near-tied-valid-sets",
+            "productionRoleIds": [
+              "role:exhibitionist-a68c66d6",
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:voyeur-4af03138"
+            ],
+            "alternativeRoleIds": [
+              "role:exhibitionist-a68c66d6",
+              "role:dominant-4cfaa6ab",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:voyeur-4af03138"
+            ],
+            "productionPrimaryRoleId": "role:exhibitionist-a68c66d6",
+            "alternativePrimaryRoleId": "role:exhibitionist-a68c66d6",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "j3-primal-directional-mix",
+            "productionRoleIds": [
+              "role:primal-switch-705db664",
+              "role:switch-39921a74",
+              "role:primal-predator-a89f810a"
+            ],
+            "alternativeRoleIds": [
+              "role:primal-switch-705db664",
+              "role:switch-39921a74",
+              "role:primal-hunter-af2866bb"
+            ],
+            "productionPrimaryRoleId": "role:primal-switch-705db664",
+            "alternativePrimaryRoleId": "role:primal-switch-705db664",
+            "membershipChanged": true
+          },
+          {
+            "scenarioId": "j3-many-independent-interests",
+            "productionRoleIds": [
+              "role:primal-predator-a89f810a",
+              "role:rigger-5d2f2d93",
+              "role:tease-6d5f3dc6",
+              "role:caregiver-b45607f2",
+              "role:exhibitionist-a68c66d6"
+            ],
+            "alternativeRoleIds": [
+              "role:primal-hunter-af2866bb",
+              "role:rigger-5d2f2d93",
+              "role:tease-6d5f3dc6",
+              "role:caregiver-b45607f2",
+              "role:exhibitionist-a68c66d6"
+            ],
+            "productionPrimaryRoleId": "role:primal-predator-a89f810a",
+            "alternativePrimaryRoleId": "role:primal-hunter-af2866bb",
+            "membershipChanged": true
+          }
+        ]
+      },
+      {
+        "rule": "greater-distinctiveness",
+        "changedScenarioCount": 7,
+        "membershipChangeCount": 2,
+        "primaryChangeCount": 1,
+        "changes": [
+          {
+            "scenarioId": "many-compatible-five-slots",
+            "productionRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:exhibitionist-a68c66d6",
+              "role:service-top-1030da11"
+            ],
+            "alternativeRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:exhibitionist-a68c66d6",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:service-top-1030da11"
+            ],
+            "productionPrimaryRoleId": "role:dominant-4cfaa6ab",
+            "alternativePrimaryRoleId": "role:dominant-4cfaa6ab",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "fetish-heavy-direct-interests",
+            "productionRoleIds": [
+              "role:latex-pony-061abae5",
+              "role:foot-fetishist-cc02ffa0",
+              "role:gear-fetishist-27106e0a"
+            ],
+            "alternativeRoleIds": [
+              "role:foot-fetishist-cc02ffa0",
+              "role:latex-pony-061abae5",
+              "role:gear-fetishist-27106e0a"
+            ],
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "role-rich-experienced",
+            "productionRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:exhibitionist-a68c66d6",
+              "role:service-top-1030da11"
+            ],
+            "alternativeRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:exhibitionist-a68c66d6",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:service-top-1030da11"
+            ],
+            "productionPrimaryRoleId": "role:dominant-4cfaa6ab",
+            "alternativePrimaryRoleId": "role:dominant-4cfaa6ab",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "five-complementary-roles",
+            "productionRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:exhibitionist-a68c66d6",
+              "role:service-top-1030da11"
+            ],
+            "alternativeRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:exhibitionist-a68c66d6",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:service-top-1030da11"
+            ],
+            "productionPrimaryRoleId": "role:dominant-4cfaa6ab",
+            "alternativePrimaryRoleId": "role:dominant-4cfaa6ab",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "near-tied-valid-sets",
+            "productionRoleIds": [
+              "role:exhibitionist-a68c66d6",
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:voyeur-4af03138"
+            ],
+            "alternativeRoleIds": [
+              "role:exhibitionist-a68c66d6",
+              "role:dominant-4cfaa6ab",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:voyeur-4af03138"
+            ],
+            "productionPrimaryRoleId": "role:exhibitionist-a68c66d6",
+            "alternativePrimaryRoleId": "role:exhibitionist-a68c66d6",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "j3-primal-directional-mix",
+            "productionRoleIds": [
+              "role:primal-switch-705db664",
+              "role:switch-39921a74",
+              "role:primal-predator-a89f810a"
+            ],
+            "alternativeRoleIds": [
+              "role:primal-switch-705db664",
+              "role:switch-39921a74",
+              "role:primal-hunter-af2866bb"
+            ],
+            "productionPrimaryRoleId": "role:primal-switch-705db664",
+            "alternativePrimaryRoleId": "role:primal-switch-705db664",
+            "membershipChanged": true
+          },
+          {
+            "scenarioId": "j3-many-independent-interests",
+            "productionRoleIds": [
+              "role:primal-predator-a89f810a",
+              "role:rigger-5d2f2d93",
+              "role:tease-6d5f3dc6",
+              "role:caregiver-b45607f2",
+              "role:exhibitionist-a68c66d6"
+            ],
+            "alternativeRoleIds": [
+              "role:primal-hunter-af2866bb",
+              "role:rigger-5d2f2d93",
+              "role:tease-6d5f3dc6",
+              "role:caregiver-b45607f2",
+              "role:exhibitionist-a68c66d6"
+            ],
+            "productionPrimaryRoleId": "role:primal-predator-a89f810a",
+            "alternativePrimaryRoleId": "role:primal-hunter-af2866bb",
+            "membershipChanged": true
+          }
+        ]
+      },
+      {
+        "rule": "conservative-specificity",
+        "changedScenarioCount": 7,
+        "membershipChangeCount": 2,
+        "primaryChangeCount": 1,
+        "changes": [
+          {
+            "scenarioId": "many-compatible-five-slots",
+            "productionRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:exhibitionist-a68c66d6",
+              "role:service-top-1030da11"
+            ],
+            "alternativeRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:exhibitionist-a68c66d6",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:service-top-1030da11"
+            ],
+            "productionPrimaryRoleId": "role:dominant-4cfaa6ab",
+            "alternativePrimaryRoleId": "role:dominant-4cfaa6ab",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "fetish-heavy-direct-interests",
+            "productionRoleIds": [
+              "role:latex-pony-061abae5",
+              "role:foot-fetishist-cc02ffa0",
+              "role:gear-fetishist-27106e0a"
+            ],
+            "alternativeRoleIds": [
+              "role:foot-fetishist-cc02ffa0",
+              "role:latex-pony-061abae5",
+              "role:gear-fetishist-27106e0a"
+            ],
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "role-rich-experienced",
+            "productionRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:exhibitionist-a68c66d6",
+              "role:service-top-1030da11"
+            ],
+            "alternativeRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:exhibitionist-a68c66d6",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:service-top-1030da11"
+            ],
+            "productionPrimaryRoleId": "role:dominant-4cfaa6ab",
+            "alternativePrimaryRoleId": "role:dominant-4cfaa6ab",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "five-complementary-roles",
+            "productionRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:exhibitionist-a68c66d6",
+              "role:service-top-1030da11"
+            ],
+            "alternativeRoleIds": [
+              "role:dominant-4cfaa6ab",
+              "role:exhibitionist-a68c66d6",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:service-top-1030da11"
+            ],
+            "productionPrimaryRoleId": "role:dominant-4cfaa6ab",
+            "alternativePrimaryRoleId": "role:dominant-4cfaa6ab",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "near-tied-valid-sets",
+            "productionRoleIds": [
+              "role:exhibitionist-a68c66d6",
+              "role:dominant-4cfaa6ab",
+              "role:sadist-967ed11a",
+              "role:rigger-5d2f2d93",
+              "role:voyeur-4af03138"
+            ],
+            "alternativeRoleIds": [
+              "role:exhibitionist-a68c66d6",
+              "role:dominant-4cfaa6ab",
+              "role:rigger-5d2f2d93",
+              "role:sadist-967ed11a",
+              "role:voyeur-4af03138"
+            ],
+            "productionPrimaryRoleId": "role:exhibitionist-a68c66d6",
+            "alternativePrimaryRoleId": "role:exhibitionist-a68c66d6",
+            "membershipChanged": false
+          },
+          {
+            "scenarioId": "j3-primal-directional-mix",
+            "productionRoleIds": [
+              "role:primal-switch-705db664",
+              "role:switch-39921a74",
+              "role:primal-predator-a89f810a"
+            ],
+            "alternativeRoleIds": [
+              "role:primal-switch-705db664",
+              "role:switch-39921a74",
+              "role:primal-hunter-af2866bb"
+            ],
+            "productionPrimaryRoleId": "role:primal-switch-705db664",
+            "alternativePrimaryRoleId": "role:primal-switch-705db664",
+            "membershipChanged": true
+          },
+          {
+            "scenarioId": "j3-many-independent-interests",
+            "productionRoleIds": [
+              "role:primal-predator-a89f810a",
+              "role:rigger-5d2f2d93",
+              "role:tease-6d5f3dc6",
+              "role:caregiver-b45607f2",
+              "role:exhibitionist-a68c66d6"
+            ],
+            "alternativeRoleIds": [
+              "role:primal-hunter-af2866bb",
+              "role:rigger-5d2f2d93",
+              "role:tease-6d5f3dc6",
+              "role:caregiver-b45607f2",
+              "role:exhibitionist-a68c66d6"
+            ],
+            "productionPrimaryRoleId": "role:primal-predator-a89f810a",
+            "alternativePrimaryRoleId": "role:primal-hunter-af2866bb",
+            "membershipChanged": true
+          }
+        ]
+      }
+    ]
+  },
+  "relationshipCounterfactual": {
+    "adapterLimitation": "Production optimizer helpers close over canonical relationship metadata. J.3 uses a bounded audit-only mirror and requires exact baseline equivalence before interpreting counterfactuals.",
+    "individual": [
+      {
+        "leftRoleId": "role:submissive-70cf87f8",
+        "leftLabel": "submissive",
+        "rightRoleId": "role:bottom-479ad21a",
+        "rightLabel": "Bottom",
+        "type": "commonly-overlapping",
+        "alreadyExists": false,
+        "endpointEligibleTogether": [
+          "rope-focused-bottom",
+          "service-bottom-independent",
+          "bottom-not-submissive",
+          "submissive-not-bottom"
+        ],
+        "affectedScenarios": [
+          {
+            "scenarioId": "bottom-not-submissive",
+            "baselineRoleIds": [
+              "role:bottom-479ad21a",
+              "role:dominant-4cfaa6ab"
+            ],
+            "counterfactualRoleIds": [
+              "role:bottom-479ad21a",
+              "role:dominant-4cfaa6ab"
+            ],
+            "addedRoleIds": [],
+            "removedRoleIds": [],
+            "orderChanged": false,
+            "membershipChanged": false,
+            "baselinePrimaryRoleId": "role:bottom-479ad21a",
+            "counterfactualPrimaryRoleId": "role:bottom-479ad21a",
+            "primaryChanged": false,
+            "changedStepScores": [
+              {
+                "step": 2,
+                "roleId": "role:submissive-70cf87f8",
+                "before": 0.4,
+                "after": 0.28
+              }
+            ]
+          }
+        ],
+        "membershipChangeCount": 0,
+        "primaryChangeCount": 0,
+        "interpretation": "This type can add a 0.12 pairwise redundancy penalty and can affect primary centrality."
+      },
+      {
+        "leftRoleId": "role:owner-4b1b8aa3",
+        "leftLabel": "Owner",
+        "rightRoleId": "role:pet-8f0d1b30",
+        "rightLabel": "Pet",
+        "type": "directional-counterpart",
+        "alreadyExists": false,
+        "endpointEligibleTogether": [],
+        "affectedScenarios": [],
+        "membershipChangeCount": 0,
+        "primaryChangeCount": 0,
+        "interpretation": "Production selection assigns no redundancy penalty to this relationship type; it can affect primary centrality only when both endpoints are selected."
+      },
+      {
+        "leftRoleId": "role:trainer-9f085ee9",
+        "leftLabel": "Trainer",
+        "rightRoleId": "role:pet-8f0d1b30",
+        "rightLabel": "Pet",
+        "type": "directional-counterpart",
+        "alreadyExists": false,
+        "endpointEligibleTogether": [],
+        "affectedScenarios": [],
+        "membershipChangeCount": 0,
+        "primaryChangeCount": 0,
+        "interpretation": "Production selection assigns no redundancy penalty to this relationship type; it can affect primary centrality only when both endpoints are selected."
+      },
+      {
+        "leftRoleId": "role:bondage-top-843060ea",
+        "leftLabel": "Bondage Top",
+        "rightRoleId": "role:bondage-switch-0bda5094",
+        "rightLabel": "Bondage Switch",
+        "type": "switch-counterpart",
+        "alreadyExists": false,
+        "endpointEligibleTogether": [
+          "j3-rope-switch",
+          "j3-broad-curiosity"
+        ],
+        "affectedScenarios": [],
+        "membershipChangeCount": 0,
+        "primaryChangeCount": 0,
+        "interpretation": "Production selection assigns no redundancy penalty to this relationship type; it can affect primary centrality only when both endpoints are selected."
+      },
+      {
+        "leftRoleId": "role:bondage-bottom-b1ecbe8d",
+        "leftLabel": "Bondage Bottom",
+        "rightRoleId": "role:bondage-switch-0bda5094",
+        "rightLabel": "Bondage Switch",
+        "type": "switch-counterpart",
+        "alreadyExists": false,
+        "endpointEligibleTogether": [],
+        "affectedScenarios": [],
+        "membershipChangeCount": 0,
+        "primaryChangeCount": 0,
+        "interpretation": "Production selection assigns no redundancy penalty to this relationship type; it can affect primary centrality only when both endpoints are selected."
+      },
+      {
+        "leftRoleId": "role:handler-53cae329",
+        "leftLabel": "Handler",
+        "rightRoleId": "role:pet-8f0d1b30",
+        "rightLabel": "Pet",
+        "type": "directional-counterpart",
+        "alreadyExists": false,
+        "endpointEligibleTogether": [],
+        "affectedScenarios": [],
+        "membershipChangeCount": 0,
+        "primaryChangeCount": 0,
+        "interpretation": "Production selection assigns no redundancy penalty to this relationship type; it can affect primary centrality only when both endpoints are selected."
+      },
+      {
+        "leftRoleId": "role:rigger-5d2f2d93",
+        "leftLabel": "Rigger",
+        "rightRoleId": "role:rope-switch-d336d9c6",
+        "rightLabel": "Rope Switch",
+        "type": "commonly-overlapping",
+        "alreadyExists": false,
+        "endpointEligibleTogether": [],
+        "affectedScenarios": [],
+        "membershipChangeCount": 0,
+        "primaryChangeCount": 0,
+        "interpretation": "This type can add a 0.12 pairwise redundancy penalty and can affect primary centrality."
+      }
+    ],
+    "combined": {
+      "affectedScenarios": [
+        {
+          "scenarioId": "bottom-not-submissive",
+          "baselineRoleIds": [
+            "role:bottom-479ad21a",
+            "role:dominant-4cfaa6ab"
+          ],
+          "counterfactualRoleIds": [
+            "role:bottom-479ad21a",
+            "role:dominant-4cfaa6ab"
+          ],
+          "addedRoleIds": [],
+          "removedRoleIds": [],
+          "orderChanged": false,
+          "membershipChanged": false,
+          "baselinePrimaryRoleId": "role:bottom-479ad21a",
+          "counterfactualPrimaryRoleId": "role:bottom-479ad21a",
+          "primaryChanged": false,
+          "changedStepScores": [
+            {
+              "step": 2,
+              "roleId": "role:submissive-70cf87f8",
+              "before": 0.4,
+              "after": 0.28
+            }
+          ]
+        }
+      ],
+      "membershipChangeCount": 0,
+      "primaryChangeCount": 0
+    }
+  },
+  "familyCounterfactual": [
+    {
+      "roleId": "role:battle-sub-5f8ba37c",
+      "label": "Battle Sub",
+      "proposedFamilyIds": [
+        "submission"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:brat-breaker-5620daca",
+      "label": "Brat Breaker",
+      "proposedFamilyIds": [
+        "brat-dynamics",
+        "persona-fantasy"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:chaos-creature-d6e512c4",
+      "label": "Chaos Creature",
+      "proposedFamilyIds": [
+        "persona-fantasy"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:creature-fc1599a5",
+      "label": "Creature",
+      "proposedFamilyIds": [
+        "persona-fantasy"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:daddy-chaser-e24c2ef1",
+      "label": "Daddy Chaser",
+      "proposedFamilyIds": [
+        "caregiver-little"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:dark-dom-a03c1196",
+      "label": "Dark Dom",
+      "proposedFamilyIds": [
+        "dominance"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:dominant-little-75592717",
+      "label": "Dominant Little",
+      "proposedFamilyIds": [
+        "caregiver-little",
+        "dominance"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:emotional-support-sub-e74d7fdd",
+      "label": "Emotional Support Sub",
+      "proposedFamilyIds": [
+        "submission"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:fairy-kink-daddy-6a354853",
+      "label": "Fairy Kink Daddy",
+      "proposedFamilyIds": [
+        "caregiver-little"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:latex-mistress-8fbc054d",
+      "label": "Latex Mistress",
+      "proposedFamilyIds": [
+        "material-fetish",
+        "power-exchange"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:maledom-submissive-15f4ef4e",
+      "label": "MaleDom Submissive",
+      "proposedFamilyIds": [
+        "submission"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:nymphic-domme-bf03e32b",
+      "label": "Nymphic Domme",
+      "proposedFamilyIds": [
+        "dominance"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:prey-eb23298d",
+      "label": "prey",
+      "proposedFamilyIds": [
+        "primal"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:primal-dom-6bd6d2f9",
+      "label": "Primal Dom",
+      "proposedFamilyIds": [
+        "dominance",
+        "primal"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:primal-pet-31300648",
+      "label": "Primal Pet",
+      "proposedFamilyIds": [
+        "primal"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:princess-domme-bf7d880e",
+      "label": "Princess Domme",
+      "proposedFamilyIds": [
+        "dominance"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:pro-domme-74b37180",
+      "label": "Pro Domme",
+      "proposedFamilyIds": [
+        "dominance"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:rope-dummy-036e3cd8",
+      "label": "Rope Dummy",
+      "proposedFamilyIds": [
+        "rope-bondage"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:rope-model-26fd1dcb",
+      "label": "Rope Model",
+      "proposedFamilyIds": [
+        "rope-bondage"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:rope-monkey-7e0934b7",
+      "label": "Rope Monkey",
+      "proposedFamilyIds": [
+        "rope-bondage"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:satyric-dominant-68517930",
+      "label": "Satyric Dominant",
+      "proposedFamilyIds": [
+        "dominance",
+        "power-exchange"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:stay-at-home-dominant-a0a05da7",
+      "label": "Stay-at-Home Dominant",
+      "proposedFamilyIds": [
+        "dominance"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:stay-at-home-sub-7b3c7cf4",
+      "label": "Stay-at-Home Sub",
+      "proposedFamilyIds": [
+        "submission"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:strap-on-domme-8177d391",
+      "label": "Strap-On Domme",
+      "proposedFamilyIds": [
+        "dominance"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:vampire-bait-9f0fad04",
+      "label": "Vampire Bait",
+      "proposedFamilyIds": [
+        "persona-fantasy",
+        "primal"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:vampire-concubine-d134c443",
+      "label": "Vampire Concubine",
+      "proposedFamilyIds": [
+        "persona-fantasy"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    },
+    {
+      "roleId": "role:whip-wielder-100b9fcf",
+      "label": "Whip Wielder",
+      "proposedFamilyIds": [
+        "sensation-impact"
+      ],
+      "decisionPathway": "manual-only",
+      "recommendationEligibility": "exploration-only",
+      "eligibleScenarioIds": [],
+      "affectedScenarios": [],
+      "currentProductionEffect": "zero-because-role-is-never-eligible-in-tested-scenarios"
+    }
+  ],
+  "sensitivity": [
+    {
+      "id": "authority-to-unknown",
+      "dimension": "one meaningful authority answer becomes unknown",
+      "baselineId": "j3-dominance-without-top",
+      "baselineRoleIds": [
+        "role:dominant-4cfaa6ab",
+        "role:owner-4b1b8aa3"
+      ],
+      "variantRoleIds": [],
+      "intersectionRoleIds": [],
+      "addedRoleIds": [],
+      "removedRoleIds": [
+        "role:dominant-4cfaa6ab",
+        "role:owner-4b1b8aa3"
+      ],
+      "baselinePrimaryRoleId": "role:dominant-4cfaa6ab",
+      "primaryChanged": true,
+      "membershipChanged": true,
+      "classification": "acceptable-uncertainty"
+    },
+    {
+      "id": "top-add-authority",
+      "dimension": "one independent authority interest is added",
+      "baselineId": "j3-top-without-dominance",
+      "baselineRoleIds": [
+        "role:service-top-1030da11",
+        "role:service-submissive-8cbb9bd3",
+        "role:top-d5cdfcf7",
+        "role:service-switch-c5501773"
+      ],
+      "variantRoleIds": [
+        "role:service-top-1030da11",
+        "role:pleasure-dom-f0f5f5c7",
+        "role:top-d5cdfcf7",
+        "role:protector-84edb6a5",
+        "role:service-switch-c5501773"
+      ],
+      "intersectionRoleIds": [
+        "role:service-top-1030da11",
+        "role:top-d5cdfcf7",
+        "role:service-switch-c5501773"
+      ],
+      "addedRoleIds": [
+        "role:pleasure-dom-f0f5f5c7",
+        "role:protector-84edb6a5"
+      ],
+      "removedRoleIds": [
+        "role:service-submissive-8cbb9bd3"
+      ],
+      "baselinePrimaryRoleId": "role:service-top-1030da11",
+      "variantPrimaryRoleId": "role:service-top-1030da11",
+      "primaryChanged": false,
+      "membershipChanged": true,
+      "classification": "expected-sensitivity"
+    },
+    {
+      "id": "submission-to-prefer-not",
+      "dimension": "one submission answer becomes prefer-not",
+      "baselineId": "j3-submission-without-bottom",
+      "baselineRoleIds": [
+        "role:submissive-70cf87f8"
+      ],
+      "variantRoleIds": [
+        "role:submissive-70cf87f8"
+      ],
+      "intersectionRoleIds": [
+        "role:submissive-70cf87f8"
+      ],
+      "addedRoleIds": [],
+      "removedRoleIds": [],
+      "baselinePrimaryRoleId": "role:submissive-70cf87f8",
+      "variantPrimaryRoleId": "role:submissive-70cf87f8",
+      "primaryChanged": false,
+      "membershipChanged": false,
+      "classification": "stable"
+    },
+    {
+      "id": "rope-giver-contrary",
+      "dimension": "the central rope interest becomes explicit contrary evidence",
+      "baselineId": "j3-rope-giver-only",
+      "baselineRoleIds": [
+        "role:rigger-5d2f2d93",
+        "role:bondage-top-843060ea"
+      ],
+      "variantRoleIds": [],
+      "intersectionRoleIds": [],
+      "addedRoleIds": [],
+      "removedRoleIds": [
+        "role:rigger-5d2f2d93",
+        "role:bondage-top-843060ea"
+      ],
+      "baselinePrimaryRoleId": "role:rigger-5d2f2d93",
+      "primaryChanged": true,
+      "membershipChanged": true,
+      "classification": "expected-sensitivity"
+    },
+    {
+      "id": "pet-owner-missing-authority",
+      "dimension": "required authority evidence becomes unknown",
+      "baselineId": "j3-owner-not-pet",
+      "baselineRoleIds": [
+        "role:owner-4b1b8aa3",
+        "role:dominant-4cfaa6ab",
+        "role:caregiver-b45607f2",
+        "role:handler-53cae329"
+      ],
+      "variantRoleIds": [
+        "role:protector-84edb6a5",
+        "role:handler-53cae329",
+        "role:caregiver-b45607f2"
+      ],
+      "intersectionRoleIds": [
+        "role:caregiver-b45607f2",
+        "role:handler-53cae329"
+      ],
+      "addedRoleIds": [
+        "role:protector-84edb6a5"
+      ],
+      "removedRoleIds": [
+        "role:owner-4b1b8aa3",
+        "role:dominant-4cfaa6ab"
+      ],
+      "baselinePrimaryRoleId": "role:owner-4b1b8aa3",
+      "variantPrimaryRoleId": "role:protector-84edb6a5",
+      "primaryChanged": true,
+      "membershipChanged": true,
+      "classification": "acceptable-uncertainty"
+    },
+    {
+      "id": "mixed-add-observation",
+      "dimension": "one directional visibility answer changes",
+      "baselineId": "j3-many-independent-interests",
+      "baselineRoleIds": [
+        "role:primal-predator-a89f810a",
+        "role:rigger-5d2f2d93",
+        "role:tease-6d5f3dc6",
+        "role:caregiver-b45607f2",
+        "role:exhibitionist-a68c66d6"
+      ],
+      "variantRoleIds": [
+        "role:primal-predator-a89f810a",
+        "role:rigger-5d2f2d93",
+        "role:caregiver-b45607f2",
+        "role:tease-6d5f3dc6",
+        "role:voyeur-4af03138"
+      ],
+      "intersectionRoleIds": [
+        "role:primal-predator-a89f810a",
+        "role:rigger-5d2f2d93",
+        "role:tease-6d5f3dc6",
+        "role:caregiver-b45607f2"
+      ],
+      "addedRoleIds": [
+        "role:voyeur-4af03138"
+      ],
+      "removedRoleIds": [
+        "role:exhibitionist-a68c66d6"
+      ],
+      "baselinePrimaryRoleId": "role:primal-predator-a89f810a",
+      "variantPrimaryRoleId": "role:primal-predator-a89f810a",
+      "primaryChanged": false,
+      "membershipChanged": true,
+      "classification": "acceptable-uncertainty"
+    }
+  ]
+}
