@@ -43,6 +43,7 @@
   "src/tests/qrTransportCore.test.ts",
   "src/tests/questionCoverage.test.ts",
   "src/tests/refinementEvidence.test.ts",
+  "src/tests/reflectionNarrative.test.ts",
   "src/tests/recommendationOptimizerValidation.test.ts",
   "src/tests/recommendationPersonas.test.ts",
   "src/tests/revealRequest.test.ts",

@@ -4,6 +4,7 @@ import { competencyDefinitions } from '../data/readiness'
 import { drawRoleEmblemOnCanvas } from '../data/roleEmblems'
 import { buildRoleSetCardPresentations, roleLibraryRoleForIdentity, type RoleSetCardPresentation } from '../data/roleIdentity'
 import { explainRoleResult } from './roleExplanation'
+import { composeFullReflection } from './reflectionNarrative'
 import type { EditableRoleProfileEntry } from './roleProfileOptimizer'
 import type { AssessmentAnswers, ReadinessAssessment, RoleResult } from '../types'
 
@@ -52,7 +53,6 @@ export const defaultShareOptions: ShareOptions = {
   negotiation: false,
 }
 
-const blindSpotLabels = { notice: 'Reflection cue', concern: 'Worth reviewing', critical: 'Important concept' } as const
 const productExplanation = 'KinkAtlas is a private self-reflection tool that suggests role vocabulary from your answers, not an identity assignment.'
 const separateLensesExplanation = 'Reflection considers knowledge and attitudes, not real-world readiness. Boundaries remain independent of role alignment.'
 const safetyDisclaimer = 'Results do not certify safety or replace education, communication, or consent negotiation.'
@@ -129,58 +129,44 @@ export function buildQuickSummary(data: ShareResultsData): string {
   return lines.join('\n').replace(/\n{3,}/g, '\n\n')
 }
 
+export function buildFullReflectionNarrative(data: ShareResultsData, options: ShareOptions = defaultShareOptions) {
+  const roles = options.roles ? getShareableRoleSet(data.roleSet, data.roleResults).map((role) => ({
+    roleId: role.roleId,
+    label: role.name,
+    definition: role.summary,
+    source: role.source,
+    alignment: options.alignment ? role.alignment : undefined,
+    confidence: options.confidence ? role.confidence : undefined,
+    evidenceBreadth: role.evidenceBreadth,
+    supportingSignals: role.supportingSignals,
+  })) : undefined
+  const readiness = options.readiness ? data.readiness.competencies.map((item) => ({
+    competencyId: item.competency,
+    label: competencyDefinitions[item.competency].label,
+    band: item.band,
+  })) : undefined
+  const blindSpots = options.blindSpots ? data.readiness.blindSpots.map((spot) => ({
+    id: spot.id,
+    title: spot.title,
+    description: spot.description,
+    severity: spot.severity,
+  })) : undefined
+  const boundaries = options.boundaries ? boundaryItems.flatMap((item) => {
+    const value = data.boundaries[item.id]
+    if (!value || value === 'neutral' || value === 'prefer-not') return []
+    return [{ id: item.id, label: item.label, responseLabel: boundaryOptions.find((option) => option.value === value)?.label ?? value }]
+  }) : undefined
+  const negotiation = options.negotiation ? negotiationQuestions.flatMap((question) => {
+    const answerId = data.negotiation[question.id]
+    const answer = question.answers.find((candidate) => candidate.id === answerId)
+    return answer ? [{ questionId: question.id, domain: question.domain, answerId, answerLabel: answer.label }] : []
+  }) : undefined
+
+  return composeFullReflection({ roles, readiness, blindSpots, boundaries, negotiation, includeAlignment: options.alignment, includeConfidence: options.confidence })
+}
+
 export function buildFullReflection(data: ShareResultsData, options: ShareOptions = defaultShareOptions): string {
-  const lines = ['Kink Atlas — My Full Reflection', productExplanation, '']
-
-  if (options.roles) {
-    lines.push(...roleMetricsExplanation(options.alignment, options.confidence), '')
-    const roles = getShareableRoleSet(data.roleSet, data.roleResults)
-    if (!roles.length) lines.push('Your role set is empty. An empty set is valid.', '')
-    else lines.push('Your Role Set', ...roles.map((role) => roleSummaryLine(role, options.alignment, options.confidence)), '')
-  }
-
-  if (options.readiness && data.readiness.competencies.length) {
-    const established = data.readiness.competencies.filter((item) => item.band === 'strong')
-    const toExplore = data.readiness.competencies.filter((item) => item.band !== 'strong')
-    const readinessLabels = { strong: 'Established', developing: 'Building', explore: 'Further reflection', important: 'Needs more reflection' } as const
-    lines.push('Reflection')
-    if (established.length) {
-      lines.push('Established foundations')
-      established.forEach((item) => lines.push(`• ${competencyDefinitions[item.competency].label} — ${readinessLabels[item.band]}`))
-    }
-    if (toExplore.length) {
-      lines.push('Areas to explore')
-      toExplore.forEach((item) => lines.push(`• ${competencyDefinitions[item.competency].label} — ${readinessLabels[item.band]}`))
-    }
-    lines.push('This is not a safety score. It reflects knowledge and attitudes expressed through your answers. It cannot evaluate real-world behavior or certify anyone as a safe partner.', '')
-  }
-
-  if (options.blindSpots && data.readiness.blindSpots.length) {
-    lines.push('Potential blind spots', 'Reflection cue: a theme to consider. Worth reviewing: a stronger concern. Important concept: a critical concept to revisit. These labels describe answer signals, not a judgment of you or your real-world behavior.')
-    data.readiness.blindSpots.forEach((spot) => lines.push(`• ${spot.title} — ${blindSpotLabels[spot.severity]}. Why it appeared: ${spot.description}`))
-    lines.push('')
-  }
-
-  if (options.boundaries) {
-    const selected = boundaryItems.flatMap((item) => {
-      const value = data.boundaries[item.id]
-      if (!value || value === 'neutral' || value === 'prefer-not') return []
-      return [`• ${item.label} — ${boundaryOptions.find((option) => option.value === value)?.label ?? value}`]
-    })
-    if (selected.length) lines.push('Wants & boundaries', ...selected, '', 'Boundaries shown here reflect the selections made when this result was generated and should never replace direct communication.', '')
-  }
-
-  if (options.negotiation) {
-    const selected = negotiationQuestions.flatMap((question) => {
-      const answerId = data.negotiation[question.id]
-      const answer = question.answers.find((candidate) => candidate.id === answerId)
-      return answer ? [`• ${question.domain}: ${answer.label}`] : []
-    })
-    if (selected.length) lines.push('Negotiation preferences', ...selected, '')
-  }
-
-  lines.push('Generated privately with KinkAtlas.', 'Role results describe vocabulary worth exploring, not identity or consent.', separateLensesExplanation, safetyDisclaimer, 'Sharing a result does not communicate consent, availability, boundaries, or agreement to any activity.')
-  return lines.join('\n').replace(/\n{3,}/g, '\n\n')
+  return buildFullReflectionNarrative(data, options).text
 }
 
 export const buildShareSummary = buildFullReflection
